@@ -4,4 +4,8 @@
 
 # React Router
 /.react-router/
+src/.react-router/
 /build/
+
+# Chakra
+app/*
