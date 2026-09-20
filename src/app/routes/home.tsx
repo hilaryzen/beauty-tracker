@@ -1,8 +1,6 @@
 import type { Route } from "./+types/home";
 import Welcome from "../welcome/welcome";
 import { DoubleButton } from "../../components/button/main";
-import { ChakraProvider } from "@chakra-ui/react";
-import { system } from "@chakra-ui/react/preset";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,9 +11,9 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <ChakraProvider value={system}>
+    <>
       <Welcome />
       <DoubleButton />
-    </ChakraProvider>
+    </>
   );
 }
