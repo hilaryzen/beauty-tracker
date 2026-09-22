@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Plum Plump Hyaluronic Cream",
+    "brand": "Glow Recipe",
+    "category": "Moisturizer",
+    "uses": 2
+  },
+  {
+    "id": 2,
+    "name": "Hydro Grip Primer",
+    "brand": "Milk Makeup",
+    "category": "Primer",
+    "uses": 23
+  }
+]

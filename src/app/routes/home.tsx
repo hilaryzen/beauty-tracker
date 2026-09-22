@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import Welcome from "../welcome/welcome";
-import { DoubleButton } from "../../components/button/main";
+import { UsageTable } from "@/features/usage/usage-table";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <>
       <Welcome />
-      <DoubleButton />
+      <UsageTable />
     </>
   );
 }
