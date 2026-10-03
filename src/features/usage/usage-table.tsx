@@ -6,15 +6,16 @@ import { useMemo } from "react";
 
 type UsageTableProps = {
   usage: ItemUsage[];
-  configs: Record<string, Array<string>>
+  categories: Record<string, Array<string>>
 }
 
-export const UsageTable = ({ usage, configs }: UsageTableProps) => {
+export const UsageTable = ({ usage, categories }: UsageTableProps) => {
+  const allCategories = categories.skincare.concat(categories.makeup, categories.lips)
   const sortedUsage = useMemo(() => {
     // Make a copy to avoid mutating state, then sort
     return [...usage].sort((a, b) => {
-      const indexA = configs.makeupCategories.indexOf(a.category);
-      const indexB = configs.makeupCategories.indexOf(b.category);
+      const indexA = allCategories.indexOf(a.category);
+      const indexB = allCategories.indexOf(b.category);
       // Compare the positions in the reference array
       return indexA - indexB;
     });

@@ -20,7 +20,7 @@ export async function loader() {
   const configs = await readFromFile("configs.json");
   return {
     usage: await readFromFile("usage.json"), 
-    configs: await readFromFile("configs.json"),
+    categories: configs.categories,
     routines: configs.routines
   };
 }
@@ -29,7 +29,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <RoutineCard usage={loaderData.usage} routines={loaderData.routines}/>
-      <UsageTable usage={loaderData.usage} configs={loaderData.configs}/>
+      <UsageTable usage={loaderData.usage} categories={loaderData.categories}/>
     </>
   );
 }
