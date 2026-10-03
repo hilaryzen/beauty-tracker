@@ -2,14 +2,25 @@ import { Table } from "@chakra-ui/react"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { useFetcher } from "react-router";
 import type { ItemUsage } from "./types";
+import { useMemo } from "react";
 
 type UsageTableProps = {
   usage: ItemUsage[];
+  configs: Record<string, Array<string>>
 }
 
-export const UsageTable = ({ usage }: UsageTableProps) => {
+export const UsageTable = ({ usage, configs }: UsageTableProps) => {
+  const sortedUsage = useMemo(() => {
+    // Make a copy to avoid mutating state, then sort
+    return [...usage].sort((a, b) => {
+      const indexA = configs.makeupCategories.indexOf(a.category);
+      const indexB = configs.makeupCategories.indexOf(b.category);
+      // Compare the positions in the reference array
+      return indexA - indexB;
+    });
+  }, [usage]);
+  
   const fetcher = useFetcher();
-
   function submitUsage(newUsage: ItemUsage[]) {
     fetcher.submit(newUsage, {
       method: "post",
@@ -59,7 +70,7 @@ export const UsageTable = ({ usage }: UsageTableProps) => {
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {usage.map((item, index) => (
+        {sortedUsage.map((item, index) => (
           <Table.Row key={item.id}>
             <Table.Cell>{item.category}</Table.Cell>
             <Table.Cell>{item.name}</Table.Cell>
