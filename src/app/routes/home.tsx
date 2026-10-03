@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
 import Welcome from "../welcome/welcome";
 import { UsageTable } from "@/features/usage/usage-table";
-import { getUsage } from "@/utils/usage.server";
+import { getFile } from "@/utils/files.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,7 +11,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader() {
-  const usage = await getUsage();
+  const usage = await getFile("usage.json");
   if (!usage) throw new Response("Not Found", { status: 404 });
   return usage;
 }

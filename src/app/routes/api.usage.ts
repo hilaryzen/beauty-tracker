@@ -1,14 +1,14 @@
 import type { Route } from "./+types/api.usage";
-import { getUsage, updateUsage } from "@/utils/usage.server";
+import { getFile, updateFile } from "@/utils/files.server";
 
 export async function loader() {
-  const usage = await getUsage();
+  const usage = await getFile("usage.json");
   if (!usage) throw new Response("Not Found", { status: 404 });
   return usage;
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const usage = await request.json();
-  await updateUsage(usage);
+  await updateFile("usage.json", usage);
   return null;
 }
