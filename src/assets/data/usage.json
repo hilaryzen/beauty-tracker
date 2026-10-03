@@ -4,13 +4,21 @@
     "name": "Plum Plump Hyaluronic Cream",
     "brand": "Glow Recipe",
     "category": "Moisturizer",
-    "uses": 2
+    "uses": {
+      "2026-08": 2,
+      "2026-09": 2
+    },
+    "usesThisMonth": 3
   },
   {
     "id": 1,
     "name": "Hydro Grip Primer",
     "brand": "Milk Makeup",
     "category": "Primer",
-    "uses": 23
+    "uses":  {
+      "2026-08": 10,
+      "2026-09": 13
+    },
+    "usesThisMonth": 10
   }
 ]

@@ -10,13 +10,12 @@ export const UsageTable = () => {
       if (i === index) {
         return {
           ...item,
-          uses: item.uses + 1
+          usesThisMonth: item.usesThisMonth + 1
         };
       } else {
         return item;
       }
     });
-    console.log(newUsage);
     setUsage(newUsage);
   }
 
@@ -25,13 +24,12 @@ export const UsageTable = () => {
       if (i === index) {
         return {
           ...item,
-          uses: item.uses - 1
+          usesThisMonth: item.usesThisMonth - 1
         };
       } else {
         return item;
       }
     });
-    console.log(newUsage);
     setUsage(newUsage);
   }
 
@@ -41,8 +39,9 @@ export const UsageTable = () => {
         <Table.Row>
           <Table.ColumnHeader>Product</Table.ColumnHeader>
           <Table.ColumnHeader>Brand</Table.ColumnHeader>
-          <Table.ColumnHeader>Uses</Table.ColumnHeader>
-          <Table.ColumnHeader textAlign="end">Add</Table.ColumnHeader>
+          <Table.ColumnHeader>Overall Uses</Table.ColumnHeader>
+          <Table.ColumnHeader>This Month's Uses</Table.ColumnHeader>
+          <Table.ColumnHeader></Table.ColumnHeader>
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -50,7 +49,8 @@ export const UsageTable = () => {
           <Table.Row key={item.id}>
             <Table.Cell>{item.name}</Table.Cell>
             <Table.Cell>{item.brand}</Table.Cell>
-            <Table.Cell>{item.uses}</Table.Cell>
+            <Table.Cell>{Object.values(item.uses).reduce((sum, value) => sum + value, 0)}</Table.Cell>
+            <Table.Cell>{item.usesThisMonth}</Table.Cell>
             <Table.Cell textAlign="end"><AddMinusButtons onAddClick={() => addUseToItem(index)} onMinusClick={() => removeUseFromItem(index)} /></Table.Cell>
           </Table.Row>
         ))}
