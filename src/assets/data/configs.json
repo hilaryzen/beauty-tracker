@@ -15,5 +15,10 @@
     "Finishing Powder",
     "Lip Balm",
     "Brush Cleanser"
-  ]
+  ],
+  "routines": {
+    "Morning Skincare": [4, 5],
+    "Makeup": [0, 1, 3],
+    "Evening Skincare": [6, 7]
+  }
 }

@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
-import Welcome from "../welcome/welcome";
 import { UsageTable } from "@/features/usage/usage-table";
 import { getFile } from "@/utils/files.server";
+import { RoutineCard } from "@/features/routine/routine-card";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -17,16 +17,18 @@ async function readFromFile(fileName: string) {
 }
 
 export async function loader() {
+  const configs = await readFromFile("configs.json");
   return {
     usage: await readFromFile("usage.json"), 
-    configs: await readFromFile("configs.json")
+    configs: await readFromFile("configs.json"),
+    routines: configs.routines
   };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>
-      <Welcome />
+      <RoutineCard usage={loaderData.usage} routines={loaderData.routines}/>
       <UsageTable usage={loaderData.usage} configs={loaderData.configs}/>
     </>
   );
