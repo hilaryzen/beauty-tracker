@@ -10,17 +10,24 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+async function readFromFile(fileName: string) {
+  const data = await getFile(fileName);
+  if (!data) throw new Response("Not Found", { status: 404 });
+  return data;
+}
+
 export async function loader() {
-  const usage = await getFile("usage.json");
-  if (!usage) throw new Response("Not Found", { status: 404 });
-  return usage;
+  return {
+    usage: await readFromFile("usage.json"), 
+    configs: await readFromFile("configs.json")
+  };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <Welcome />
-      <UsageTable usage={loaderData} />
+      <UsageTable usage={loaderData.usage} configs={loaderData.configs}/>
     </>
   );
 }
