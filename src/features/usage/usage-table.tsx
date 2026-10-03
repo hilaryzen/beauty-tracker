@@ -1,9 +1,22 @@
 import { Table } from "@chakra-ui/react"
-import { useImportData } from "@/hooks/import-data"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
+import { useFetcher } from "react-router";
+import type { ItemUsage } from "./types";
 
-export const UsageTable = () => {
-  const { usage, setUsage } = useImportData();
+type UsageTableProps = {
+  usage: ItemUsage[];
+}
+
+export const UsageTable = ({ usage }: UsageTableProps) => {
+  const fetcher = useFetcher();
+
+  function submitUsage(newUsage: ItemUsage[]) {
+    fetcher.submit(newUsage, {
+      method: "post",
+      action: "/api/usage",
+      encType: "application/json",
+    });
+  }
 
   function addUseToItem(index: number) {
     const newUsage = usage.map((item, i) => {
@@ -16,7 +29,7 @@ export const UsageTable = () => {
         return item;
       }
     });
-    setUsage(newUsage);
+    submitUsage(newUsage);
   }
 
   function removeUseFromItem(index: number) {
@@ -30,7 +43,7 @@ export const UsageTable = () => {
         return item;
       }
     });
-    setUsage(newUsage);
+    submitUsage(newUsage);
   }
 
   return (
