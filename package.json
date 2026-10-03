@@ -4,7 +4,8 @@
   "scripts": {
     "build": "react-router build",
     "dev": "vite",
-    "start": "react-router-serve ./build/server/index.js",
+    "dev:prod": "ENV=prod vite",
+    "start": "ENV=prod react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {

@@ -2,7 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import type { ItemUsage } from '../types';
 
-const usageFile = fileURLToPath(new URL('../../../assets/data/usage.json', import.meta.url));
+const dataDir = process.env.ENV === 'prod' ? 'data-prod' : 'data';
+const usageFile = fileURLToPath(new URL(`../../../assets/${dataDir}/usage.json`, import.meta.url));
 
 export async function getUsage() {
   try {
