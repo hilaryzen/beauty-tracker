@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
 import Welcome from "../welcome/welcome";
 import { UsageTable } from "@/features/usage/usage-table";
-import { getUsage } from "@/features/usage/api/usage.server";
+import { getUsage } from "@/utils/usage.server";
 
 export function meta({}: Route.MetaArgs) {
   return [

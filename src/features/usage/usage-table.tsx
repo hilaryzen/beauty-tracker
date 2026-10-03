@@ -50,6 +50,7 @@ export const UsageTable = ({ usage }: UsageTableProps) => {
     <Table.Root size="sm">
       <Table.Header>
         <Table.Row>
+          <Table.ColumnHeader>Category</Table.ColumnHeader>
           <Table.ColumnHeader>Product</Table.ColumnHeader>
           <Table.ColumnHeader>Brand</Table.ColumnHeader>
           <Table.ColumnHeader>Overall Uses</Table.ColumnHeader>
@@ -60,6 +61,7 @@ export const UsageTable = ({ usage }: UsageTableProps) => {
       <Table.Body>
         {usage.map((item, index) => (
           <Table.Row key={item.id}>
+            <Table.Cell>{item.category}</Table.Cell>
             <Table.Cell>{item.name}</Table.Cell>
             <Table.Cell>{item.brand}</Table.Cell>
             <Table.Cell>{Object.values(item.uses).reduce((sum, value) => sum + value, 0)}</Table.Cell>

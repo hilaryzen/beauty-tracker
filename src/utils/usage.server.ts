@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import type { ItemUsage } from '../types';
+import type { ItemUsage } from '../features/usage/types';
 
 const dataDir = process.env.ENV === 'prod' ? 'data-prod' : 'data';
 const usageFile = fileURLToPath(new URL(`../../../assets/${dataDir}/usage.json`, import.meta.url));

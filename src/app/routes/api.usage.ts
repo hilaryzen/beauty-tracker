@@ -1,5 +1,5 @@
 import type { Route } from "./+types/api.usage";
-import { getUsage, updateUsage } from "@/features/usage/api/usage.server";
+import { getUsage, updateUsage } from "@/utils/usage.server";
 
 export async function loader() {
   const usage = await getUsage();
