@@ -3,6 +3,7 @@ import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { useFetcher } from "react-router";
 import type { ItemUsage } from "./types";
 import { useMemo } from "react";
+import { useUsage } from "./use-usage";
 
 type UsageTableProps = {
   usage: ItemUsage[];
@@ -10,6 +11,8 @@ type UsageTableProps = {
 }
 
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
+  const { addUsesToItems, removeUsesFromItems } = useUsage(usage);
+  
   const allCategories = categories.skincare.concat(categories.makeup, categories.lips)
   const sortedUsage = useMemo(() => {
     // Make a copy to avoid mutating state, then sort
@@ -20,43 +23,6 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
       return indexA - indexB;
     });
   }, [usage]);
-  
-  const fetcher = useFetcher();
-  function submitUsage(newUsage: ItemUsage[]) {
-    fetcher.submit(newUsage, {
-      method: "post",
-      action: "/api/usage",
-      encType: "application/json",
-    });
-  }
-
-  function addUseToItem(index: number) {
-    const newUsage = usage.map((item, i) => {
-      if (i === index) {
-        return {
-          ...item,
-          usesThisMonth: item.usesThisMonth + 1
-        };
-      } else {
-        return item;
-      }
-    });
-    submitUsage(newUsage);
-  }
-
-  function removeUseFromItem(index: number) {
-    const newUsage = usage.map((item, i) => {
-      if (i === index) {
-        return {
-          ...item,
-          usesThisMonth: item.usesThisMonth - 1
-        };
-      } else {
-        return item;
-      }
-    });
-    submitUsage(newUsage);
-  }
 
   return (
     <Table.Root size="sm">
@@ -71,14 +37,14 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {sortedUsage.map((item, index) => (
+        {sortedUsage.map((item) => (
           <Table.Row key={item.id}>
             <Table.Cell>{item.category}</Table.Cell>
             <Table.Cell>{item.name}</Table.Cell>
             <Table.Cell>{item.brand}</Table.Cell>
             <Table.Cell>{Object.values(item.uses).reduce((sum, value) => sum + value, 0)}</Table.Cell>
             <Table.Cell>{item.usesThisMonth}</Table.Cell>
-            <Table.Cell textAlign="end"><AddMinusButtons onAddClick={() => addUseToItem(index)} onMinusClick={() => removeUseFromItem(index)} /></Table.Cell>
+            <Table.Cell textAlign="end"><AddMinusButtons onAddClick={() => addUsesToItems([item.id])} onMinusClick={() => removeUsesFromItems([item.id])} /></Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>
