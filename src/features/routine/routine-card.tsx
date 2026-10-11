@@ -1,4 +1,4 @@
-import { Box, Card, HStack, List } from "@chakra-ui/react"
+import { Flex, Card, HStack, List } from "@chakra-ui/react"
 import type { ItemUsage } from "../usage/types";
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { useUsage } from "../usage/use-usage";
@@ -12,8 +12,8 @@ export const RoutineCard = ({ usage, routines }: RoutineCardProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage(usage);
 
   return (
-    <Box>
-      <HStack align="flex-start">
+    <Flex>
+      <HStack alignItems='stretch'>
         {Object.entries(routines).map(([name, products]) => (
           <Card.Root width="320px" variant="subtle" key={name}>
             <Card.Body gap="2">
@@ -32,6 +32,6 @@ export const RoutineCard = ({ usage, routines }: RoutineCardProps) => {
           </Card.Root>
         ))}
       </HStack>
-    </Box>
+    </Flex>
   )
 }

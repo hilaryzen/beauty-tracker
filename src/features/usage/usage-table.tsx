@@ -1,6 +1,5 @@
 import { Table } from "@chakra-ui/react"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
-import { useFetcher } from "react-router";
 import type { ItemUsage } from "./types";
 import { useMemo } from "react";
 import { useUsage } from "./use-usage";
