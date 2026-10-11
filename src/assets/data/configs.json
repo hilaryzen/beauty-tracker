@@ -1,19 +1,32 @@
 {
-  "makeupCategories": [
-    "Primer",
-    "Foundation",
-    "Concealer",
-    "Highlighter",
-    "Contour",
-    "Blush",
-    "Brows",
-    "Eyeliner",
-    "Mascara",
-    "Eyeshadow",
-    "Setting Powder",
-    "Setting Spray",
-    "Finishing Powder",
-    "Lip Balm",
-    "Brush Cleanser"
-  ]
+  "categories": {
+    "skincare": [
+      "Cleanser"
+    ],
+    "makeup": [
+      "Primer",
+      "Foundation",
+      "Concealer",
+      "Highlighter",
+      "Contour",
+      "Blush",
+      "Brows",
+      "Eyeliner",
+      "Mascara",
+      "Eyeshadow",
+      "Setting Powder",
+      "Setting Spray",
+      "Finishing Powder",
+      "Brush Cleanser"
+    ],
+    "lips": [
+      "Lip Balm"
+    ]
+  },
+
+  "routines": {
+    "Morning Skincare": [4, 5],
+    "Makeup": [0, 1, 3],
+    "Evening Skincare": [6, 7]
+  }
 }
