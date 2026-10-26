@@ -1,0 +1,63 @@
+schema_version: 2
+last_updated: 2026-10-26
+
+taxonomy:
+  tracking:
+    - usage
+    - routines
+  platform:
+    - data-store
+    - app-shell
+
+arrows:
+  usage:
+    status: MAPPED
+    parent: null
+    sampled: 2026-10-25
+    audited: 2026-10-25
+    audited_sha: 8527123
+    blocks: [routines, app-shell]
+    blockedBy: [data-store]
+    detail: usage.md
+    next: "Confirm open questions in usage-design.md; add tests for USAGE specs"
+    drift: null
+
+  routines:
+    status: MAPPED
+    parent: null
+    sampled: 2026-10-25
+    audited: 2026-10-25
+    audited_sha: 8527123
+    blocks: [app-shell]
+    blockedBy: [usage]
+    detail: routines.md
+    next: "Confirm open questions in routines-design.md; add tests for ROUT specs"
+    drift: null
+
+  data-store:
+    status: MAPPED
+    parent: null
+    sampled: 2026-10-25
+    audited: 2026-10-25
+    audited_sha: 8527123
+    blocks: [usage]
+    blockedBy: []
+    detail: data-store.md
+    next: "Update data-prod/configs.json to current shape; decide write-error handling; add tests for STORE specs"
+    drift: null
+
+  app-shell:
+    status: MAPPED
+    parent: null
+    sampled: 2026-10-25
+    audited: 2026-10-25
+    audited_sha: 8527123
+    blocks: []
+    blockedBy: [usage, routines]
+    detail: app-shell.md
+    next: "Confirm open questions in app-shell-design.md; add tests for SHELL specs"
+    drift: null
+
+unmapped:
+  docs:
+    intent: []
