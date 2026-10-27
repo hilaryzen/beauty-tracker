@@ -1,8 +1,14 @@
 import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
 import { chmodSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterAll, beforeEach, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, vi } from "vitest";
+
+// Unmount anything a component test rendered.
+afterEach(() => {
+  cleanup();
+});
 
 // Every test runs against an empty throwaway data folder, so no test can
 // touch src/assets/data* or see files left by an earlier test.
