@@ -20,10 +20,13 @@ The data store owns where the files live, how they are read and written, and the
 
 ## Environment Folders
 
-`src/utils/files.server.ts` resolves a data folder once at module load:
+`src/utils/files.server.ts` resolves the data folder on each file access:
 
-- `ENV=prod` → `src/assets/data-prod/`
+- `DATA_DIR` set → that folder (used by tests to run against a temporary folder)
+- otherwise `ENV=prod` → `src/assets/data-prod/`
 - otherwise → `src/assets/data/`
+
+Currently the folder is resolved once at module load and `DATA_DIR` is not supported.
 
 `npm run dev` uses `data/`; `npm run dev:prod` and `npm start` set `ENV=prod`. Both folders are committed to git. `data/` is the working development copy; `data-prod/` holds the user's real data.
 

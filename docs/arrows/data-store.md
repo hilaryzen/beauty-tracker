@@ -15,7 +15,7 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 - docs/intent/data-store/data-store-design.md
 
 ### EARS
-- docs/intent/data-store/data-store-specs.md (19 specs)
+- docs/intent/data-store/data-store-specs.md (20 specs)
 
 ### Tests
 - none
@@ -42,11 +42,11 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Environment | STORE-001 to STORE-002 | 0 | 0 | 2 |
+| Environment | STORE-001, STORE-002, STORE-011 | 0 | 0 | 3 |
 | File access | STORE-003 to STORE-010 | 0 | 0 | 8 |
 | Config API | STORE-API-001 to STORE-API-009 | 0 | 0 | 9 |
 
-**Summary:** 19 specs, all `[ ]`. STORE-001 to STORE-006 and STORE-API-001/002 describe behavior observed in code but untested; STORE-007 to STORE-010 and STORE-API-003 to STORE-API-009 describe behavior not yet implemented.
+**Summary:** 20 specs, all `[ ]`. STORE-001 to STORE-006 and STORE-API-001/002 describe behavior observed in code but untested; STORE-007 to STORE-011 and STORE-API-003 to STORE-API-009 describe behavior not yet implemented.
 
 ## Key Findings
 
