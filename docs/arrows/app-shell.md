@@ -15,7 +15,7 @@ Page frame and composition: root layout, theme, error page, routing, the home pa
 - docs/intent/app-shell/app-shell-design.md
 
 ### EARS
-- docs/intent/app-shell/app-shell-specs.md (8 specs)
+- docs/intent/app-shell/app-shell-specs.md (11 specs)
 
 ### Tests
 - none
@@ -47,11 +47,11 @@ Page frame and composition: root layout, theme, error page, routing, the home pa
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Layout | SHELL-UI-001 to SHELL-UI-002 | 0 | 0 | 2 |
-| Home | SHELL-HOME-001 to SHELL-HOME-002 | 0 | 0 | 2 |
+| Layout | SHELL-UI-001 to SHELL-UI-004 | 0 | 0 | 4 |
+| Home | SHELL-HOME-001, SHELL-HOME-002, SHELL-HOME-004 | 0 | 0 | 3 |
 | Error page | SHELL-ERR-001 to SHELL-ERR-004 | 0 | 0 | 4 |
 
-**Summary:** 8 specs, all `[ ]` — behavior observed in code but untested.
+**Summary:** 11 specs, all `[ ]`. SHELL-UI-001/002 (error page coverage), SHELL-UI-003/004, and SHELL-HOME-002/004 describe behavior not yet implemented; the rest are observed in code but untested.
 
 ## Key Findings
 

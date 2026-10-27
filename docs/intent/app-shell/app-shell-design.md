@@ -7,17 +7,18 @@ prefix: SHELL
 
 ## Context and Design Philosophy
 
-The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, and the home page that places the feature components together. It also holds small UI controls shared by more than one feature.
+The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, notifications, and the home page that places the feature components together. It also holds small UI controls shared by more than one feature.
 
-The shell composes features but owns none of their behavior — the home page loads data and hands it to the usage and routines components, which decide what to display and how logging works.
+The shell composes features but owns none of their behavior. The home page loads data through each owning segment and hands it to the usage and routines components, which decide what to display and how logging works.
 
 ## Stack
 
 - **Framework** — React Router v8 in framework mode with server-side rendering (`react-router.config.ts`, `ssr: true`), app directory `src/app`.
-- **Build** — Vite with the React Router and Tailwind plugins (`vite.config.ts`).
-- **Component library** — Chakra UI v3 with its default system, wrapped by `Provider` (`src/components/ui/provider.tsx`).
-- **Styling** — Chakra props in feature components; Tailwind in `app.css` (page background, dark color-scheme) and the error boundary.
+- **Build** — Vite with the React Router plugin (`vite.config.ts`).
+- **UI and styling** — Chakra UI v3, the app's only styling system. A Chakra system based on the default system sets Inter as the body and heading font; Chakra's global styles provide the page background in light and dark mode.
 - **Path aliases** — `@/*` → `src/*`, `~/*` → `src/app/*` (`tsconfig.json`).
+
+Currently Tailwind is also installed: `app.css` sets the Inter font and page background, and the error boundary uses Tailwind classes.
 
 ## Routes
 
@@ -32,12 +33,15 @@ The shell composes features but owns none of their behavior — the home page lo
 `src/app/root.tsx` renders the HTML document for every route:
 
 - `<html lang="en">` with `suppressHydrationWarning` (required by next-themes class switching).
-- Google Fonts preconnect and stylesheet links for Inter; `app.css` sets Inter as the default sans font.
-- Body content wrapped in `Provider` → `ChakraProvider` + `ColorModeProvider` (next-themes, `attribute="class"`). Color mode follows the system preference; no toggle is rendered.
+- Google Fonts preconnect and stylesheet links for Inter.
+- Body content wrapped in `Provider` → `ChakraProvider` + `ColorModeProvider` (next-themes, `attribute="class"`) inside `Layout`. React Router renders `Layout` around both the normal route tree and `ErrorBoundary`, so the error page gets Chakra styling and color mode too. Color mode follows the system's light/dark preference; there is no in-app toggle.
+- `<Toaster />` rendered once inside `Provider`, so any feature can show notifications through the shared `toaster` (`src/components/ui/toaster.tsx`). Notifications appear at the bottom-right of the page.
+
+Currently `Provider` wraps only `App`'s outlet, not the error page, and `<Toaster />` is not rendered.
 
 ## Error Page
 
-`ErrorBoundary` in `root.tsx` renders a heading and message:
+`ErrorBoundary` in `root.tsx` renders a heading and message, styled with Chakra:
 
 | Error | Heading | Message |
 |---|---|---|
@@ -50,34 +54,38 @@ The shell composes features but owns none of their behavior — the home page lo
 
 `src/app/routes/home.tsx`:
 
-- **Loader** (server) — reads `configs.json` and `usage.json` through the data store; throws a 404 response if either is unreadable. Returns `{ usage, categories, routines }`.
+- **Loader** (server) — loads product records through the usage segment's server-side loader, which applies month rollover (usage design, *Month Rollover*), and reads `configs.json` through the data store. If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". If the rollover write fails, the loader's error propagates to the error page. Returns `{ usage, categories, routines }`.
 - **Component** — renders `RoutineCard` (routines segment) above `UsageTable` (usage segment), passing each the loader data it needs.
-- **Meta** — title "New React Router App", description "Welcome to React Router!" (starter defaults).
+- **Meta** — description "Track beauty product usage, purchases, and inventory".
+
+**Document title.** Every page, including the error page, has the title "Beauty Tracker". The title is set in the root layout rather than by individual routes, so it is present even when a route's loader fails.
+
+Currently the loader reads `usage.json` directly through its own read-or-404 helper, without rollover; unreadable data responds 404; and the title and description are the React Router starter's defaults, set only on the home route.
 
 ## Shared Controls
 
 `AddMinusButtons` (`src/components/add-minus-buttons/main.tsx`) renders a "+" button and a "−" button, calling `onAddClick` / `onMinusClick`. Used by the usage table rows and routine cards.
 
-`src/components/ui/` holds Chakra CLI-generated snippets. `provider.tsx` and `ColorModeProvider` are in use; `toaster.tsx`, `tooltip.tsx`, and the `ColorModeButton` / `LightMode` / `DarkMode` exports are not imported anywhere.
+`src/components/ui/` holds Chakra snippets the app uses: `provider.tsx`, `ColorModeProvider` in `color-mode.tsx`, and `toaster.tsx`. Currently it also holds unused snippets — `tooltip.tsx` and the `ColorModeButton`, `ColorModeIcon`, `LightMode`, `DarkMode`, `useColorMode`, and `useColorModeValue` exports — which are to be deleted.
 
 ## Decisions & Alternatives
 
 | Decision | Chosen | Alternatives Considered | Rationale |
 |----------|--------|------------------------|-----------|
-| Rendering | Server-side rendering with route loaders | SPA mode | [inferred] Loaders read data files directly on the server; no separate API call on page load |
-| Component library | Chakra UI v3 | Tailwind-only; other libraries | [inferred] Ready-made table, card, and button components |
+| Rendering | Server-side rendering with route loaders | SPA mode | Loaders read data files directly on the local server (HLD Key Design Decisions: local server-rendered app) |
+| Styling system | Chakra UI only | Chakra plus Tailwind; Tailwind only | One system to learn and maintain; Chakra already supplies every component the features use |
+| Color mode | Follow the system preference; no toggle | In-app toggle | Nothing to build or remember; the system setting already expresses the preference |
+| Notifications | One shared Chakra toaster mounted in the root layout | Per-feature inline error messages | Any feature (first, usage save failures) can notify without its own UI |
+| Unreadable data on the home page | 500 with "Your data could not be loaded." | 404 Not Found | The page exists; a 404 message would misdescribe the failure |
+| Document title | "Beauty Tracker", set in the root layout for every page | Per-route titles | One app, one title; root placement keeps it on the error page |
 | Home page composition | One page showing routines then the usage table | Separate pages per feature | [inferred] Small app; everything the user logs is on one screen |
 | Shared +/− control | One `AddMinusButtons` component | Per-feature buttons | [inferred] Identical control in both features |
+| Unused generated snippets | Delete them | Keep for possible future use | The Chakra CLI regenerates any snippet on demand |
 
 ## Open Questions & Future Decisions
 
 ### Deferred
-1. **Page metadata** — replace the starter title and description with app-specific ones?
-2. **Color mode toggle** — add a visible toggle (the `ColorModeButton` exists), or keep following the system setting?
-3. **Unused UI snippets** — keep `toaster`/`tooltip` for planned features (e.g. a toast on save failure), or delete?
-4. **Two styling systems** — consolidate on Chakra, or keep Tailwind for global styles?
-5. **Duplicated read-or-404 logic** — the home loader's `readFromFile` mirrors the API routes' loaders; share one helper?
-6. **Navigation** — no nav or header exists; needed once purchases/inventory add pages?
+1. **Navigation** — no header or nav exists. Needed once purchases or inventory add pages.
 
 ## References
 
@@ -85,4 +93,5 @@ The shell composes features but owns none of their behavior — the home page lo
 - src/components/add-minus-buttons/main.tsx
 - src/components/ui/
 - react-router.config.ts, vite.config.ts, tsconfig.json
+- docs/intent/usage/usage-design.md
 - docs/arrows/app-shell.md

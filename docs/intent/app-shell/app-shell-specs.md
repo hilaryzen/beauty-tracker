@@ -2,17 +2,20 @@
 
 EARS requirements for the app-shell segment. Design: [app-shell-design.md](app-shell-design.md).
 
-Status markers: `[x]` implemented with tests, `[ ]` not yet covered by tests (all current specs describe behavior observed in code but untested), `[D]` deferred.
+Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or implemented but not yet covered by tests, `[D]` deferred.
 
 ## Layout
 
-- [ ] **SHELL-UI-001**: Every page shall use Inter as its default sans-serif font.
-- [ ] **SHELL-UI-002**: Every page shall display in light or dark color mode according to the user's system color-scheme preference.
+- [ ] **SHELL-UI-001**: Every page, including the error page, shall use Inter as its default font.
+- [ ] **SHELL-UI-002**: Every page, including the error page, shall display in light or dark color mode according to the user's system color-scheme preference.
+- [ ] **SHELL-UI-003**: Every page shall provide a notification area at the bottom-right of the viewport where features can show notifications.
+- [ ] **SHELL-UI-004**: Every page, including the error page, shall have the document title "Beauty Tracker".
 
 ## Home Page
 
 - [ ] **SHELL-HOME-001**: The home page shall display the routine cards above the usage table.
-- [ ] **SHELL-HOME-002**: If `configs.json` or `usage.json` cannot be read when the home page loads, then the system shall respond with 404 Not Found.
+- [ ] **SHELL-HOME-002**: If `configs.json` or `usage.json` cannot be read when the home page loads, then the system shall respond with status 500 and the status text "Your data could not be loaded."
+- [ ] **SHELL-HOME-004**: The home page shall have the meta description "Track beauty product usage, purchases, and inventory".
 
 ## Error Page
 

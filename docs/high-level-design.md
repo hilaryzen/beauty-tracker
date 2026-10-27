@@ -2,39 +2,48 @@
 
 ## Problem
 
-*(not yet specified)*
-
-[inferred] It's hard to know which beauty products actually get used and which sit idle; tracking use by hand is tedious enough that it doesn't happen.
+It is hard to judge whether a beauty product was worth what it cost, and easy to buy another product in a category you already have covered. A receipt says what you paid, and a drawer says what you own, but neither says how much you actually use each product. Without that, "was this worth it?" and "do I need another one?" are guesses.
 
 ## Approach
 
-*(not yet specified)*
+Track three things per product and combine them:
 
-[inferred] A small single-user web app: one record per product with a monthly use count, one-click logging per product or per routine, and a table showing every product's usage at a glance.
+- **Usage** — a running count of how often each product is used, kept per month. Logging must be fast enough to do every day: one click per product, or one click per routine for products used together.
+- **Purchases** — what each product cost. Combined with usage, this gives **cost per use**: price divided by total uses.
+- **Inventory** — which products you currently own, grouped by category. Before buying, you can see what you already have in that category and how much each is used.
+
+All data is entered by hand in the app. The app shows numbers; the user draws conclusions.
 
 ## Target Users
 
-*(not yet specified)*
-
-[inferred] A single person tracking their own skincare and makeup collection.
+A single person tracking their own skincare and makeup collection, using the app on their own computer.
 
 ## Goals
 
-*(not yet specified)*
-
-[inferred] The README names three areas — purchases, inventory, and usage. Usage tracking is built; purchases and inventory are not.
+1. Logging a use takes one click — per product, or per routine.
+2. For every product with a recorded price, the app shows its cost per use.
+3. For any category, the app shows every product you own in it, with its use counts.
+4. Every kind of data — products, uses, routines, categories, purchases — can be created and edited in the app, without opening a data file.
 
 ## Non-Goals
 
-*(not yet specified)*
+- **Multiple users or accounts.** One person's collection only.
+- **Remote or mobile access.** The app runs locally on the user's computer.
+- **Product catalog lookups.** No fetching product details, ingredients, or prices from external sources.
+- **Automatic imports.** No importing purchases from receipts, email, or order history.
+- **Recommendations.** The app does not suggest what to buy, discard, or use next.
 
 ## Tenets
 
-*(not yet specified)*
+In priority order — when two conflict, the higher one wins.
+
+1. **The app is the only writer.** Data changes go through the app, which validates them; data files are storage, not an editing surface.
+2. **Low friction over precision.** When logging must trade effort against exactness, choose fewer clicks and let the user correct mistakes afterward.
+3. **Simplicity over robustness.** For a single local user, accept rare edge cases rather than adding machinery to prevent them.
 
 ## System Design
 
-[inferred] A React Router app rendered on the server, storing all data in JSON files in the repository. Four segments, all at the root level of the design tree:
+A React Router app rendered on the server, storing all data as JSON files on the local machine. Four segments, all at the root level of the design tree:
 
 | Segment | Purpose | Design | Spec prefix |
 |---|---|---|---|
@@ -42,6 +51,8 @@
 | routines | Named product groups logged together in one click | [routines-design.md](intent/routines/routines-design.md) | `ROUT` |
 | data-store | JSON file storage, dev/prod data folders, configuration API | [data-store-design.md](intent/data-store/data-store-design.md) | `STORE` |
 | app-shell | Root layout, theme, error page, routes, home page composition, shared controls | [app-shell-design.md](intent/app-shell/app-shell-design.md) | `SHELL` |
+
+Purchases and inventory (Goals 2 and 3) are not yet designed and have no segments.
 
 ```mermaid
 flowchart TD
@@ -54,11 +65,19 @@ flowchart TD
 
 ## Key Design Decisions
 
-*(not yet specified)*
+| Decision | Chosen | Alternatives Considered | Rationale |
+|---|---|---|---|
+| Deployment | Local server-rendered web app | Hosted web app; native mobile app | Single user on one computer; no hosting, accounts, or sync needed |
+| Storage | JSON files on local disk | SQLite; hosted database | Small data, one writer, no infrastructure; consistent with *Simplicity over robustness* |
+| Usage granularity | Counts per product per month | Timestamped log of each use; a single lifetime total | Monthly counts answer cost-per-use and usage-trend questions at a fraction of the data; per-use timestamps add nothing the goals need |
+| Write validation | Each segment validates writes to the data it owns, at the API route that accepts them; the data store only reads and writes files | Central per-file schemas enforced by the data store; validation only in editing forms | Keeps data rules with the segment that defines the data and adds no dependency; form-only validation would let other callers bypass *The app is the only writer* |
+| Bulk logging | Routines that log every product in them at once | Per-product logging only | Daily routines would otherwise take a click per product, against *Low friction over precision* |
 
 ## Success Metrics
 
-*(not yet specified)*
+- Day-to-day use never requires opening a data file. Falsified if any routine kind of change — adding a product, logging a use, editing a routine or category — still needs a hand edit.
+- Before a purchase, "what do I already own in this category, and how much do I use it?" is answerable from one screen.
+- Cost per use is visible for every product with a recorded price.
 
 ## References
 

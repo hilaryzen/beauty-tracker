@@ -15,7 +15,7 @@ Products the user tracks and their monthly use counts — viewing, logging, and 
 - docs/intent/usage/usage-design.md
 
 ### EARS
-- docs/intent/usage/usage-specs.md (14 specs)
+- docs/intent/usage/usage-specs.md (38 specs)
 
 ### Tests
 - none
@@ -41,12 +41,14 @@ Products the user tracks and their monthly use counts — viewing, logging, and 
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Record | USAGE-001 | 0 | 0 | 1 |
-| UI | USAGE-UI-001 to USAGE-UI-005 | 0 | 0 | 5 |
-| Logging | USAGE-LOG-001 to USAGE-LOG-005 | 0 | 0 | 5 |
-| API | USAGE-API-001 to USAGE-API-003 | 0 | 0 | 3 |
+| Record | USAGE-001 to USAGE-002 | 0 | 0 | 2 |
+| Rollover | USAGE-ROLL-001 to USAGE-ROLL-006 | 0 | 0 | 6 |
+| UI | USAGE-UI-001 to USAGE-UI-006 | 0 | 0 | 6 |
+| Logging | USAGE-LOG-001 to USAGE-LOG-009 | 0 | 0 | 9 |
+| API | USAGE-API-001 to USAGE-API-012 | 0 | 0 | 12 |
+| Categories | USAGE-CAT-001 to USAGE-CAT-003 | 0 | 0 | 3 |
 
-**Summary:** 14 specs, all `[ ]` — behavior observed in code but untested.
+**Summary:** 38 specs, all `[ ]`. Most describe behavior not yet implemented (delta logging, rollover, validation, id lookup); the rest are observed in code but untested.
 
 ## Key Findings
 
@@ -64,6 +66,7 @@ Products the user tracks and their monthly use counts — viewing, logging, and 
 
 ### Should Fix
 2. Add tests for `useUsage` and table sort.
+3. Add a rollover-retry test (`@spec USAGE-ROLL-005, STORE-009`): make the rollover write fail, assert `usage.json` is unchanged, then load again and assert rollover completes.
 
 ### Nice to Have
 3. Decide whether categories should split into their own segment once inventory/purchases arrive.

@@ -7,9 +7,9 @@ prefix: ROUT
 
 ## Context and Design Philosophy
 
-Most product use happens as part of a routine — a morning skincare sequence, a full makeup look. Logging each product individually after every routine is tedious, so a routine bundles products and logs a use for all of them in one click.
+Most product use happens as part of a routine — a morning skincare sequence, a full makeup look. Logging each product individually after every routine is tedious, so a routine bundles products and logs a use for all of them in one click (HLD *Low friction over precision*). A routine always logs every product in it; if one was skipped that day, the user corrects it afterward from the usage table.
 
-Routines own only the grouping. Recording and persisting the use belongs to the usage segment; routines call into it.
+Routines own only the grouping and its rules. Recording and saving a use belongs to the usage segment; routines call into it.
 
 ## Routine Definition
 
@@ -23,11 +23,19 @@ Routines are defined in `configs.json` under the `routines` key:
 }
 ```
 
-- **Key** — the routine's display name.
-- **Value** — ordered array of product ids. An id is resolved as an index into the usage list (see the usage segment's item-addressing decision).
-- **Order** — routines display in object key order; products within a routine display in array order.
+- **Key** — the routine's display name. Object keys make names unique.
+- **Value** — ordered array of product ids, each matching a product record's `id` field (usage segment, USAGE-002).
+- **Order** — routines display in object key order; products within a routine display in array order. JavaScript orders integer-like keys (such as `"2"`) before all other keys, so a routine named with a whole number displays ahead of the rest.
+- A product may appear in more than one routine.
 
-Routines are edited by hand in the config file. The data-store segment's `/api/configs` endpoint could write them, but no UI calls it.
+**Routine rules.** A `routines` value submitted to `/api/configs` is valid when:
+- It is an object whose values are arrays of integers. An empty object is valid: no routines.
+- Every routine name contains at least one non-whitespace character and neither starts nor ends with whitespace.
+- Every routine lists at least one product.
+- No routine lists the same product id more than once.
+- Every listed id matches a product record in `usage.json`.
+
+The data-store segment's `/api/configs` route applies these rules (data-store design, *Configuration API*). Routines are currently edited by hand in `configs.json`; an in-app routine editor (HLD Goal 4) is not yet designed.
 
 ## Routine Cards
 
@@ -43,34 +51,41 @@ Routines are edited by hand in the config file. The data-store segment's `/api/c
 
 - Title: routine name.
 - Controls: + and −, from the shared `AddMinusButtons` component (app-shell segment).
-- Body: ordered list of product names, looked up from the usage list.
-- Footer: present but empty.
+- Body: ordered list of product names, looked up by `id` in the usage list.
+
+A listed id with no matching product — possible only in data that predates the routine rules — is shown as "Unknown product (id N)" so the card still renders. Logging that routine then fails usage validation (USAGE-API-007) as a whole, so none of its products are logged, and usage's save-error notification appears.
+
+With no routines configured — an empty `routines` object, or no `routines` key in `configs.json` — no cards are shown.
+
+Currently the card looks products up by array index (`usage[id].name`), which crashes on an unknown id, and renders an empty footer.
 
 ## Logging a Routine
 
-The + control calls the usage segment's `addUsesToItems(productIds)` with the routine's full id array; − calls `removeUsesFromItems(productIds)`. The usage segment applies the ±1 to each product and persists the whole list in one save.
+The + control calls the usage segment's `addUsesToItems(productIds)` with the routine's full id array; − calls `removeUsesFromItems(productIds)`. The usage segment applies the ±1 to each product (never below 0) and saves the change in one request.
 
 ## Decisions & Alternatives
 
 | Decision | Chosen | Alternatives Considered | Rationale |
 |----------|--------|------------------------|-----------|
 | Where routines are stored | `configs.json`, alongside categories | Own file; inside `usage.json` | [inferred] Routines are user configuration rather than tracked data |
-| How a routine refers to products | Array of product ids resolved by index | Product names; id lookup by field | [inferred] Compact; matches how usage addresses items |
-| Logging mechanism | Reuse usage's `useUsage` hook with the routine's id list | Routine-specific endpoint | [inferred] One write path for all use logging |
-| Granularity of a routine log | All products in the routine, together | Per-product checkboxes within a routine | [inferred] One-click logging is the point of a routine |
+| How a routine refers to products | Array of product ids, looked up by `id` | Product names; array positions | Ids stay valid when products are renamed or reordered |
+| Logging mechanism | Reuse usage's `useUsage` hook with the routine's id list | Routine-specific endpoint | One save path for all use logging, so the 0 floor, update queue, and error notification apply uniformly |
+| Granularity of a routine log | All products in the routine, together | Per-product checkboxes within a routine | One-click logging is the point of a routine (*Low friction over precision*) |
+| Empty routines | Rejected | Allowed, with controls hidden | A routine with no products has nothing to log |
+| Duplicate products in a routine | Rejected | Count each occurrence | Using a product twice in one routine is not a real case; a duplicate signals an editing mistake |
+| Integer-like routine names | Allowed; they display first | Reject them; store routines as an array | Such names are unlikely; not worth a rule or a format change |
+| Unknown product id on a card | Show "Unknown product (id N)" | Fail the home page | One bad id should not hide the rest of the page |
 
 ## Open Questions & Future Decisions
 
 ### Deferred
-1. **Invalid product references** — an id past the end of the usage list crashes the card (`usage[id].name` is undefined). Validate, skip, or treat as a config error?
-2. **Routine editing in the UI** — should routines be creatable/editable in the app (via `/api/configs`), or stay hand-edited?
-3. **Empty footer** — placeholder for future content (e.g. "last done", times this month), or remove?
-4. **Partial routines** — is there a need to log a routine minus one product (e.g. skipped mascara today)?
-5. **Duplicate ids in a routine** — if the same id appears twice, does logging count it once or twice? (Current code: each occurrence reads the already-updated entry from the working copy (`use-usage.ts:17-18`), so a duplicated id is counted twice.)
+1. **Routine editor** — HLD Goal 4 requires creating, renaming, reordering, and deleting routines in the app, sending changes through `/api/configs`. Not yet designed.
+2. **Deleting a product listed in a routine** — once product editing exists, deleting such a product would break the routine's logging. The product editor must either block the deletion or remove the product from routines.
 
 ## References
 
 - src/features/routine/routine-card.tsx
 - src/assets/data/configs.json
 - docs/intent/usage/usage-design.md
+- docs/intent/data-store/data-store-design.md
 - docs/arrows/routines.md
