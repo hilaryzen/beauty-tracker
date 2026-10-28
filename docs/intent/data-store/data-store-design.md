@@ -39,7 +39,7 @@ Currently the folder is resolved once at module load and `DATA_DIR` is not suppo
 | `getFile(name)` | Reads `<folder>/<name>` as UTF-8 and returns the parsed JSON | Logs the error message and returns `undefined` |
 | `updateFile(name, data)` | Writes `data` as 2-space-indented JSON to a temporary file in `<folder>`, then renames it over `<folder>/<name>` | Logs the error message and rethrows it to the caller; `<folder>/<name>` keeps its previous contents |
 
-**Serialized updates.** Most writes are read-change-write: load the file, change part of it, write it back. Two such updates to the same file that overlap would each start from the same contents, and the later write would erase the earlier change. The data store therefore runs read-change-write updates to a given file one at a time, in the order they arrive, through an in-process queue per file. Every API route and server function that changes a data file goes through this queue. Updates to different files do not wait for each other.
+**Serialized updates.** Most writes are read-change-write: load the file, change part of it, write it back. Two such updates to the same file that overlap would each start from the same contents, and the later write would erase the earlier change. The data store therefore runs read-change-write updates to a given file one at a time, in the order they arrive, through an in-process queue per file. Every API route and server function that changes a data file goes through this queue. A plain write that replaces a file without reading it first waits in the same queue, so it cannot land in the middle of a read-change-write update and be overwritten by it. Updates to different files do not wait for each other.
 
 Both functions are server-only (`.server.ts`), so file access never reaches the browser. They do not validate content; validation happens in the API route before `updateFile` is called.
 
@@ -57,6 +57,8 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 `/api/configs` is the write path for in-app editing of routines and categories (HLD Goal 4). A POST carries only the parts being changed: `categories`, `routines`, or both. Through the `configs.json` update queue, the route reads the current `configs.json`, replaces each key present in the body, keeps the rest, and writes the result.
 
 **Validation.** Before writing, the route validates each key present in the body: `categories` against the usage segment's rules, `routines` against the routines segment's rules. Routine validation checks product ids against `usage.json`. A body with any top-level key other than `categories` and `routines` is invalid. The error message describes the first failure found.
+
+**Malformed requests.** A POST body that is not valid JSON, or is JSON but not an object, fails validation like any other bad input: 400 with an error message, file unchanged.
 
 **All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was.
 
@@ -86,14 +88,14 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 
 ### Deferred
 1. **Prod data in git** — `data-prod/` is committed. Intentional backup mechanism, or should real data move out of the repo?
-2. **Wrong type import** — `api.configs.ts` imports its `Route` types from `./+types/api.usage`; harmless today since both routes have the same shape.
-3. **Deleting a category in use** — may a category be removed while products still carry it? The rule belongs to usage; the check would run at `/api/configs`.
-4. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless until product editing exists; revisit then.
+2. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless until product editing exists; revisit then.
 
 ## References
 
 - src/utils/files.server.ts
 - src/app/routes/api.configs.ts
+- src/features/usage/category-rules.ts
+- src/features/routine/routine-rules.ts
 - src/assets/data/, src/assets/data-prod/
 - package.json
 - docs/high-level-design.md

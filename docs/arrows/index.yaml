@@ -43,7 +43,7 @@ arrows:
     blocks: [usage]
     blockedBy: []
     detail: data-store.md
-    next: "Update data-prod/configs.json to current shape; decide write-error handling; add tests for STORE specs"
+    next: "Update data-prod/configs.json to current shape"
     drift: null
 
   app-shell:

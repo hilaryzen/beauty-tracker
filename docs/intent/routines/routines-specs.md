@@ -24,9 +24,9 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 ## Validation
 
-- [ ] **ROUT-VAL-001**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation unless it is an object whose values are arrays of integers.
-- [ ] **ROUT-VAL-002**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine name is empty or contains only whitespace.
-- [ ] **ROUT-VAL-006**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine name starts or ends with whitespace.
-- [ ] **ROUT-VAL-003**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine lists no products.
-- [ ] **ROUT-VAL-004**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine lists the same product id more than once.
-- [ ] **ROUT-VAL-005**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any listed product id matches no product record in `usage.json`.
+- [x] **ROUT-VAL-001**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation unless it is an object whose values are arrays of integers.
+- [x] **ROUT-VAL-002**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine name is empty or contains only whitespace.
+- [x] **ROUT-VAL-006**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine name starts or ends with whitespace.
+- [x] **ROUT-VAL-003**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine lists no products.
+- [x] **ROUT-VAL-004**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine lists the same product id more than once.
+- [x] **ROUT-VAL-005**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any listed product id matches no product record in `usage.json`.

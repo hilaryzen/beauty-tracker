@@ -24,6 +24,7 @@ Products the user tracks and their monthly use counts — viewing, logging, and 
 - src/features/usage/types.ts
 - src/features/usage/use-usage.ts
 - src/features/usage/usage-table.tsx
+- src/features/usage/category-rules.ts
 - src/app/routes/api.usage.ts
 - src/assets/data/configs.json (`categories` key — consumed for sort order)
 
@@ -46,7 +47,7 @@ Products the user tracks and their monthly use counts — viewing, logging, and 
 | UI | USAGE-UI-001 to USAGE-UI-006 | 0 | 0 | 6 |
 | Logging | USAGE-LOG-001 to USAGE-LOG-009 | 0 | 0 | 9 |
 | API | USAGE-API-001 to USAGE-API-012 | 0 | 0 | 12 |
-| Categories | USAGE-CAT-001 to USAGE-CAT-003 | 0 | 0 | 3 |
+| Categories | USAGE-CAT-001 to USAGE-CAT-003 | 3 | 0 | 0 |
 
 **Summary:** 38 specs, all `[ ]`. Most describe behavior not yet implemented (delta logging, rollover, validation, id lookup); the rest are observed in code but untested.
 

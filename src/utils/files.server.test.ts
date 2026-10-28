@@ -140,4 +140,20 @@ describe("file access", () => {
 
     expect(await readData("counter.json")).toEqual({ n: 3 });
   });
+
+  // @spec STORE-012
+  it("waits for a pending read-change-write update before a plain write to the same file", async () => {
+    await writeData("counter.json", { n: 0 });
+    const slowIncrement = async (current: { n: number }) => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return { n: current.n + 1 };
+    };
+
+    await Promise.all([
+      modifyFile("counter.json", slowIncrement),
+      updateFile("counter.json", { n: 100 }),
+    ]);
+
+    expect(await readData("counter.json")).toEqual({ n: 100 });
+  });
 });

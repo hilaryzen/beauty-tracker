@@ -133,4 +133,18 @@ describe("/api/configs", () => {
     }
     expect(await readData("configs.json")).toEqual(sampleConfigs);
   });
+
+  // @spec STORE-API-010
+  it("rejects a body that is not valid JSON or not a JSON object", async () => {
+    await seed();
+    const raw = new Request("http://localhost/api/configs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not json",
+    });
+    await expectError(await settle(() => action({ request: raw } as Parameters<typeof action>[0])), 400);
+    await expectError(await post([{ routines: {} }]), 400);
+    await expectError(await post(null), 400);
+    expect(await readData("configs.json")).toEqual(sampleConfigs);
+  });
 });

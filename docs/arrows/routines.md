@@ -22,6 +22,7 @@ Named groups of products the user logs together in one click.
 
 ### Code
 - src/features/routine/routine-card.tsx
+- src/features/routine/routine-rules.ts
 - src/assets/data/configs.json (`routines` key)
 
 ## Architecture
@@ -40,7 +41,7 @@ Named groups of products the user logs together in one click.
 | Definition | ROUT-001 | 0 | 0 | 1 |
 | UI | ROUT-UI-001 to ROUT-UI-006 | 0 | 0 | 6 |
 | Logging | ROUT-LOG-001 to ROUT-LOG-002 | 0 | 0 | 2 |
-| Validation | ROUT-VAL-001 to ROUT-VAL-006 | 0 | 0 | 6 |
+| Validation | ROUT-VAL-001 to ROUT-VAL-006 | 6 | 0 | 0 |
 
 **Summary:** 15 specs, all `[ ]`. ROUT-UI-003 (lookup by id), ROUT-UI-005, and ROUT-VAL-* describe behavior not yet implemented; the rest are observed in code but untested.
 
