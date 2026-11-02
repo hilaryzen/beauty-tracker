@@ -4,10 +4,11 @@ import { loadUsage } from "@/features/usage/usage.server";
 import { getFile } from "@/utils/files.server";
 import { RoutineCard } from "@/features/routine/routine-card";
 
+// The document title is set for every page in the root layout.
+// @spec SHELL-HOME-004
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { name: "description", content: "Track beauty product usage, purchases, and inventory" },
   ];
 }
 
@@ -25,6 +26,7 @@ export async function loader() {
   };
 }
 
+// @spec SHELL-HOME-001
 export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>

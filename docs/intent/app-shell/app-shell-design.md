@@ -18,8 +18,6 @@ The shell composes features but owns none of their behavior. The home page loads
 - **UI and styling** — Chakra UI v3, the app's only styling system. A Chakra system based on the default system sets Inter as the body and heading font; Chakra's global styles provide the page background in light and dark mode.
 - **Path aliases** — `@/*` → `src/*`, `~/*` → `src/app/*` (`tsconfig.json`).
 
-Currently Tailwind is also installed: `app.css` sets the Inter font and page background, and the error boundary uses Tailwind classes.
-
 ## Routes
 
 | Path | Module | Purpose |
@@ -34,10 +32,8 @@ Currently Tailwind is also installed: `app.css` sets the Inter font and page bac
 
 - `<html lang="en">` with `suppressHydrationWarning` (required by next-themes class switching).
 - Google Fonts preconnect and stylesheet links for Inter.
-- Body content wrapped in `Provider` → `ChakraProvider` + `ColorModeProvider` (next-themes, `attribute="class"`) inside `Layout`. React Router renders `Layout` around both the normal route tree and `ErrorBoundary`, so the error page gets Chakra styling and color mode too. Color mode follows the system's light/dark preference; there is no in-app toggle.
-- `<Toaster />` rendered once inside `Provider`, so any feature can show notifications through the shared `toaster` (`src/components/ui/toaster.tsx`). Notifications appear at the bottom-right of the page.
-
-Currently `Provider` wraps only `App`'s outlet, not the error page, and `<Toaster />` is not rendered.
+- Body content wrapped in `Shell` — `Provider` (`ChakraProvider` with the app's Chakra system, plus `ColorModeProvider`: next-themes, `attribute="class"`) and `<Toaster />` — inside `Layout`. React Router renders `Layout` around both the normal route tree and `ErrorBoundary`, so the error page gets Chakra styling and color mode too. Color mode follows the system's light/dark preference; there is no in-app toggle.
+- `<Toaster />` rendered once inside `Shell`, so any feature can show notifications through the shared `toaster` (`src/components/ui/toaster.tsx`). Notifications appear at the bottom-right of the page.
 
 ## Error Page
 
@@ -60,13 +56,11 @@ Currently `Provider` wraps only `App`'s outlet, not the error page, and `<Toaste
 
 **Document title.** Every page, including the error page, has the title "Beauty Tracker". The title is set in the root layout rather than by individual routes, so it is present even when a route's loader fails.
 
-Currently the loader reads `usage.json` directly through its own read-or-404 helper, without rollover; unreadable data responds 404; and the title and description are the React Router starter's defaults, set only on the home route.
-
 ## Shared Controls
 
 `AddMinusButtons` (`src/components/add-minus-buttons/main.tsx`) renders a "+" button and a "−" button, calling `onAddClick` / `onMinusClick`. Used by the usage table rows and routine cards.
 
-`src/components/ui/` holds Chakra snippets the app uses: `provider.tsx`, `ColorModeProvider` in `color-mode.tsx`, and `toaster.tsx`. Currently it also holds unused snippets — `tooltip.tsx` and the `ColorModeButton`, `ColorModeIcon`, `LightMode`, `DarkMode`, `useColorMode`, and `useColorModeValue` exports — which are to be deleted.
+`src/components/ui/` holds Chakra snippets the app uses: `provider.tsx`, `ColorModeProvider` in `color-mode.tsx`, and `toaster.tsx`.
 
 ## Decisions & Alternatives
 
@@ -89,7 +83,7 @@ Currently the loader reads `usage.json` directly through its own read-or-404 hel
 
 ## References
 
-- src/app/root.tsx, src/app/app.css, src/app/routes.ts, src/app/routes/home.tsx
+- src/app/root.tsx, src/app/routes.ts, src/app/routes/home.tsx
 - src/components/add-minus-buttons/main.tsx
 - src/components/ui/
 - react-router.config.ts, vite.config.ts, tsconfig.json

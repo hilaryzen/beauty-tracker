@@ -55,7 +55,7 @@ arrows:
     blocks: []
     blockedBy: [usage, routines]
     detail: app-shell.md
-    next: "Confirm open questions in app-shell-design.md; add tests for SHELL specs"
+    next: "Add navigation when a second page arrives"
     drift: null
 
 unmapped:
