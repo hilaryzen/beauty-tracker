@@ -41,6 +41,20 @@ describe("data folder", () => {
     expect(getDataDir()).toBe(path.join(assetsDir, "data"));
   });
 
+  // @spec STORE-001, STORE-002
+  it("finds the data folders under the folder the server is started from, wherever the module is bundled", () => {
+    delete process.env.DATA_DIR;
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue("/srv/beauty-tracker");
+    try {
+      process.env.ENV = "prod";
+      expect(getDataDir()).toBe(path.join("/srv/beauty-tracker", "src/assets/data-prod"));
+      delete process.env.ENV;
+      expect(getDataDir()).toBe(path.join("/srv/beauty-tracker", "src/assets/data"));
+    } finally {
+      cwd.mockRestore();
+    }
+  });
+
   // @spec STORE-011
   it("uses DATA_DIR when set, regardless of ENV", () => {
     process.env.ENV = "prod";

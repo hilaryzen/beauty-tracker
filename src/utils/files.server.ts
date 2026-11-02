@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 // @spec STORE-001, STORE-002, STORE-011
 export function getDataDir() {
   if (process.env.DATA_DIR) return process.env.DATA_DIR;
   const dataDir = process.env.ENV === 'prod' ? 'data-prod' : 'data';
-  return fileURLToPath(new URL(`../assets/${dataDir}`, import.meta.url));
+  // Relative to where the server starts (the project folder), not this module, which a build moves.
+  return path.join(process.cwd(), 'src/assets', dataDir);
 }
 
 function filePath(fileName: string) {

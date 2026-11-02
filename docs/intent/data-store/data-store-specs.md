@@ -6,8 +6,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 ## Environment Folders
 
-- [x] **STORE-001**: While the `DATA_DIR` environment variable is unset and the `ENV` environment variable is `prod`, the data store shall read and write data files in `src/assets/data-prod/`.
-- [x] **STORE-002**: While the `DATA_DIR` environment variable is unset and the `ENV` environment variable is not `prod`, the data store shall read and write data files in `src/assets/data/`.
+- [x] **STORE-001**: While the `DATA_DIR` environment variable is unset and the `ENV` environment variable is `prod`, the data store shall read and write data files in `src/assets/data-prod/` within the folder the server is started from.
+- [x] **STORE-002**: While the `DATA_DIR` environment variable is unset and the `ENV` environment variable is not `prod`, the data store shall read and write data files in `src/assets/data/` within the folder the server is started from.
 - [x] **STORE-011**: While the `DATA_DIR` environment variable is set, the data store shall read and write data files in the folder it names, regardless of `ENV`.
 
 ## File Access

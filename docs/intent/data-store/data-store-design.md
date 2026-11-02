@@ -26,7 +26,7 @@ The data store owns where the files live, how they are read and written, and the
 - otherwise `ENV=prod` → `src/assets/data-prod/`
 - otherwise → `src/assets/data/`
 
-Currently the folder is resolved once at module load and `DATA_DIR` is not supported.
+The `src/assets/...` folders are relative to the folder the server is started from: the project folder, where every npm script runs.
 
 `npm run dev` uses `data/`; `npm run dev:prod` and `npm start` set `ENV=prod`. `data/` is the working development copy and is committed to git; `data-prod/` holds the user's real data and is git-ignored, so it never enters the repository.
 
@@ -71,6 +71,7 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 | Decision | Chosen | Alternatives Considered | Rationale |
 |----------|--------|------------------------|-----------|
 | Storage medium | JSON files on local disk | SQLite; hosted database; browser storage | Single local user, small data, no infrastructure (HLD Key Design Decisions) |
+| Data folder base | The folder the server is started from | Relative to the location of `files.server.ts` | A production build bundles the module into `build/server/`, so a module-relative path points at a folder that does not exist |
 | Environment separation | Separate `data/` and `data-prod/` folders chosen by `ENV` | One data folder; env-configured path | [inferred] Lets development clicks run against throwaway data |
 | Real data and git | `data-prod/` is git-ignored; `data/` is committed | Commit both folders as a backup | Real data is personal and changes with every logged use; keeping it out of git keeps it out of code history and any pushed remote. Development data is committed so the app runs from a fresh clone |
 | Write model | Replace the whole file on every write | Append log; per-record updates | Files are small; simplest correct write (*Simplicity over robustness*) |
