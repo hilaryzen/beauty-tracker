@@ -1,7 +1,7 @@
 import { chmod } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loader as homeLoader } from "@/app/routes/home";
-import { loader as usageLoader } from "@/app/routes/api.usage";
+import { action as usageAction, loader as usageLoader } from "@/app/routes/api.usage";
 import { dataDir, readData, sampleConfigs, settle, writeData } from "@/test/data-dir";
 import { loadUsage } from "./usage.server";
 
@@ -39,14 +39,14 @@ describe("month rollover", () => {
   // @spec USAGE-ROLL-001
   it("adds an earlier month's count into that month's history when usage data is loaded", async () => {
     await writeData("usage.json", [october]);
-    const [record] = await loadUsage();
+    const [record] = (await loadUsage())!;
     expect(record.uses).toEqual({ "2026-09": 25, "2026-10": 5 });
   });
 
   // @spec USAGE-ROLL-002
   it("resets the count to 0 and moves the record to the current month", async () => {
     await writeData("usage.json", [october]);
-    const [record] = await loadUsage();
+    const [record] = (await loadUsage())!;
     expect(record.usesThisMonth).toBe(0);
     expect(record.currentMonth).toBe("2026-11");
   });
@@ -64,7 +64,7 @@ describe("month rollover", () => {
   it("leaves a record whose current month is equal to or later than the server's month unchanged", async () => {
     const november = { ...october, id: 2, currentMonth: "2026-11" };
     await writeData("usage.json", [november, december]);
-    const records = await loadUsage();
+    const records = (await loadUsage())!;
     expect(records).toEqual([november, december]);
   });
 
@@ -74,7 +74,7 @@ describe("month rollover", () => {
     await writeData("usage.json", [october]);
     await writeData("configs.json", sampleConfigs);
     const result = await withReadOnlyDataDir(() =>
-      settle(() => homeLoader({} as Parameters<typeof homeLoader>[0])),
+      settle(() => homeLoader()),
     );
     // A thrown Error (not a data response) reaches the error page.
     expect(result).toBeInstanceOf(Error);
@@ -86,10 +86,10 @@ describe("month rollover", () => {
     await writeData("usage.json", [october]);
     await writeData("configs.json", sampleConfigs);
 
-    await withReadOnlyDataDir(() => settle(() => homeLoader({} as Parameters<typeof homeLoader>[0])));
+    await withReadOnlyDataDir(() => settle(() => homeLoader()));
     expect(await readData("usage.json")).toEqual([october]);
 
-    await homeLoader({} as Parameters<typeof homeLoader>[0]);
+    await homeLoader();
     const [saved] = await readData("usage.json");
     expect(saved.currentMonth).toBe("2026-11");
     expect(saved.uses["2026-10"]).toBe(5);
@@ -100,11 +100,33 @@ describe("month rollover", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     await writeData("usage.json", [october]);
     const result = await withReadOnlyDataDir(() =>
-      settle(() => usageLoader({} as Parameters<typeof usageLoader>[0])),
+      settle(() => usageLoader()),
     );
     expect(result).toBeInstanceOf(Response);
     const response = result as Response;
     expect(response.status).toBe(500);
     expect(typeof (await response.json()).error).toBe("string");
+  });
+
+  // @spec USAGE-ROLL-007
+  it("treats usage.json as unreadable when a record's current month is missing or malformed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { currentMonth: _, ...noMonth } = october;
+    for (const bad of [noMonth, { ...october, currentMonth: "Oct" }, { ...october, currentMonth: "2026-1" }]) {
+      await writeData("usage.json", [bad, december]);
+      expect(await loadUsage()).toBeUndefined();
+
+      const get = await settle(() => usageLoader());
+      expect((get as Response).status).toBe(500);
+
+      const request = new Request("http://localhost/api/usage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [1], delta: 1 }),
+      });
+      const post = await settle(() => usageAction({ request } as Parameters<typeof usageAction>[0]));
+      expect((post as Response).status).toBe(500);
+      expect(await readData("usage.json")).toEqual([bad, december]);
+    }
   });
 });

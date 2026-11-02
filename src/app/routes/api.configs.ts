@@ -1,7 +1,7 @@
 import type { Route } from "./+types/api.configs";
 import { checkRoutines } from "@/features/routine/routine-rules";
 import { checkCategories } from "@/features/usage/category-rules";
-import type { ItemUsage } from "@/features/usage/types";
+import { loadUsage } from "@/features/usage/usage.server";
 import { getFile, modifyFile } from "@/utils/files.server";
 
 const configKeys = ["categories", "routines"];
@@ -31,7 +31,7 @@ async function validate(body: unknown): Promise<string | undefined> {
   const changes = body as Record<string, unknown>;
   if (!("categories" in changes) && !("routines" in changes)) return;
 
-  const usage: ItemUsage[] | undefined = await getFile("usage.json");
+  const usage = await loadUsage();
   if (usage === undefined) throw new Error("usage.json could not be read");
 
   if ("categories" in changes) {

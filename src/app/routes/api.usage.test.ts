@@ -13,7 +13,7 @@ function post(body: unknown) {
 }
 
 function get() {
-  return settle(() => loader({} as Parameters<typeof loader>[0]));
+  return settle(() => loader());
 }
 
 async function expectError(result: unknown, status: number) {

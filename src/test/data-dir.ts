@@ -1,7 +1,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { ItemUsage } from "@/features/usage/types";
 
-export const sampleUsage = [
+export const sampleUsage: ItemUsage[] = [
   {
     id: 0,
     name: "Hydro Grip Primer",

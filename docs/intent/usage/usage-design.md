@@ -35,8 +35,6 @@ Each product is an `ItemUsage` (`src/features/usage/types.ts`) stored in `usage.
 
 Logging and month rollover preserve these rules by construction. A future product editor (HLD Goal 4) validates submitted records against them.
 
-Currently records carry no `currentMonth` field, and `useUsage` addresses records by array index.
-
 ## Month Rollover
 
 When a month ends, each product's current count moves into its history. Rollover runs on the server whenever usage data is loaded — by the home page loader, a GET of `/api/usage`, or before a logging change is applied:
@@ -49,6 +47,8 @@ Rollover and logging both change `usage.json` through the data store's per-file 
 
 A record whose `currentMonth` equals or is later than the current month is left unchanged — rollover only moves counts forward, so a misset clock never rewrites history. Months with no app activity get no `uses` entry; a missing month means zero uses.
 
+**Malformed records.** If any record's `currentMonth` is missing or not in `YYYY-MM` form, loading treats `usage.json` as unreadable — the home page shows its data error and `/api/usage` responds 500 — until the file is fixed. Without a valid month, rollover cannot tell whether a count belongs to an earlier month, and saving any change on top of the record would bury the problem.
+
 If the rollover write fails, loading fails: the home page shows the error page, and `/api/usage` responds 500. Serving rolled-over data that was never saved would show the user history that disappears on the next load.
 
 The server-side function that loads usage data with rollover applied is the only way other segments read `usage.json`.
@@ -57,7 +57,7 @@ The server-side function that loads usage data with rollover applied is the only
 
 `useUsage()` (`src/features/usage/use-usage.ts`) returns `addUsesToItems(ids)` and `removeUsesFromItems(ids)`. Each call POSTs `{ ids, delta }` to `/api/usage`, where `delta` is `1` or `-1`.
 
-Every click counts: each call sends its own request, and a later click never cancels an earlier request still in flight. (A single shared React Router fetcher would cancel the earlier submission, so a rapid double-click might count once.)
+Every click counts: each call sends its own request, and a later click never cancels an earlier request still in flight.
 
 The route action, on the server, inside the `usage.json` update queue:
 
@@ -66,13 +66,11 @@ The route action, on the server, inside the `usage.json` update queue:
 3. For each product whose `id` is in `ids`, adds `delta` to `usesThisMonth`, but never below 0 — a −1 on a product already at 0 leaves it at 0 while the other products in the request still decrease.
 4. Writes `usage.json` once.
 
-React Router then revalidates the home loader, which re-reads the file and re-renders.
+After a successful save, `useUsage` revalidates the page's loaders, so the home page re-reads the file and re-renders.
 
 Callers pass a list of ids, so the same hook serves single-product logging (usage table) and multi-product logging (routines segment).
 
-**Save failures.** When the POST responds with an error (400 or 500), `useUsage` shows an error notification saying the change was not saved. The page keeps showing the last saved data, since the loader is revalidated only after a successful action.
-
-Currently `useUsage` builds the whole updated list on the client and POSTs it, and save failures are not shown.
+**Save failures.** When the POST responds with an error (400 or 500), or gets no response at all (for example, the server is not running), `useUsage` shows an error notification saying the change was not saved. The page keeps showing the last saved data, since the loader is revalidated only after a successful action.
 
 ## Usage Table
 
@@ -81,8 +79,6 @@ Currently `useUsage` builds the whole updated list on the client and POSTs it, a
 - **Sort order** — rows are ordered by the position of their `category` in the concatenation of all category groups, taken in the groups' configured order. Rows with equal position keep file order (stable sort). If `configs.json` has no `categories` key, there are no groups: every row has the same position and the table shows file order.
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
 - **This Month's Uses** — `usesThisMonth`.
-
-Currently the sort uses only the `skincare`, `makeup`, and `lips` groups, and Overall Uses excludes `usesThisMonth`.
 
 ## Categories
 
@@ -133,6 +129,8 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 
 - src/features/usage/types.ts
 - src/features/usage/use-usage.ts
+- src/features/usage/usage.server.ts
+- src/features/usage/category-rules.ts
 - src/features/usage/usage-table.tsx
 - src/app/routes/api.usage.ts
 - docs/intent/data-store/data-store-design.md

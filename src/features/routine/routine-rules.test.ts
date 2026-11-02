@@ -33,7 +33,7 @@ describe("routine definition", () => {
 
   // @spec ROUT-001
   it("reads routines from the routines key of configs.json", async () => {
-    const data = await homeLoader({} as Parameters<typeof homeLoader>[0]);
+    const data = await homeLoader();
     expect((data as { routines: unknown }).routines).toEqual(sampleConfigs.routines);
   });
 });

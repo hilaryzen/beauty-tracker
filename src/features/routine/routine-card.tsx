@@ -9,7 +9,7 @@ type RoutineCardProps = {
 }
 
 export const RoutineCard = ({ usage, routines }: RoutineCardProps) => {
-  const { addUsesToItems, removeUsesFromItems } = useUsage(usage);
+  const { addUsesToItems, removeUsesFromItems } = useUsage();
 
   return (
     <Flex>

@@ -2,6 +2,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useLoaderData } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toaster } from "@/components/ui/toaster";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
 import { renderPage } from "@/test/render";
 import { UsageTable } from "./usage-table";
@@ -45,6 +46,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // The toaster is shared across renders; clear it so one test's notification can't satisfy another's.
+  toaster.remove();
 });
 
 describe("usage table display", () => {
@@ -180,5 +183,23 @@ describe("logging from the usage table", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const firstSignal = (fetchMock.mock.calls[0][1] as RequestInit | undefined)?.signal;
     expect(firstSignal?.aborted ?? false).toBe(false);
+  });
+
+  // @spec USAGE-LOG-010
+  it("shows an error notification when the request gets no response", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderTable();
+    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
+    expect(await screen.findByText(/not saved/i)).toBeInTheDocument();
+  });
+
+  // @spec USAGE-LOG-011
+  it("keeps showing the last saved data when the request gets no response", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    const loader = renderTable();
+    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
+    await screen.findByText(/not saved/i);
+    expect(loader).toHaveBeenCalledTimes(1);
+    expect(within(await row("Hydro Grip Primer")).getByText("27")).toBeInTheDocument();
   });
 });

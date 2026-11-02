@@ -19,7 +19,7 @@ arrows:
     blocks: [routines, app-shell]
     blockedBy: [data-store]
     detail: usage.md
-    next: "Confirm open questions in usage-design.md; add tests for USAGE specs"
+    next: "Decide whether categories become their own segment when inventory or purchases arrive"
     drift: null
 
   routines:

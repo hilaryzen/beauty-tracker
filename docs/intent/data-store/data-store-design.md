@@ -28,7 +28,7 @@ The data store owns where the files live, how they are read and written, and the
 
 Currently the folder is resolved once at module load and `DATA_DIR` is not supported.
 
-`npm run dev` uses `data/`; `npm run dev:prod` and `npm start` set `ENV=prod`. Both folders are committed to git. `data/` is the working development copy; `data-prod/` holds the user's real data.
+`npm run dev` uses `data/`; `npm run dev:prod` and `npm start` set `ENV=prod`. `data/` is the working development copy and is committed to git; `data-prod/` holds the user's real data and is git-ignored, so it never enters the repository.
 
 `data-prod/configs.json` is currently stale, in an older shape (`makeupCategories`, no `categories` key) that the usage table cannot read. Because no in-app editor for configuration exists yet, it is brought to the current shape by a one-time hand edit.
 
@@ -72,6 +72,7 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 |----------|--------|------------------------|-----------|
 | Storage medium | JSON files on local disk | SQLite; hosted database; browser storage | Single local user, small data, no infrastructure (HLD Key Design Decisions) |
 | Environment separation | Separate `data/` and `data-prod/` folders chosen by `ENV` | One data folder; env-configured path | [inferred] Lets development clicks run against throwaway data |
+| Real data and git | `data-prod/` is git-ignored; `data/` is committed | Commit both folders as a backup | Real data is personal and changes with every logged use; keeping it out of git keeps it out of code history and any pushed remote. Development data is committed so the app runs from a fresh clone |
 | Write model | Replace the whole file on every write | Append log; per-record updates | Files are small; simplest correct write (*Simplicity over robustness*) |
 | Where validation lives | In each API route, using rules owned by the data's segment; data store does not validate | Central per-file schemas in the data store; form-only validation | HLD Key Design Decisions (*Write validation*) |
 | Atomic writes | Write to a temporary file, then rename over the target | Write directly to the target file | The data files hold the entire usage history; a truncated file would lose all of it. The cost is one extra filesystem call, an explicit exception to *Simplicity over robustness* |
@@ -87,8 +88,7 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 ## Open Questions & Future Decisions
 
 ### Deferred
-1. **Prod data in git** — `data-prod/` is committed. Intentional backup mechanism, or should real data move out of the repo?
-2. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless until product editing exists; revisit then.
+1. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless until product editing exists; revisit then.
 
 ## References
 

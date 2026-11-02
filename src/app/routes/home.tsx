@@ -1,5 +1,6 @@
 import type { Route } from "./+types/home";
 import { UsageTable } from "@/features/usage/usage-table";
+import { loadUsage } from "@/features/usage/usage.server";
 import { getFile } from "@/utils/files.server";
 import { RoutineCard } from "@/features/routine/routine-card";
 
@@ -10,16 +11,15 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-async function readFromFile(fileName: string) {
-  const data = await getFile(fileName);
-  if (!data) throw new Response("Not Found", { status: 404 });
-  return data;
-}
-
+// @spec SHELL-HOME-002, USAGE-ROLL-005, ROUT-001
 export async function loader() {
-  const configs = await readFromFile("configs.json");
+  const configs = await getFile("configs.json");
+  const usage = await loadUsage();
+  if (configs === undefined || usage === undefined) {
+    throw new Response(null, { status: 500, statusText: "Your data could not be loaded." });
+  }
   return {
-    usage: await readFromFile("usage.json"), 
+    usage,
     categories: configs.categories,
     routines: configs.routines
   };

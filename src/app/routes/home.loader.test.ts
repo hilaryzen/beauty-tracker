@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sampleConfigs, sampleUsage, settle, writeData } from "@/test/data-dir";
 import { loader, meta } from "./home";
 
-type LoaderArgs = Parameters<typeof loader>[0];
 type MetaArgs = Parameters<typeof meta>[0];
 
 describe("home page", () => {
@@ -17,7 +16,7 @@ describe("home page", () => {
   });
 
   async function expectDataError() {
-    const result = await settle(() => loader({} as LoaderArgs));
+    const result = await settle(() => loader());
     expect(result).toBeInstanceOf(Response);
     const response = result as Response;
     expect(response.status).toBe(500);

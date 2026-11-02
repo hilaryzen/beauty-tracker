@@ -37,7 +37,7 @@ describe("/api/configs", () => {
   // @spec STORE-API-001
   it("returns the full contents of configs.json on GET", async () => {
     await seed();
-    const result = await settle(() => loader({} as Parameters<typeof loader>[0]));
+    const result = await settle(() => loader());
     const data = result instanceof Response ? await result.json() : result;
     expect(data).toEqual(sampleConfigs);
   });
@@ -45,7 +45,7 @@ describe("/api/configs", () => {
   // @spec STORE-API-002
   it("responds 500 with an error message when configs.json cannot be read on GET", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    await expectError(await settle(() => loader({} as Parameters<typeof loader>[0])), 500);
+    await expectError(await settle(() => loader()), 500);
   });
 
   // @spec STORE-API-003

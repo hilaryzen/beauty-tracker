@@ -6,22 +6,25 @@ import { useUsage } from "./use-usage";
 
 type UsageTableProps = {
   usage: ItemUsage[];
-  categories: Record<string, Array<string>>
+  categories?: Record<string, Array<string>>
 }
 
+function overallUses(item: ItemUsage) {
+  return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
+}
+
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
-  const { addUsesToItems, removeUsesFromItems } = useUsage(usage);
-  
-  const allCategories = categories.skincare.concat(categories.makeup, categories.lips)
+  const { addUsesToItems, removeUsesFromItems } = useUsage();
+
   const sortedUsage = useMemo(() => {
-    // Make a copy to avoid mutating state, then sort
-    return [...usage].sort((a, b) => {
-      const indexA = allCategories.indexOf(a.category);
-      const indexB = allCategories.indexOf(b.category);
-      // Compare the positions in the reference array
-      return indexA - indexB;
-    });
-  }, [usage]);
+    // Every group's categories, in configured group order; no categories means one shared position.
+    const allCategories = Object.values(categories ?? {}).flat();
+    // Array.prototype.sort is stable, so products with the same position keep stored order.
+    return [...usage].sort(
+      (a, b) => allCategories.indexOf(a.category) - allCategories.indexOf(b.category),
+    );
+  }, [usage, categories]);
 
   return (
     <Table.Root size="sm">
@@ -41,7 +44,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
             <Table.Cell>{item.category}</Table.Cell>
             <Table.Cell>{item.name}</Table.Cell>
             <Table.Cell>{item.brand}</Table.Cell>
-            <Table.Cell>{Object.values(item.uses).reduce((sum, value) => sum + value, 0)}</Table.Cell>
+            <Table.Cell>{overallUses(item)}</Table.Cell>
             <Table.Cell>{item.usesThisMonth}</Table.Cell>
             <Table.Cell textAlign="end"><AddMinusButtons onAddClick={() => addUsesToItems([item.id])} onMinusClick={() => removeUsesFromItems([item.id])} /></Table.Cell>
           </Table.Row>

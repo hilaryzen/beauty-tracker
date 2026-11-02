@@ -37,7 +37,7 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 **Key Components:**
 1. `files.server.ts` — `getDataDir()` (`DATA_DIR`, else `data-prod` when `ENV=prod`, else `data`); `getFile(name)`; `updateFile(name, data)` (atomic temp-file-then-rename, rethrows on failure); `modifyFile(name, change)` (read-change-write, queued per file)
 2. `/api/configs` route — GET returns `configs.json`; POST validates `categories` (`features/usage/category-rules.ts`) and `routines` (`features/routine/routine-rules.ts`), then merges the sent keys inside `modifyFile`
-3. Data folders — `data/` (development) and `data-prod/` (real data), both committed to git
+3. Data folders — `data/` (development, committed) and `data-prod/` (real data, git-ignored)
 
 ## Spec Coverage
 
@@ -53,7 +53,6 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 
 1. **Prod data is stale** — `data-prod/configs.json` still uses an older shape (`makeupCategories`, no `categories` key), which the usage table cannot read. Confirmed by the user as stale, pending a later update; not a live production failure.
 2. **`/api/configs` has no UI caller yet** — it exists for the planned routine and category editors.
-3. **Prod data lives in the repo** — `data-prod/` is committed (LLD deferred question 1).
 
 ## Work Required
 
