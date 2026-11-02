@@ -57,8 +57,6 @@ A listed id with no matching product — possible only in data that predates the
 
 With no routines configured — an empty `routines` object, or no `routines` key in `configs.json` — no cards are shown.
 
-Currently the card looks products up by array index (`usage[id].name`), which crashes on an unknown id, and renders an empty footer.
-
 ## Logging a Routine
 
 The + control calls the usage segment's `addUsesToItems(productIds)` with the routine's full id array; − calls `removeUsesFromItems(productIds)`. The usage segment applies the ±1 to each product (never below 0) and saves the change in one request.
@@ -85,6 +83,7 @@ The + control calls the usage segment's `addUsesToItems(productIds)` with the ro
 ## References
 
 - src/features/routine/routine-card.tsx
+- src/features/routine/routine-rules.ts
 - src/assets/data/configs.json
 - docs/intent/usage/usage-design.md
 - docs/intent/data-store/data-store-design.md

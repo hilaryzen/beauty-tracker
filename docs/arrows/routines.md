@@ -4,7 +4,7 @@ Named groups of products the user logs together in one click.
 
 ## Status
 
-**MAPPED** — last audited 2026-10-25 (git SHA `8527123`). Brownfield skeleton; behavior observed in code, intent not yet confirmed.
+**MAPPED** — last audited 2026-10-25 (git SHA `8527123`). All specs implemented with tests.
 
 ## References
 
@@ -18,7 +18,8 @@ Named groups of products the user logs together in one click.
 - docs/intent/routines/routines-specs.md (15 specs)
 
 ### Tests
-- none
+- src/features/routine/routine-card.test.tsx
+- src/features/routine/routine-rules.test.ts
 
 ### Code
 - src/features/routine/routine-card.tsx
@@ -30,35 +31,27 @@ Named groups of products the user logs together in one click.
 **Purpose:** Let the user define routines (e.g. "Morning Skincare", "Makeup") as ordered lists of products, see each routine's products on a card, and log a use for every product in the routine at once.
 
 **Key Components:**
-1. `configs.json → routines` — map of routine name to an ordered array of product ids (`configs.json:27-31`)
-2. `RoutineCard` — renders one card per routine with its product names and +/- controls (`routine-card.tsx:11-37`)
-3. `useUsage` (usage segment) — reused to apply and persist the ±1 for all products in the routine (`routine-card.tsx:12,22`)
+1. `configs.json → routines` — map of routine name to an ordered array of product ids
+2. `RoutineCard` — one card per routine with product names looked up by id ("Unknown product (id N)" when none matches) and +/- controls; no cards when routines are empty or missing (`routine-card.tsx`)
+3. `useUsage` (usage segment) — logs ±1 for all products in the routine as one `{ ids, delta }` request
+4. `checkRoutines` — routine rules applied by `/api/configs` (`routine-rules.ts`)
 
 ## Spec Coverage
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Definition | ROUT-001 | 0 | 0 | 1 |
-| UI | ROUT-UI-001 to ROUT-UI-006 | 0 | 0 | 6 |
-| Logging | ROUT-LOG-001 to ROUT-LOG-002 | 0 | 0 | 2 |
+| Definition | ROUT-001 | 1 | 0 | 0 |
+| UI | ROUT-UI-001 to ROUT-UI-006 | 6 | 0 | 0 |
+| Logging | ROUT-LOG-001 to ROUT-LOG-002 | 2 | 0 | 0 |
 | Validation | ROUT-VAL-001 to ROUT-VAL-006 | 6 | 0 | 0 |
 
-**Summary:** 15 specs, all `[ ]`. ROUT-UI-003 (lookup by id), ROUT-UI-005, and ROUT-VAL-* describe behavior not yet implemented; the rest are observed in code but untested.
+**Summary:** 15 specs, all `[x]`.
 
 ## Key Findings
 
-1. **Products referenced by array index** — `usage[id].name` (`routine-card.tsx:26`); a routine id beyond the usage list crashes the card. Shares the id/index coupling noted in the usage arrow.
-2. **No UI to create or edit routines** — routines are hand-edited in `configs.json`; `/api/configs` POST exists but nothing calls it.
-3. **Empty card footer** — `Card.Footer` renders with no children (`routine-card.tsx:30-31`); looks like a placeholder.
-4. **Routine card and usage table share one fetcher-per-hook pattern** — each component calls `useUsage` separately, so a routine click and a table click are independent submissions computed from the same loader data.
+1. **No UI to create or edit routines** — routines are hand-edited in `configs.json`; `/api/configs` POST validates them but nothing in the UI calls it yet (LLD deferred question 1).
 
 ## Work Required
 
-### Must Fix
-1. Confirm intent for findings 1–3 during flesh-out.
-
-### Should Fix
-2. Add tests for routine card rendering and multi-product logging.
-
 ### Nice to Have
-3. Decide whether routine editing belongs in the UI.
+1. Design the routine editor (HLD Goal 4).
