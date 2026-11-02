@@ -51,10 +51,4 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 
 ## Key Findings
 
-1. **Prod data is stale** — `data-prod/configs.json` still uses an older shape (`makeupCategories`, no `categories` key), which the usage table cannot read. Confirmed by the user as stale, pending a later update; not a live production failure.
-2. **`/api/configs` has no UI caller yet** — it exists for the planned routine and category editors.
-
-## Work Required
-
-### Must Fix
-1. Update `data-prod/configs.json` to the current `categories` shape before next prod use (finding 1).
+1. **`/api/configs` has no UI caller yet** — it exists for the planned routine and category editors.

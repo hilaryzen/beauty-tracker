@@ -30,20 +30,19 @@ The `src/assets/...` folders are relative to the folder the server is started fr
 
 `npm run dev` uses `data/`; `npm run dev:prod` and `npm start` set `ENV=prod`. `data/` is the working development copy and is committed to git; `data-prod/` holds the user's real data and is git-ignored, so it never enters the repository.
 
-`data-prod/configs.json` is currently stale, in an older shape (`makeupCategories`, no `categories` key) that the usage table cannot read. Because no in-app editor for configuration exists yet, it is brought to the current shape by a one-time hand edit.
-
 ## File Access
 
 | Function | Behavior | On error |
 |---|---|---|
 | `getFile(name)` | Reads `<folder>/<name>` as UTF-8 and returns the parsed JSON | Logs the error message and returns `undefined` |
 | `updateFile(name, data)` | Writes `data` as 2-space-indented JSON to a temporary file in `<folder>`, then renames it over `<folder>/<name>` | Logs the error message and rethrows it to the caller; `<folder>/<name>` keeps its previous contents |
+| `modifyFile(name, change)` | In the file's update queue, reads `<folder>/<name>`, passes the parsed contents to `change`, and writes what `change` returns the same way `updateFile` does | Rejects if the file cannot be read or written, or if `change` throws; `<folder>/<name>` keeps its previous contents |
 
 **Serialized updates.** Most writes are read-change-write: load the file, change part of it, write it back. Two such updates to the same file that overlap would each start from the same contents, and the later write would erase the earlier change. The data store therefore runs read-change-write updates to a given file one at a time, in the order they arrive, through an in-process queue per file. Every API route and server function that changes a data file goes through this queue. A plain write that replaces a file without reading it first waits in the same queue, so it cannot land in the middle of a read-change-write update and be overwritten by it. Updates to different files do not wait for each other.
 
-Both functions are server-only (`.server.ts`), so file access never reaches the browser. They do not validate content; validation happens in the API route before `updateFile` is called.
+These functions are server-only (`.server.ts`), so file access never reaches the browser. They do not validate content; validation happens in the API route, before the file is written.
 
-Reads and writes fail differently on purpose. A failed read is reported by the caller, which knows what to tell the user (API routes respond 500; the home page shows "Your data could not be loaded."), so `getFile` returns `undefined`. A failed write must reach the user — otherwise the UI shows a change that was never saved — so `updateFile` rethrows, and each API route turns the error into a 500 response. Writes are atomic: because the new contents land under a temporary name and replace the target only by rename, a crash or failure mid-write never leaves a truncated data file. Currently `updateFile` swallows write errors and writes the target file directly.
+Reads and writes fail differently on purpose. A failed read is reported by the caller, which knows what to tell the user (API routes respond 500; the home page shows "Your data could not be loaded."), so `getFile` returns `undefined`. A failed write must reach the user — otherwise the UI shows a change that was never saved — so `updateFile` rethrows, and each API route turns the error into a 500 response. Writes are atomic: because the new contents land under a temporary name and replace the target only by rename, a crash or failure mid-write never leaves a truncated data file.
 
 ## Configuration API
 
@@ -62,7 +61,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 
 **All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was.
 
-Currently the route replaces the whole file with the body, performs no validation, and no UI calls it.
+No UI calls the route yet.
 
 The `/api/usage` endpoint, including its validation, is specified by the usage segment.
 

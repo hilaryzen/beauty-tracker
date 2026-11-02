@@ -1,5 +1,5 @@
 schema_version: 2
-last_updated: 2026-10-26
+last_updated: 2026-11-01
 
 taxonomy:
   tracking:
@@ -43,7 +43,7 @@ arrows:
     blocks: [usage]
     blockedBy: []
     detail: data-store.md
-    next: "Update data-prod/configs.json to current shape"
+    next: "Connect /api/configs to the routine and category editors when they arrive"
     drift: null
 
   app-shell:
