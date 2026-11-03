@@ -33,7 +33,7 @@ Each product is an `ItemUsage` (`src/features/usage/types.ts`) stored in `usage.
 - `usesThisMonth` and every value in `uses` are integers ≥ 0.
 - Every key of `uses`, and `currentMonth`, has the form `YYYY-MM`.
 
-Logging and month rollover preserve these rules by construction. A future product editor (HLD Goal 4) validates submitted records against them.
+Logging and month rollover preserve these rules by construction. The `/api/products` route validates each product it saves against them (see *Product Editor*).
 
 ## Month Rollover
 
@@ -74,18 +74,57 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 
 ## Usage Table
 
-`UsageTable` (`src/features/usage/usage-table.tsx`) renders one row per product with columns: Category, Product, Brand, Overall Uses, This Month's Uses, and +/- controls.
+`UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button above one row per product, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, +/- controls, and an edit button.
 
 - **Sort order** — rows are ordered by the position of their `category` in the concatenation of all category groups, taken in the groups' configured order. Rows with equal position keep file order (stable sort). If `configs.json` has no `categories` key, there are no groups: every row has the same position and the table shows file order.
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
 - **This Month's Uses** — `usesThisMonth`.
+
+## Product Editor
+
+`ProductDialog` (`src/features/usage/product-dialog.tsx`) is one modal form used for both adding and editing, opened from the usage table. Because it is modal, the +/- controls and routine cards cannot be clicked while it is open.
+
+```
+┌─ Edit product ──────────────────┐
+│ Name              [___________] │
+│ Brand             [___________] │
+│ Category          [Foundation ▾]│
+│ This month's uses [___]         │  edit only
+│              [Cancel]  [Save]   │
+└─────────────────────────────────┘
+```
+
+**Fields.** Name and brand are required. Category is a dropdown of the configured categories, listed under their groups in configured order, ending with a "New category" option. A new product starts with no history and a current-month count of 0, so this month's uses appears only when editing. Past months are not editable: the +/- controls and this field correct the current month, and closed months stay as recorded. Two products may have the same name and brand, so a repurchase can be tracked separately.
+
+**New categories.** Choosing "New category" reveals a category name input and a group dropdown of the existing groups, ending with a "New group" option that reveals a group name input. A new category goes at the end of its group, and a new group goes after the existing groups, which together set where the category sorts in the usage table.
+
+**Saving.** `useProductEditor()` (`src/features/usage/use-product-editor.ts`) trims the text fields and saves in up to two requests, one at a time:
+
+1. If the category name is new, POST the current categories plus the new one to `/api/configs`, which applies the category rules. If this fails, nothing is saved and step 2 does not run.
+2. POST (add) or PUT (edit) the product to `/api/products`.
+
+The category is saved first so that a failure between the two steps leaves at worst an unused category, never a product whose category is not configured. An unused category is valid and appears in the dropdown.
+
+A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling, step 1 is skipped, and the chosen group is ignored. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
+
+**After saving.** On success the dialog closes and the page's loaders revalidate. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a save is in flight, so a double click cannot add a product twice. Cancel closes the dialog and discards its contents.
+
+**Editing a count.** The form sends `usesThisMonth` only if the user changed it. This way, saving a rename cannot overwrite a logged use the form had not yet seen. A changed count replaces the stored value, because it is a deliberate correction. If the month changes while the dialog is open, a changed count applies to the new month, because the route applies rollover first.
+
+**On the server.** Inside the `usage.json` update queue, the `/api/products` route applies rollover, validates the body against the record rules, and writes the file once:
+
+- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, and appends the record.
+- **Edit** — replaces `name`, `brand`, `category`, and `usesThisMonth` if sent, and leaves `id`, `uses`, and `currentMonth` unchanged.
+
+Routines refer to products by `id`, so renaming a product updates its routine cards without changing `configs.json`. Moving a product to another category leaves the old category configured, even if nothing else uses it.
 
 ## Categories
 
 `configs.json → categories` maps a group name (such as `skincare`) to an ordered list of category names (such as `Cleanser`). Groups and categories display in configured order.
 
 **Category rules.** A `categories` value submitted to `/api/configs` is valid when:
-- It is an object whose values are arrays of non-empty strings. A group's array may be empty, so a group can be set up before it has categories.
+- It is an object whose values are arrays of strings. A group's array may be empty, so a group can be set up before it has categories.
+- Every group name and category name contains at least one non-whitespace character and neither starts nor ends with whitespace.
 - No category name appears more than once across all groups.
 - Every category used by a product in `usage.json` is still present.
 
@@ -101,6 +140,15 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 | `/api/usage` | POST (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
 
 A POST body is valid when `ids` is a non-empty array of distinct integers that each match a product's `id`, `delta` is `1` or `-1`, and there are no other keys. The error message describes the first failure found.
+
+| Endpoint | Method | Request | Response |
+|---|---|---|---|
+| `/api/products` | POST | `{ "name", "brand", "category" }` | `null`; product added |
+| `/api/products` | PUT | `{ "id", "name", "brand", "category", "usesThisMonth"? }` | `null`; product changed |
+| `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
+| `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
+
+A `/api/products` body is valid when it has all the required keys for its method and no other keys, `name` and `brand` each contain at least one non-whitespace character and neither starts nor ends with whitespace, and `category` names a configured category. On a PUT, `id` must also match a product's `id`, and `usesThisMonth`, if sent, must be an integer ≥ 0. The error message describes the first failure found.
 
 ## Decisions & Alternatives
 
@@ -118,12 +166,23 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 | Category groups | Any number of groups, sorted in configured order | Fixed `skincare`, `makeup`, `lips` | New groups (such as hair or body) need no code change |
 | Category membership | Product categories must be configured; deleting a category in use is rejected | Free-text categories; allow deleting used categories | Every product stays sortable and groupable for the inventory view |
 | Save failure feedback | Error notification; page keeps last saved data | Silent failure; optimistic update with rollback | The user must know a use wasn't recorded; showing saved data needs no rollback logic |
+| Product editor placement | Modal dialog opened from the usage table | Inline row editing; separate products page | Keeps one place to manage products, without crowding the table's logging controls or adding the app's first navigation |
+| Product write route | New `/api/products` route | Extend `/api/usage` | `/api/usage` carries small logging changes with a strict body; keeping them apart leaves its validation unchanged |
+| New category write path | Browser POSTs to `/api/configs`, then saves the product | One `/api/products` request that writes both files | `/api/configs` stays the only write path for categories and reuses their rules. The cost is that the browser coordinates the steps and a failure between them leaves an unused category, which is harmless (*Simplicity over robustness*) |
+| New categories and groups in the form | Add and edit can both create a category or group | Dropdown of existing categories only; add form only | Adding or correcting a product never requires a hand edit (HLD *The app is the only writer*) |
+| Editable counts | This month's count only | No counts; every month | Typing corrects a large miscount faster than repeated clicks; closed months stay as recorded so cost per use cannot change by accident |
+| Count in an edit request | Sent only if changed, as a replacement value | Always sent; sent as a delta | Always sending would let a rename overwrite a use the form had not seen. A replacement matches what the user typed |
+| Product ids | Highest existing id plus 1 | Random id; stored counter | Small readable ids; products cannot be deleted, so an id is never reused |
+| Capitalization of typed categories and groups | A name differing only by capitalization reuses the existing one | Treat as a new name | `cleanser` and `Cleanser` would otherwise split one category in two, and nothing in the app can merge them |
+| Duplicate products | Allowed | Reject a repeated name and brand | A repurchase can be tracked separately |
+| Count edit across a month change | Applies to the new month | Reject the save; have the form send its month | Rare for one user, and not worth extra machinery (*Simplicity over robustness*) |
 
 ## Open Questions & Future Decisions
 
 ### Deferred
-1. **Product editing** — HLD Goal 4 requires creating, editing, and deleting products in the app. Not yet designed; expected alongside purchases and inventory. It will validate records against the record rules above.
+1. **Deleting products** — HLD Goal 4 requires deleting products in the app. Not yet designed. It must settle what happens to routines that list the product (routines design, deferred question 2), and whether the highest-id-plus-1 rule can reuse a deleted product's id.
 2. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
+3. **Category editor** — HLD Goal 4 requires editing categories in the app. Not yet designed. The product editor can add categories and groups but not rename or remove them, so removing an unused category needs a hand edit until this exists.
 
 ## References
 
@@ -132,6 +191,9 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 - src/features/usage/usage.server.ts
 - src/features/usage/category-rules.ts
 - src/features/usage/usage-table.tsx
+- src/features/usage/product-dialog.tsx
+- src/features/usage/use-product-editor.ts
 - src/app/routes/api.usage.ts
+- src/app/routes/api.products.ts
 - docs/intent/data-store/data-store-design.md
 - docs/arrows/usage.md
