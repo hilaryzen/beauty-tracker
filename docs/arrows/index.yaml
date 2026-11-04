@@ -1,8 +1,9 @@
 schema_version: 2
-last_updated: 2026-11-01
+last_updated: 2026-11-03
 
 taxonomy:
   tracking:
+    - products
     - usage
     - routines
   platform:
@@ -10,6 +11,18 @@ taxonomy:
     - app-shell
 
 arrows:
+  products:
+    status: MAPPED
+    parent: null
+    sampled: 2026-11-03
+    audited: null
+    audited_sha: null
+    blocks: [usage, routines]
+    blockedBy: [data-store]
+    detail: products.md
+    next: "Implement the product dialog and /api/products; move the record and category rules out of the usage folder"
+    drift: null
+
   usage:
     status: MAPPED
     parent: null
@@ -17,9 +30,9 @@ arrows:
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: [routines, app-shell]
-    blockedBy: [data-store]
+    blockedBy: [data-store, products]
     detail: usage.md
-    next: "Decide whether categories become their own segment when inventory or purchases arrive"
+    next: "Implement the Add product and edit buttons with the products segment"
     drift: null
 
   routines:
@@ -29,7 +42,7 @@ arrows:
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: [app-shell]
-    blockedBy: [usage]
+    blockedBy: [usage, products]
     detail: routines.md
     next: "Design the routine editor (HLD Goal 4)"
     drift: null
@@ -40,7 +53,7 @@ arrows:
     sampled: 2026-10-25
     audited: 2026-10-25
     audited_sha: 8527123
-    blocks: [usage]
+    blocks: [products, usage]
     blockedBy: []
     detail: data-store.md
     next: "Connect /api/configs to the routine and category editors when they arrive"

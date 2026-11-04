@@ -4,11 +4,6 @@ EARS requirements for the usage segment. Design: [usage-design.md](usage-design.
 
 Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or implemented but not yet covered by tests, `[D]` deferred.
 
-## Product Record
-
-- [x] **USAGE-001**: The system shall store each tracked product as a record with an integer id, name, brand, category, a map of closed-month use counts keyed by `YYYY-MM`, a current month in `YYYY-MM` form, and a use count for that current month.
-- [x] **USAGE-002**: The system shall locate a product record by its `id` field, independent of the record's position in `usage.json`.
-
 ## Month Rollover
 
 - [x] **USAGE-ROLL-001**: When usage data is loaded (by the home page loader, a GET of `/api/usage`, or a POST to `/api/usage` before its change is applied), the system shall, for each product record whose current month is earlier than the server's current local month, add the record's current-month use count to its closed-month count for that month.
@@ -27,6 +22,10 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-004**: The usage table shall show, as a product's overall uses, the sum of the product's closed-month use counts plus its current-month use count.
 - [x] **USAGE-UI-005**: The usage table shall show a + and a − control on every product row.
 - [x] **USAGE-UI-006**: If `configs.json` has no `categories` key, then the usage table shall show product rows in their stored order.
+- [ ] **USAGE-UI-007**: The usage table shall show an Add product button above the product rows.
+- [ ] **USAGE-UI-008**: The usage table shall show an edit button on every product row.
+- [ ] **USAGE-UI-009**: When the user activates the Add product button, the usage table shall open the product dialog to add a product.
+- [ ] **USAGE-UI-010**: When the user activates a product row's edit button, the usage table shall open the product dialog to edit that product.
 
 ## Logging
 
@@ -56,9 +55,3 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-API-010**: If a POST body to `/api/usage` fails validation, then the system shall leave `usage.json` unchanged.
 - [x] **USAGE-API-011**: If a POST to `/api/usage` cannot complete because `usage.json` cannot be read or written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
 - [x] **USAGE-API-012**: If a POST to `/api/usage` cannot complete because `usage.json` cannot be read or written, then the system shall leave `usage.json` unchanged.
-
-## Categories
-
-- [x] **USAGE-CAT-001**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation unless it is an object whose values are arrays (possibly empty) of non-empty strings.
-- [x] **USAGE-CAT-002**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any category name appears more than once across all groups.
-- [x] **USAGE-CAT-003**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if it omits a category that any product record in `usage.json` uses.

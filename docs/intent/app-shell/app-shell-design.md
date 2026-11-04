@@ -24,6 +24,7 @@ The shell composes features but owns none of their behavior. The home page loads
 |---|---|---|
 | `/` | `routes/home.tsx` | Home page |
 | `/api/usage` | `routes/api.usage.ts` | Usage data API (usage segment) |
+| `/api/products` | `routes/api.products.ts` | Product add and edit API (products segment) |
 | `/api/configs` | `routes/api.configs.ts` | Configuration API (data-store segment) |
 
 ## Root Layout

@@ -9,14 +9,14 @@ prefix: STORE
 
 beauty-tracker is a single-user app running locally with a small amount of data, so it stores everything as JSON files on disk rather than in a database. The app is the only writer of these files (HLD tenet *The app is the only writer*): every change arrives through an API route that validates it before the data store writes it.
 
-The data store owns where the files live, how they are read and written, and the HTTP endpoint for configuration. The shape and meaning of each file — and the rules for validating it — belong to the segments that use it: usage owns `usage.json`'s records and `configs.json → categories`; routines owns `configs.json → routines`.
+The data store owns where the files live, how they are read and written, and the HTTP endpoint for configuration. The shape and meaning of each file — and the rules for validating it — belong to the segments that use it: products owns `usage.json`'s records and `configs.json → categories`; usage owns changes to the records' count fields; routines owns `configs.json → routines`.
 
 ## Data Files
 
 | File | Contents | Owning segment for contents and validation rules |
 |---|---|---|
-| `usage.json` | Array of product records | usage |
-| `configs.json` | `{ categories: { skincare, makeup, lips }, routines: { name: [ids] } }` | usage (`categories`), routines (`routines`) |
+| `usage.json` | Array of product records | products (records), usage (changes to count fields) |
+| `configs.json` | `{ categories: { skincare, makeup, lips }, routines: { name: [ids] } }` | products (`categories`), routines (`routines`) |
 
 ## Environment Folders
 
@@ -55,7 +55,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 
 `/api/configs` is the write path for in-app editing of routines and categories (HLD Goal 4). A POST carries only the parts being changed: `categories`, `routines`, or both. Through the `configs.json` update queue, the route reads the current `configs.json`, replaces each key present in the body, keeps the rest, and writes the result.
 
-**Validation.** Before writing, the route validates each key present in the body: `categories` against the usage segment's rules, `routines` against the routines segment's rules. Routine validation checks product ids against `usage.json`. A body with any top-level key other than `categories` and `routines` is invalid. The error message describes the first failure found.
+**Validation.** Before writing, the route validates each key present in the body: `categories` against the products segment's rules, `routines` against the routines segment's rules. Routine validation checks product ids against `usage.json`. A body with any top-level key other than `categories` and `routines` is invalid. The error message describes the first failure found.
 
 **Malformed requests.** A POST body that is not valid JSON, or is JSON but not an object, fails validation like any other bad input: 400 with an error message, file unchanged.
 
@@ -63,7 +63,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 
 No UI calls the route yet.
 
-The `/api/usage` endpoint, including its validation, is specified by the usage segment.
+The `/api/usage` endpoint, including its validation, is specified by the usage segment, and `/api/products` by the products segment.
 
 ## Decisions & Alternatives
 
@@ -88,13 +88,13 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 ## Open Questions & Future Decisions
 
 ### Deferred
-1. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless until product editing exists; revisit then.
+1. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless while nothing in the app removes a category; revisit when a category editor can.
 
 ## References
 
 - src/utils/files.server.ts
 - src/app/routes/api.configs.ts
-- src/features/usage/category-rules.ts
+- src/features/products/category-rules.ts
 - src/features/routine/routine-rules.ts
 - src/assets/data/, src/assets/data-prod/
 - package.json
