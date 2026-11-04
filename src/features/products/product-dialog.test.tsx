@@ -343,9 +343,13 @@ describe("closing the dialog", () => {
   it("stays open when the user clicks outside it", async () => {
     renderDialog();
     await fillValidNewProduct();
-    fireEvent.pointerDown(document.body);
-    fireEvent.pointerUp(document.body);
-    fireEvent.click(document.body);
+    // Outside-click detection attaches just after opening, and jsdom gives the dialog no size,
+    // so a click needs a delay and coordinates away from (0, 0) to count as outside.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const outside = { clientX: 500, clientY: 500 };
+    fireEvent.pointerDown(document.body, outside);
+    fireEvent.pointerUp(document.body, outside);
+    fireEvent.click(document.body, outside);
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Dew Serum");
@@ -585,6 +589,8 @@ describe("when a save fails", () => {
     fireEvent.click(button("Save"));
     await screen.findByText("Nope");
     await waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
+    // The group locks once the refreshed categories, which now include Toner, reach the form.
+    await waitFor(() => expect(screen.getByLabelText("Group")).toBeDisabled());
     await waitFor(() => expect(button("Save")).toBeEnabled());
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(2));
