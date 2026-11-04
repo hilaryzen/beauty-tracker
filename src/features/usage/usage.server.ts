@@ -1,11 +1,6 @@
 import { getFile, modifyFile } from "@/utils/files.server";
+import { thisMonth } from "@/utils/this-month";
 import type { Product } from "@/features/products/types";
-
-/** The server's current local month as `YYYY-MM`. */
-function thisMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
 
 /** Logs and returns false if any record's currentMonth is missing or not `YYYY-MM`. */
 // @spec USAGE-ROLL-007

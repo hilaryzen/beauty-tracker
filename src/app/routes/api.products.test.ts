@@ -8,7 +8,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, rename: vi.fn(actual.rename) };
 });
 
-function send(method: "POST" | "PUT", rawBody: string) {
+function send(method: "POST" | "PUT" | "PATCH" | "DELETE", rawBody: string) {
   const request = new Request("http://localhost/api/products", {
     method,
     headers: { "Content-Type": "application/json" },
@@ -213,6 +213,20 @@ describe("/api/products", () => {
       await post({ ...newProduct, name: "" });
       await put({ ...changes, id: 99 });
       await send("POST", "{not json");
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+    });
+  });
+
+  describe("other methods", () => {
+    // @spec PROD-API-018
+    it.each(["PATCH", "DELETE"] as const)("responds 405 with an error message to %s", async (method) => {
+      await expectError(await send(method, JSON.stringify(changes)), 405);
+    });
+
+    // @spec PROD-API-019
+    it.each(["PATCH", "DELETE"] as const)("leaves usage.json unchanged on %s", async (method) => {
+      // A body that POST would accept, so only the method can be what stops the write.
+      await send(method, JSON.stringify(newProduct));
       expect(await readData("usage.json")).toEqual(sampleUsage);
     });
   });
