@@ -1,8 +1,8 @@
-import type { ItemUsage } from "./types";
+import type { Product } from "./types";
 
 /** Returns a message describing the first rule `categories` breaks, or undefined if it is valid. */
-// @spec USAGE-CAT-001, USAGE-CAT-002, USAGE-CAT-003
-export function checkCategories(categories: unknown, usage: ItemUsage[]): string | undefined {
+// @spec PROD-CAT-001, PROD-CAT-002, PROD-CAT-003
+export function checkCategories(categories: unknown, usage: Product[]): string | undefined {
   if (typeof categories !== "object" || categories === null || Array.isArray(categories)) {
     return "categories must be an object of category groups";
   }

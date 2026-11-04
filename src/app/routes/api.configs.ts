@@ -1,6 +1,6 @@
 import type { Route } from "./+types/api.configs";
 import { checkRoutines } from "@/features/routine/routine-rules";
-import { checkCategories } from "@/features/usage/category-rules";
+import { checkCategories } from "@/features/products/category-rules";
 import { loadUsage } from "@/features/usage/usage.server";
 import { getFile, modifyFile } from "@/utils/files.server";
 

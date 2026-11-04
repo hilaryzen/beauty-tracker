@@ -1,5 +1,5 @@
-// @spec USAGE-001
-export type ItemUsage = {
+// @spec PROD-001
+export type Product = {
   id: number,
   name: string,
   brand: string,

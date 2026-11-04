@@ -1,5 +1,5 @@
 import type { Route } from "./+types/api.usage";
-import type { ItemUsage } from "@/features/usage/types";
+import type { Product } from "@/features/products/types";
 import { hasValidMonths, loadUsage, rollOver } from "@/features/usage/usage.server";
 import { modifyFile } from "@/utils/files.server";
 
@@ -42,8 +42,8 @@ function checkShape(body: unknown): string | undefined {
 }
 
 /** Applies the change to every listed product, never taking a count below 0. */
-// @spec USAGE-002, USAGE-LOG-003, USAGE-LOG-006
-function applyChange(usage: ItemUsage[], { ids, delta }: UsageChange): ItemUsage[] {
+// @spec PROD-002, USAGE-LOG-003, USAGE-LOG-006
+function applyChange(usage: Product[], { ids, delta }: UsageChange): Product[] {
   const unknown = ids.find((id) => !usage.some((record) => record.id === id));
   if (unknown !== undefined) throw new ValidationError(`No product has id ${unknown}`);
   return usage.map((record) =>
@@ -65,7 +65,7 @@ export async function action({ request }: Route.ActionArgs) {
   if (shapeError) return errorResponse(shapeError, 400);
 
   try {
-    await modifyFile<ItemUsage[]>("usage.json", (usage) => {
+    await modifyFile<Product[]>("usage.json", (usage) => {
       if (!hasValidMonths(usage)) throw new Error("usage.json has a record with no valid currentMonth");
       return applyChange(rollOver(usage), body as UsageChange);
     });

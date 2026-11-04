@@ -1,14 +1,14 @@
 import { Flex, Card, HStack, List } from "@chakra-ui/react"
-import type { ItemUsage } from "../usage/types";
+import type { Product } from "@/features/products/types";
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { useUsage } from "../usage/use-usage";
 
 type RoutineCardProps = {
-  usage: ItemUsage[];
+  usage: Product[];
   routines?: Record<string, Array<number>>
 }
 
-function productName(usage: ItemUsage[], id: number) {
+function productName(usage: Product[], id: number) {
   return usage.find((item) => item.id === id)?.name ?? `Unknown product (id ${id})`;
 }
 

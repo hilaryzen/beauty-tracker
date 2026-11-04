@@ -1,15 +1,15 @@
 import { Table } from "@chakra-ui/react"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
-import type { ItemUsage } from "./types";
+import type { Product } from "@/features/products/types";
 import { useMemo } from "react";
 import { useUsage } from "./use-usage";
 
 type UsageTableProps = {
-  usage: ItemUsage[];
+  usage: Product[];
   categories?: Record<string, Array<string>>
 }
 
-function overallUses(item: ItemUsage) {
+function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
