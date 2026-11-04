@@ -66,6 +66,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PROD-API-015**: If a POST or PUT to `/api/products` cannot complete because `usage.json` or `configs.json` cannot be read, or `usage.json` cannot be written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
 - [ ] **PROD-API-016**: If a POST or PUT to `/api/products` cannot complete because `usage.json` or `configs.json` cannot be read, or `usage.json` cannot be written, then the system shall leave `usage.json` unchanged.
 - [ ] **PROD-API-017**: When `/api/products` receives overlapping POST requests that pass validation, the system shall assign each new product record a different id.
+- [ ] **PROD-API-018**: If `/api/products` receives a PATCH or DELETE request, then the system shall respond with 405 and a JSON body of the form `{ "error": "<message>" }`.
+- [ ] **PROD-API-019**: If `/api/products` receives a PATCH or DELETE request, then the system shall leave `usage.json` unchanged.
 
 ## Categories
 

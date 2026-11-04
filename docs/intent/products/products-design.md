@@ -97,6 +97,7 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 | `/api/products` | PUT | `{ "id", "name", "brand", "category" }` | `null`; product changed |
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
+| `/api/products` | PATCH or DELETE | Any | 405 with `{ "error": "<message>" }`; file unchanged |
 
 A body is valid when it is a JSON object with exactly the keys listed for its method, `name` and `brand` satisfy the record rules, and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
 
