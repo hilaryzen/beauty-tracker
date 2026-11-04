@@ -58,9 +58,13 @@ The `/api/products` route validates each product it saves against these rules. L
 
 The category is saved first so that a failure between the two steps leaves at worst an unused category, never a product whose category is not configured. An unused category is valid and appears in the dropdown.
 
-A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling, step 1 is skipped, and the chosen group is ignored. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
+A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling and step 1 is skipped. While the name matches, the group dropdown shows that category's group and is disabled, and the group name input is hidden, so the form shows where the product is going and does not offer a choice it would ignore. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
 
-**After saving.** On success the dialog closes and the page's loaders revalidate. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Cancel closes the dialog and discards its contents.
+**After saving.** On success the dialog closes and the page's loaders revalidate. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
+
+**Closing.** Cancel, Esc, and the close control close the dialog and discard its contents. A click outside the dialog does nothing, so a stray click cannot lose what was typed. While a save is in flight the dialog cannot be closed, so the result of the save, including a failure, is seen in context.
+
+**While open.** If the page's loaders revalidate while the dialog is open, such as when a logged use finishes saving, the fields keep what is in them.
 
 Routines refer to products by `id`, so renaming a product updates its routine cards without changing `configs.json`. Moving a product to another category leaves the old category configured, even if nothing else uses it.
 
@@ -71,7 +75,7 @@ Inside the `usage.json` update queue (data-store design, *Serialized updates*), 
 - **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, and appends the record.
 - **Edit** — replaces `name`, `brand`, and `category`, and leaves every other field unchanged.
 
-The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded.
+The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queue, overlapping adds each see the previous one's record and get different ids.
 
 ## Categories
 
@@ -111,6 +115,13 @@ A body is valid when it is a JSON object with exactly the keys listed for its me
 | Product ids | Highest existing id plus 1 | Random id; stored counter | Small readable ids; products cannot be deleted, so an id is never reused |
 | Capitalization of typed categories and groups | A name differing only by capitalization reuses the existing one | Treat as a new name | `cleanser` and `Cleanser` would otherwise split one category in two, and nothing in the app can merge them |
 | Duplicate products | Allowed | Reject a repeated name and brand | A repurchase can be tracked separately |
+| Group for an existing category typed as new | Filled in and locked | Require a group and ignore it; hide the group dropdown | Shows where the product is going without offering a choice that would be ignored |
+| Clicking outside the dialog | Does nothing; Cancel, Esc, and the close control close it | Chakra's default of closing on an outside click | A stray click should not lose what was typed |
+| Closing during a save | Not allowed | Let the save continue with the dialog gone | A failure is only useful if the form is still there to correct and retry |
+| Ids already listed in routines | Not checked when assigning an id | Skip ids that routines list | A routine can list an unknown id only in data that predates the routine rules. A new product could then join that routine; rare, and not worth a check (*Simplicity over robustness*) |
+| Malformed months on product writes | Not checked | Reject the write as usage's loader does | The write leaves the bad record as it was, and the home page still reports it, so nothing is hidden |
+| Number-only group names | Allowed; they sort before other groups | Reject them | JavaScript orders integer-like object keys first. Such names are unlikely, as in the routines design |
+| Saving a new category from two open tabs | Accepted; the later save can drop the earlier tab's unused category | Merge on the server | `/api/configs` replaces `categories` as a whole, and this needs two tabs open at once for one user (*Simplicity over robustness*) |
 | Category groups | Any number of groups, sorted in configured order | Fixed `skincare`, `makeup`, `lips` | New groups (such as hair or body) need no code change |
 | Category membership | Product categories must be configured; deleting a category in use is rejected | Free-text categories; allow deleting used categories | Every product stays sortable and groupable for the inventory view |
 

@@ -15,7 +15,7 @@ What a product is: the product record, categories, and adding and editing produc
 - docs/intent/products/products-design.md
 
 ### EARS
-- docs/intent/products/products-specs.md (46 specs)
+- docs/intent/products/products-specs.md (55 specs)
 
 ### Tests
 - src/app/routes/api.usage.test.ts (cites the record specs under their former IDs)
@@ -41,12 +41,12 @@ What a product is: the product record, categories, and adding and editing produc
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
 | Record | PROD-001 to PROD-002 | 2 | 0 | 0 |
-| Dialog | PROD-EDIT-001 to PROD-EDIT-011 | 0 | 0 | 11 |
-| Saving | PROD-SAVE-001 to PROD-SAVE-013 | 0 | 0 | 13 |
-| API | PROD-API-001 to PROD-API-016 | 0 | 0 | 16 |
+| Dialog | PROD-EDIT-001 to PROD-EDIT-018 | 0 | 0 | 18 |
+| Saving | PROD-SAVE-001 to PROD-SAVE-014 | 0 | 0 | 14 |
+| API | PROD-API-001 to PROD-API-017 | 0 | 0 | 17 |
 | Categories | PROD-CAT-001 to PROD-CAT-004 | 3 | 0 | 1 |
 
-**Summary:** 46 specs: 5 `[x]`, 41 `[ ]`.
+**Summary:** 55 specs: 5 `[x]`, 50 `[ ]`.
 
 ## Key Findings
 

@@ -22,6 +22,13 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PROD-EDIT-009**: While a save from the product dialog is in flight, the dialog shall disable Save.
 - [ ] **PROD-EDIT-010**: When the user activates Cancel in the product dialog, the page shall close the dialog without sending any request.
 - [ ] **PROD-EDIT-011**: When the product dialog saves, the page shall trim leading and trailing whitespace from every text input before using its value.
+- [ ] **PROD-EDIT-012**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall show that category's group in the group dropdown.
+- [ ] **PROD-EDIT-013**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall disable the group dropdown.
+- [ ] **PROD-EDIT-014**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall not show the group name input.
+- [ ] **PROD-EDIT-015**: When the user presses Esc or activates the close control in the product dialog, the page shall close the dialog without sending any request.
+- [ ] **PROD-EDIT-016**: When the user clicks outside the product dialog, the page shall keep the dialog open.
+- [ ] **PROD-EDIT-017**: While a save from the product dialog is in flight, the page shall ignore Cancel, Esc, and the close control.
+- [ ] **PROD-EDIT-018**: When the page's loaders revalidate while the product dialog is open, the dialog shall keep the contents of its fields.
 
 ## Saving a Product
 
@@ -35,9 +42,10 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PROD-SAVE-008**: When a request to `/api/products` from the product dialog succeeds, the page shall close the dialog.
 - [ ] **PROD-SAVE-009**: When a request to `/api/products` from the product dialog succeeds, the page shall revalidate its loaders.
 - [ ] **PROD-SAVE-010**: If a request from the product dialog fails, then the page shall keep the dialog open with its current contents.
-- [ ] **PROD-SAVE-011**: If a request from the product dialog responds with an error status, then the page shall show an error notification containing the server's error message.
+- [ ] **PROD-SAVE-011**: If a request from the product dialog responds with an error status and a JSON body with a non-empty string `error`, then the page shall show an error notification containing that message.
 - [ ] **PROD-SAVE-012**: If a request from the product dialog gets no response, then the page shall show an error notification stating that the change was not saved.
 - [ ] **PROD-SAVE-013**: If the POST to `/api/configs` from the product dialog succeeds and the request to `/api/products` fails, then the page shall revalidate its loaders.
+- [ ] **PROD-SAVE-014**: If a request from the product dialog responds with an error status and no JSON body with a non-empty string `error`, then the page shall show an error notification stating that the change was not saved.
 
 ## Product API
 
@@ -51,12 +59,13 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any other top-level key, then the system shall treat the body as failing validation.
 - [ ] **PROD-API-009**: If `name` or `brand` in a body to `/api/products` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
 - [ ] **PROD-API-010**: If `category` in a body to `/api/products` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
-- [ ] **PROD-API-011**: If `id` in a PUT body to `/api/products` matches no product record, then the system shall treat the body as failing validation.
+- [ ] **PROD-API-011**: If `id` in a PUT body to `/api/products` is not an integer matching a product record's `id`, then the system shall treat the body as failing validation.
 - [ ] **PROD-API-012**: If a body to `/api/products` is not valid JSON or is not a JSON object, then the system shall treat the body as failing validation.
 - [ ] **PROD-API-013**: If a body to `/api/products` fails validation, then the system shall respond with 400 and a JSON body of the form `{ "error": "<message>" }` describing the first failure found.
 - [ ] **PROD-API-014**: If a body to `/api/products` fails validation, then the system shall leave `usage.json` unchanged.
 - [ ] **PROD-API-015**: If a POST or PUT to `/api/products` cannot complete because `usage.json` or `configs.json` cannot be read, or `usage.json` cannot be written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
 - [ ] **PROD-API-016**: If a POST or PUT to `/api/products` cannot complete because `usage.json` or `configs.json` cannot be read, or `usage.json` cannot be written, then the system shall leave `usage.json` unchanged.
+- [ ] **PROD-API-017**: When `/api/products` receives overlapping POST requests that pass validation, the system shall assign each new product record a different id.
 
 ## Categories
 
