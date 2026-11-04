@@ -1,7 +1,8 @@
-import { Table } from "@chakra-ui/react"
+import { Button, Flex, Table } from "@chakra-ui/react"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
+import { ProductDialog } from "@/features/products/product-dialog";
 import type { Product } from "@/features/products/types";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useUsage } from "./use-usage";
 
 type UsageTableProps = {
@@ -13,9 +14,16 @@ function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-LOG-001, USAGE-LOG-002
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | undefined>();
+
+  function openDialog(product?: Product) {
+    setEditing(product);
+    setDialogOpen(true);
+  }
 
   const sortedUsage = useMemo(() => {
     // Every group's categories, in configured group order; no categories means one shared position.
@@ -27,6 +35,10 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   }, [usage, categories]);
 
   return (
+    <>
+    <Flex justify="flex-end" mb="2">
+      <Button onClick={() => openDialog()}>Add product</Button>
+    </Flex>
     <Table.Root size="sm">
       <Table.Header>
         <Table.Row>
@@ -46,10 +58,15 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
             <Table.Cell>{item.brand}</Table.Cell>
             <Table.Cell>{overallUses(item)}</Table.Cell>
             <Table.Cell>{item.usesThisMonth}</Table.Cell>
-            <Table.Cell textAlign="end"><AddMinusButtons onAddClick={() => addUsesToItems([item.id])} onMinusClick={() => removeUsesFromItems([item.id])} /></Table.Cell>
+            <Table.Cell textAlign="end">
+              <AddMinusButtons onAddClick={() => addUsesToItems([item.id])} onMinusClick={() => removeUsesFromItems([item.id])} />
+              <Button variant="outline" ml="2" onClick={() => openDialog(item)}>Edit</Button>
+            </Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>
     </Table.Root>
+    <ProductDialog open={dialogOpen} product={editing} categories={categories} onClose={() => setDialogOpen(false)} />
+    </>
   )
 }
