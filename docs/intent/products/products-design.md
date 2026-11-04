@@ -140,6 +140,7 @@ A body is valid when it is a JSON object with exactly the keys listed for its me
 - src/features/products/product-dialog.tsx
 - src/features/products/use-product-editor.ts
 - src/app/routes/api.products.ts
+- src/utils/this-month.ts
 - docs/high-level-design.md
 - docs/intent/usage/usage-design.md
 - docs/intent/data-store/data-store-design.md

@@ -20,7 +20,7 @@ arrows:
     blocks: [usage, routines]
     blockedBy: [data-store]
     detail: products.md
-    next: "Implement the product dialog and /api/products; move the record and category rules out of the usage folder"
+    next: "Design deleting products and the category editor (HLD Goal 4)"
     drift: null
 
   usage:
@@ -32,7 +32,7 @@ arrows:
     blocks: [routines, app-shell]
     blockedBy: [data-store, products]
     detail: usage.md
-    next: "Implement the Add product and edit buttons with the products segment"
+    next: "None open"
     drift: null
 
   routines:

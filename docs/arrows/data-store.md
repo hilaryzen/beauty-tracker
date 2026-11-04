@@ -36,7 +36,7 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 
 **Key Components:**
 1. `files.server.ts` — `getDataDir()` (`DATA_DIR`, else `data-prod` when `ENV=prod`, else `data`); `getFile(name)`; `updateFile(name, data)` (atomic temp-file-then-rename, rethrows on failure); `modifyFile(name, change)` (read-change-write, queued per file)
-2. `/api/configs` route — GET returns `configs.json`; POST validates `categories` (`features/usage/category-rules.ts`) and `routines` (`features/routine/routine-rules.ts`), then merges the sent keys inside `modifyFile`
+2. `/api/configs` route — GET returns `configs.json`; POST validates `categories` (`features/products/category-rules.ts`) and `routines` (`features/routine/routine-rules.ts`), then merges the sent keys inside `modifyFile`
 3. Data folders — `data/` (development, committed) and `data-prod/` (real data, git-ignored)
 
 ## Spec Coverage

@@ -4,7 +4,7 @@ What a product is: the product record, categories, and adding and editing produc
 
 ## Status
 
-**MAPPED** — not yet audited. The record and category rules exist in code under `src/features/usage/`; the product dialog and `/api/products` are designed but not built.
+**MAPPED** — not yet audited. All specs implemented with tests.
 
 ## References
 
@@ -15,15 +15,21 @@ What a product is: the product record, categories, and adding and editing produc
 - docs/intent/products/products-design.md
 
 ### EARS
-- docs/intent/products/products-specs.md (55 specs)
+- docs/intent/products/products-specs.md (57 specs)
 
 ### Tests
-- src/app/routes/api.usage.test.ts (cites the record specs under their former IDs)
-- src/features/usage/category-rules.test.ts (cites the category specs under their former IDs)
+- src/app/routes/api.products.test.ts
+- src/app/routes/api.usage.test.ts (record specs)
+- src/features/products/category-rules.test.ts
+- src/features/products/product-dialog.test.tsx
 
 ### Code
-- src/features/usage/types.ts (moves to `src/features/products/types.ts`)
-- src/features/usage/category-rules.ts (moves to `src/features/products/category-rules.ts`)
+- src/features/products/types.ts
+- src/features/products/category-rules.ts
+- src/features/products/product-dialog.tsx
+- src/features/products/use-product-editor.ts
+- src/app/routes/api.products.ts
+- src/utils/this-month.ts
 - src/assets/data/configs.json (`categories` key)
 
 ## Architecture
@@ -31,33 +37,29 @@ What a product is: the product record, categories, and adding and editing produc
 **Purpose:** Define the product record and category rules, and let the user add and edit products without opening a data file.
 
 **Key Components:**
-1. `Product` type — product record shape (currently `ItemUsage`)
-2. `checkCategories` — category rules applied by `/api/configs`
-3. `ProductDialog` and `useProductEditor` — one modal form for add and edit; saves a new category through `/api/configs`, then the product through `/api/products` (not built)
-4. `/api/products` route — POST adds and PUT edits, validated inside the `usage.json` queue, with no rollover (not built)
+1. `Product` type — product record shape (`types.ts`)
+2. `checkCategories` — category rules applied by `/api/configs` (`category-rules.ts`)
+3. `ProductDialog` and `useProductEditor` — one modal form for add and edit; saves a new category through `/api/configs`, then the product through `/api/products` (`product-dialog.tsx`, `use-product-editor.ts`)
+4. `/api/products` route — POST adds and PUT edits, validated inside the `usage.json` queue, with no rollover (`api.products.ts`)
 
 ## Spec Coverage
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
 | Record | PROD-001 to PROD-002 | 2 | 0 | 0 |
-| Dialog | PROD-EDIT-001 to PROD-EDIT-018 | 0 | 0 | 18 |
-| Saving | PROD-SAVE-001 to PROD-SAVE-014 | 0 | 0 | 14 |
-| API | PROD-API-001 to PROD-API-017 | 0 | 0 | 17 |
-| Categories | PROD-CAT-001 to PROD-CAT-004 | 3 | 0 | 1 |
+| Dialog | PROD-EDIT-001 to PROD-EDIT-018 | 18 | 0 | 0 |
+| Saving | PROD-SAVE-001 to PROD-SAVE-014 | 14 | 0 | 0 |
+| API | PROD-API-001 to PROD-API-019 | 19 | 0 | 0 |
+| Categories | PROD-CAT-001 to PROD-CAT-004 | 4 | 0 | 0 |
 
-**Summary:** 55 specs: 5 `[x]`, 50 `[ ]`.
+**Summary:** 57 specs, all `[x]`.
 
 ## Key Findings
 
-1. **Code still cites former spec IDs** — `@spec` comments in `types.ts`, `category-rules.ts`, `api.usage.ts`, and their tests cite `USAGE-001`, `USAGE-002`, and `USAGE-CAT-001` to `USAGE-CAT-003`, which are now `PROD-001`, `PROD-002`, and `PROD-CAT-001` to `PROD-CAT-003`.
-2. **Code still lives in the usage folder** — the record type and category rules move to `src/features/products/`, and `ItemUsage` becomes `Product`.
+1. **Deleting products and a category editor are not designed** — both are needed for HLD Goal 4 (LLD deferred questions 1 and 2).
 
 ## Work Required
 
-### Must Fix
-1. Update the `@spec` comments and move the files (findings 1 and 2) when this segment is implemented.
-2. Implement the `[ ]` specs.
-
 ### Nice to Have
-1. Decide whether categories should split into their own segment once inventory or purchases arrive.
+1. Design deleting products and the category editor (HLD Goal 4).
+2. Decide whether categories should split into their own segment once inventory or purchases arrive.

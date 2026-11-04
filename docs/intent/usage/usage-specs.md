@@ -22,10 +22,10 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-004**: The usage table shall show, as a product's overall uses, the sum of the product's closed-month use counts plus its current-month use count.
 - [x] **USAGE-UI-005**: The usage table shall show a + and a − control on every product row.
 - [x] **USAGE-UI-006**: If `configs.json` has no `categories` key, then the usage table shall show product rows in their stored order.
-- [ ] **USAGE-UI-007**: The usage table shall show an Add product button above the product rows.
-- [ ] **USAGE-UI-008**: The usage table shall show an edit button on every product row.
-- [ ] **USAGE-UI-009**: When the user activates the Add product button, the usage table shall open the product dialog to add a product.
-- [ ] **USAGE-UI-010**: When the user activates a product row's edit button, the usage table shall open the product dialog to edit that product.
+- [x] **USAGE-UI-007**: The usage table shall show an Add product button above the product rows.
+- [x] **USAGE-UI-008**: The usage table shall show an edit button on every product row.
+- [x] **USAGE-UI-009**: When the user activates the Add product button, the usage table shall open the product dialog to add a product.
+- [x] **USAGE-UI-010**: When the user activates a product row's edit button, the usage table shall open the product dialog to edit that product.
 
 ## Logging
 
