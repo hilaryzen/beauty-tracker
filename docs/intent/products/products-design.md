@@ -49,7 +49,7 @@ The `/api/products` route validates each product it saves against these rules. L
 
 **Fields.** Name, brand, and category are required. Category is a dropdown of the configured categories, listed under their groups in configured order, ending with a "New category" option. Two products may have the same name and brand, so a repurchase can be tracked separately.
 
-**New categories.** Choosing "New category" reveals a category name input and a group dropdown of the existing groups, ending with a "New group" option that reveals a group name input. A new category goes at the end of its group, and a new group goes after the existing groups, which together set where the category sorts in the usage table. With no categories configured, the category dropdown offers only "New category" and the group dropdown offers only "New group".
+**New categories.** Choosing "New category" reveals a new category name input and a group dropdown of the existing groups, ending with a "New group" option that reveals a new group name input. A new category goes at the end of its group, and a new group goes after the existing groups, which together set where the category sorts in the usage table. With no categories configured, the category dropdown offers only "New category" and the group dropdown offers only "New group".
 
 **Saving.** `useProductEditor()` (`src/features/products/use-product-editor.ts`) trims the text fields and saves in up to two requests, one at a time:
 
@@ -58,7 +58,7 @@ The `/api/products` route validates each product it saves against these rules. L
 
 The category is saved first so that a failure between the two steps leaves at worst an unused category, never a product whose category is not configured. An unused category is valid and appears in the dropdown.
 
-A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling and step 1 is skipped. While the name matches, the group dropdown shows that category's group and is disabled, and the group name input is hidden, so the form shows where the product is going and does not offer a choice it would ignore. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
+A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling and step 1 is skipped. While the name matches, the group dropdown shows that category's group and is disabled, and the new group name input is hidden, so the form shows where the product is going and does not offer a choice it would ignore. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
 
 **After saving.** On success the dialog closes and the page's loaders revalidate. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
 

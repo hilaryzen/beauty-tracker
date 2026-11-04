@@ -15,16 +15,16 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PROD-EDIT-002**: When the product dialog opens to edit a product, the dialog shall show that product's name, brand, and category.
 - [ ] **PROD-EDIT-003**: While the product dialog is open, the page shall prevent interaction with the usage table and routine cards.
 - [ ] **PROD-EDIT-004**: The product dialog's category dropdown shall list the configured categories under their groups, in configured order, followed by a "New category" option.
-- [ ] **PROD-EDIT-005**: When the user chooses "New category" in the product dialog, the dialog shall show a category name input and a group dropdown listing the existing groups in configured order, followed by a "New group" option.
-- [ ] **PROD-EDIT-006**: When the user chooses "New group" in the product dialog, the dialog shall show a group name input.
-- [ ] **PROD-EDIT-007**: While any shown name, brand, category name, or group name input in the product dialog is blank after trimming, the dialog shall disable Save.
+- [ ] **PROD-EDIT-005**: When the user chooses "New category" in the product dialog, the dialog shall show a new category name input and a group dropdown listing the existing groups in configured order, followed by a "New group" option.
+- [ ] **PROD-EDIT-006**: When the user chooses "New group" in the product dialog, the dialog shall show a new group name input.
+- [ ] **PROD-EDIT-007**: While any shown name, brand, new category name, or new group name input in the product dialog is blank after trimming, the dialog shall disable Save.
 - [ ] **PROD-EDIT-008**: While no category, or no group for a new category, is chosen in the product dialog, the dialog shall disable Save.
 - [ ] **PROD-EDIT-009**: While a save from the product dialog is in flight, the dialog shall disable Save.
 - [ ] **PROD-EDIT-010**: When the user activates Cancel in the product dialog, the page shall close the dialog without sending any request.
 - [ ] **PROD-EDIT-011**: When the product dialog saves, the page shall trim leading and trailing whitespace from every text input before using its value.
 - [ ] **PROD-EDIT-012**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall show that category's group in the group dropdown.
 - [ ] **PROD-EDIT-013**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall disable the group dropdown.
-- [ ] **PROD-EDIT-014**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall not show the group name input.
+- [ ] **PROD-EDIT-014**: While the typed category name in the product dialog matches a configured category ignoring capitalization, the dialog shall not show the new group name input.
 - [ ] **PROD-EDIT-015**: When the user presses Esc or activates the close control in the product dialog, the page shall close the dialog without sending any request.
 - [ ] **PROD-EDIT-016**: When the user clicks outside the product dialog, the page shall keep the dialog open.
 - [ ] **PROD-EDIT-017**: While a save from the product dialog is in flight, the page shall ignore Cancel, Esc, and the close control.
