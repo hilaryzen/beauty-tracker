@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { system } from "@/components/ui/provider";
 import { toaster } from "@/components/ui/toaster";
@@ -11,9 +12,11 @@ type ErrorProps = Parameters<typeof ErrorBoundary>[0];
 function renderError(error: unknown) {
   stubMatchMedia();
   render(
-    <Shell>
-      <ErrorBoundary {...({ error } as ErrorProps)} />
-    </Shell>,
+    <MemoryRouter>
+      <Shell>
+        <ErrorBoundary {...({ error } as ErrorProps)} />
+      </Shell>
+    </MemoryRouter>,
   );
 }
 
@@ -38,9 +41,11 @@ describe("layout", () => {
   it("follows the system color-scheme preference, including on the error page", async () => {
     stubMatchMedia(true);
     render(
-      <Shell>
-        <ErrorBoundary {...({ error: routeError(404, "Not Found") } as ErrorProps)} />
-      </Shell>,
+      <MemoryRouter>
+        <Shell>
+          <ErrorBoundary {...({ error: routeError(404, "Not Found") } as ErrorProps)} />
+        </Shell>
+      </MemoryRouter>,
     );
     await waitFor(() => expect(document.documentElement).toHaveClass("dark"));
   });
@@ -49,9 +54,11 @@ describe("layout", () => {
   it("shows notifications at the bottom-right of the page", async () => {
     stubMatchMedia();
     render(
-      <Shell>
-        <p>page</p>
-      </Shell>,
+      <MemoryRouter>
+        <Shell>
+          <p>page</p>
+        </Shell>
+      </MemoryRouter>,
     );
     toaster.create({ title: "Hello from a feature" });
     const toast = await screen.findByText("Hello from a feature");

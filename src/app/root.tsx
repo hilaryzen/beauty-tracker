@@ -11,6 +11,7 @@ import { Box, Container, Heading, Text } from "@chakra-ui/react";
 import type { Route } from "./+types/root";
 import { Provider } from "@/components/ui/provider";
 import { Toaster } from "@/components/ui/toaster";
+import { AppHeader } from "@/components/app-header/main";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,11 +26,12 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-/** Theme, color mode, and the notification area, around every page including the error page. */
-// @spec SHELL-UI-001, SHELL-UI-002, SHELL-UI-003
+/** Theme, color mode, navigation header, and the notification area, around every page including the error page. */
+// @spec SHELL-UI-001, SHELL-UI-002, SHELL-UI-003, SHELL-NAV-001
 export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <Provider>
+      <AppHeader />
       {children}
       <Toaster />
     </Provider>
@@ -37,7 +39,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 }
 
 // React Router renders Layout around both the route tree and ErrorBoundary.
-// @spec SHELL-UI-004
+// @spec SHELL-UI-004, SHELL-UI-005
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -45,6 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Beauty Tracker</title>
+        <meta name="description" content="Track beauty product usage, purchases, and inventory" />
         <Meta />
         <Links />
       </head>

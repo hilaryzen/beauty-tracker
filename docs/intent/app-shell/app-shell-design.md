@@ -7,9 +7,9 @@ prefix: SHELL
 
 ## Context and Design Philosophy
 
-The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, notifications, and the home page that places the feature components together. It also holds small UI controls shared by more than one feature.
+The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, navigation header, notifications, and the pages that place the feature components together. It also holds small UI controls shared by more than one feature.
 
-The shell composes features but owns none of their behavior. The home page loads data through each owning segment and hands it to the usage and routines components, which decide what to display and how logging works.
+The app has one page per tracked area — the home page for usage and a purchases page — reached from a header on every page. The shell composes features but owns none of their behavior. The home page loads data through each owning segment and hands it to the usage and routines components, which decide what to display and how logging works.
 
 ## Stack
 
@@ -22,7 +22,8 @@ The shell composes features but owns none of their behavior. The home page loads
 
 | Path | Module | Purpose |
 |---|---|---|
-| `/` | `routes/home.tsx` | Home page |
+| `/` | `routes/home.tsx` | Home page (usage) |
+| `/purchases` | `routes/purchases.tsx` | Purchases page |
 | `/api/usage` | `routes/api.usage.ts` | Usage data API (usage segment) |
 | `/api/products` | `routes/api.products.ts` | Product add and edit API (products segment) |
 | `/api/configs` | `routes/api.configs.ts` | Configuration API (data-store segment) |
@@ -33,8 +34,21 @@ The shell composes features but owns none of their behavior. The home page loads
 
 - `<html lang="en">` with `suppressHydrationWarning` (required by next-themes class switching).
 - Google Fonts preconnect and stylesheet links for Inter.
-- Body content wrapped in `Shell` — `Provider` (`ChakraProvider` with the app's Chakra system, plus `ColorModeProvider`: next-themes, `attribute="class"`) and `<Toaster />` — inside `Layout`. React Router renders `Layout` around both the normal route tree and `ErrorBoundary`, so the error page gets Chakra styling and color mode too. Color mode follows the system's light/dark preference; there is no in-app toggle.
+- Body content wrapped in `Shell` — `Provider` (`ChakraProvider` with the app's Chakra system, plus `ColorModeProvider`: next-themes, `attribute="class"`), the navigation header, and `<Toaster />` — inside `Layout`. React Router renders `Layout` around both the normal route tree and `ErrorBoundary`, so the error page gets Chakra styling, color mode, and the header too. Color mode follows the system's light/dark preference; there is no in-app toggle.
 - `<Toaster />` rendered once inside `Shell`, so any feature can show notifications through the shared `toaster` (`src/components/ui/toaster.tsx`). Notifications appear at the bottom-right of the page.
+
+**Document title and description.** Every page, including the error page, has the title "Beauty Tracker" and the meta description "Track beauty product usage, purchases, and inventory". Both are set in the root layout rather than by individual routes, so they are present even when a route's loader fails.
+
+## Navigation Header
+
+`AppHeader` (`src/components/app-header/main.tsx`) renders above the page content on every page, including the error page. It shows the app name "Beauty Tracker" as plain text — not a link and not a heading — and one link per page, in this order:
+
+| Link | Goes to |
+|---|---|
+| Usage | `/` |
+| Purchases | `/purchases` |
+
+The link for the page being shown is highlighted and marked as the current page (`aria-current="page"`). Which link is current follows the path, not what the page renders: on `/`, Usage is current even when the home page fails to load and the error page shows instead. The Usage link matches `/` exactly, so it is not highlighted on `/purchases`. On a path that matches no route, no link is highlighted. Links navigate on the client without a full page reload.
 
 ## Error Page
 
@@ -53,9 +67,10 @@ The shell composes features but owns none of their behavior. The home page loads
 
 - **Loader** (server) — loads product records through the usage segment's server-side loader, which applies month rollover (usage design, *Month Rollover*), and reads `configs.json` through the data store. If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". If the rollover write fails, the loader's error propagates to the error page. Returns `{ usage, categories, routines }`.
 - **Component** — renders `RoutineCard` (routines segment) above `UsageTable` (usage segment), passing each the loader data it needs.
-- **Meta** — description "Track beauty product usage, purchases, and inventory".
 
-**Document title.** Every page, including the error page, has the title "Beauty Tracker". The title is set in the root layout rather than by individual routes, so it is present even when a route's loader fails.
+## Purchases Page
+
+`src/app/routes/purchases.tsx` is a placeholder until purchases are designed (HLD: purchases have no segment yet). It shows the top-level heading "Purchases" and the text "Purchase tracking is coming soon." It has no loader, so it reads no data and cannot fail to load.
 
 ## Shared Controls
 
@@ -73,18 +88,24 @@ The shell composes features but owns none of their behavior. The home page loads
 | Notifications | One shared Chakra toaster mounted in the root layout | Per-feature inline error messages | Any feature (first, usage save failures) can notify without its own UI |
 | Unreadable data on the home page | 500 with "Your data could not be loaded." | 404 Not Found | The page exists; a 404 message would misdescribe the failure |
 | Document title | "Beauty Tracker", set in the root layout for every page | Per-route titles | One app, one title; root placement keeps it on the error page |
-| Home page composition | One page showing routines then the usage table | Separate pages per feature | [inferred] Small app; everything the user logs is on one screen |
+| Meta description | One description, set in the root layout for every page | Per-route descriptions | The description names the whole app, so it fits every page; root placement keeps it on the error page |
+| App name in the header | Plain text | A link to `/` | The Usage link already goes to `/`; one way there is enough |
+| Page structure | One page per tracked area (usage, purchases), linked from a header | Everything on one page; usage at `/usage` with `/` redirecting | Each area's content grows independently. Usage stays at `/` because it is the page used every day |
+| Routines placement | On the usage page, above the usage table | Their own page | Routines are a way of logging usage |
+| Navigation | A header on every page, including the error page | Sidebar; header on normal pages only | Few pages fit in a header; on the error page it gives a way back |
+| Purchases page content | Placeholder text | No page until purchases are designed | Sets up the page and its navigation now; the page gets real content when purchases are designed |
 | Shared +/− control | One `AddMinusButtons` component | Per-feature buttons | [inferred] Identical control in both features |
 | Unused generated snippets | Delete them | Keep for possible future use | The Chakra CLI regenerates any snippet on demand |
 
 ## Open Questions & Future Decisions
 
 ### Deferred
-1. **Navigation** — no header or nav exists. Needed once purchases or inventory add pages.
+1. **Inventory page** — add a header link when inventory gets a page.
 
 ## References
 
-- src/app/root.tsx, src/app/routes.ts, src/app/routes/home.tsx
+- src/app/root.tsx, src/app/routes.ts, src/app/routes/home.tsx, src/app/routes/purchases.tsx
+- src/components/app-header/main.tsx
 - src/components/add-minus-buttons/main.tsx
 - src/components/ui/
 - react-router.config.ts, vite.config.ts, tsconfig.json
