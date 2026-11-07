@@ -10,18 +10,18 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **SHELL-UI-002**: Every page, including the error page, shall display in light or dark color mode according to the user's system color-scheme preference.
 - [x] **SHELL-UI-003**: Every page shall provide a notification area at the bottom-right of the viewport where features can show notifications.
 - [x] **SHELL-UI-004**: Every page, including the error page, shall have the document title "Beauty Tracker".
-- [ ] **SHELL-UI-005**: Every page, including the error page, shall have the meta description "Track beauty product usage, purchases, and inventory".
+- [x] **SHELL-UI-005**: Every page, including the error page, shall have the meta description "Track beauty product usage, purchases, and inventory".
 
 ## Navigation Header
 
-- [ ] **SHELL-NAV-001**: Every page, including the error page, shall display a header above the page content.
-- [ ] **SHELL-NAV-002**: The header shall show the app name "Beauty Tracker" as text that is not a link.
-- [ ] **SHELL-NAV-003**: The header shall show a "Usage" link to `/` followed by a "Purchases" link to `/purchases`.
-- [ ] **SHELL-NAV-004**: While the current path is `/` — showing the home page, or the error page when the home page fails to load — the header shall mark the "Usage" link, and no other link, with `aria-current="page"`.
-- [ ] **SHELL-NAV-005**: While the current path is `/purchases`, the header shall mark the "Purchases" link, and no other link, with `aria-current="page"`.
-- [ ] **SHELL-NAV-006**: While the current path matches no route, the header shall mark no link with `aria-current="page"`.
-- [ ] **SHELL-NAV-007**: The header shall display the link marked with `aria-current="page"` in a visual style that differs from the other header links.
-- [ ] **SHELL-NAV-008**: When the user selects a header link, the system shall show the linked page without a full document reload.
+- [x] **SHELL-NAV-001**: Every page, including the error page, shall display a header above the page content.
+- [x] **SHELL-NAV-002**: The header shall show the app name "Beauty Tracker" as text that is not a link.
+- [x] **SHELL-NAV-003**: The header shall show a "Usage" link to `/` followed by a "Purchases" link to `/purchases`.
+- [x] **SHELL-NAV-004**: While the current path is `/` — showing the home page, or the error page when the home page fails to load — the header shall mark the "Usage" link, and no other link, with `aria-current="page"`.
+- [x] **SHELL-NAV-005**: While the current path is `/purchases`, the header shall mark the "Purchases" link, and no other link, with `aria-current="page"`.
+- [x] **SHELL-NAV-006**: While the current path matches no route, the header shall mark no link with `aria-current="page"`.
+- [x] **SHELL-NAV-007**: The header shall display the link marked with `aria-current="page"` in a visual style that differs from the other header links.
+- [x] **SHELL-NAV-008**: When the user selects a header link, the system shall show the linked page without a full document reload.
 
 ## Home Page
 
@@ -30,8 +30,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 ## Purchases Page
 
-- [ ] **SHELL-PURCH-001**: The purchases page (`/purchases`) shall show the top-level heading "Purchases".
-- [ ] **SHELL-PURCH-002**: The purchases page (`/purchases`) shall show the text "Purchase tracking is coming soon."
+- [x] **SHELL-PURCH-001**: The purchases page (`/purchases`) shall show the top-level heading "Purchases".
+- [x] **SHELL-PURCH-002**: The purchases page (`/purchases`) shall show the text "Purchase tracking is coming soon."
 
 ## Error Page
 

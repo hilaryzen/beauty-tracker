@@ -1,5 +1,5 @@
 schema_version: 2
-last_updated: 2026-11-03
+last_updated: 2026-11-07
 
 taxonomy:
   tracking:
@@ -62,13 +62,13 @@ arrows:
   app-shell:
     status: MAPPED
     parent: null
-    sampled: 2026-10-25
+    sampled: 2026-11-07
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: []
     blockedBy: [usage, routines]
     detail: app-shell.md
-    next: "Add navigation when a second page arrives"
+    next: "Add an Inventory header link when inventory gets a page"
     drift: null
 
 unmapped:

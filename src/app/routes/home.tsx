@@ -4,14 +4,6 @@ import { loadUsage } from "@/features/usage/usage.server";
 import { getFile } from "@/utils/files.server";
 import { RoutineCard } from "@/features/routine/routine-card";
 
-// The document title is set for every page in the root layout.
-// @spec SHELL-HOME-004
-export function meta({}: Route.MetaArgs) {
-  return [
-    { name: "description", content: "Track beauty product usage, purchases, and inventory" },
-  ];
-}
-
 // @spec SHELL-HOME-002, USAGE-ROLL-005, ROUT-001
 export async function loader() {
   const configs = await getFile("configs.json");
