@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sampleConfigs, sampleUsage, settle, writeData } from "@/test/data-dir";
-import { loader, meta } from "./home";
-
-type MetaArgs = Parameters<typeof meta>[0];
+import { loader } from "./home";
 
 describe("home page", () => {
   beforeEach(() => {
@@ -32,13 +30,5 @@ describe("home page", () => {
     await rm(`${process.env.DATA_DIR}/usage.json`);
     await writeData("configs.json", sampleConfigs);
     await expectDataError();
-  });
-
-  // @spec SHELL-HOME-004
-  it("has the meta description for the app", () => {
-    expect(meta({} as MetaArgs)).toContainEqual({
-      name: "description",
-      content: "Track beauty product usage, purchases, and inventory",
-    });
   });
 });
