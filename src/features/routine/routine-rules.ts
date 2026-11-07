@@ -1,8 +1,8 @@
-import type { ItemUsage } from "@/features/usage/types";
+import type { Product } from "@/features/products/types";
 
 /** Returns a message describing the first rule `routines` breaks, or undefined if it is valid. */
 // @spec ROUT-VAL-001, ROUT-VAL-002, ROUT-VAL-003, ROUT-VAL-004, ROUT-VAL-005, ROUT-VAL-006
-export function checkRoutines(routines: unknown, usage: ItemUsage[]): string | undefined {
+export function checkRoutines(routines: unknown, usage: Product[]): string | undefined {
   if (typeof routines !== "object" || routines === null || Array.isArray(routines)) {
     return "routines must be an object of routines";
   }

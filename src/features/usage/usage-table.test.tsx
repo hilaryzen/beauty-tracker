@@ -113,6 +113,60 @@ describe("usage table display", () => {
   });
 });
 
+describe("opening the product dialog", () => {
+  // @spec USAGE-UI-007
+  it("shows an Add product button above the rows", async () => {
+    renderTable();
+    const add = await screen.findByRole("button", { name: "Add product" });
+    expect(add.closest("tr")).toBeNull();
+    const table = screen.getByRole("table");
+    expect(add.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  // @spec USAGE-UI-007
+  it("shows the Add product button when there are no products", async () => {
+    renderTable({ usage: [], categories: sampleConfigs.categories });
+    expect(await screen.findByRole("button", { name: "Add product" })).toBeInTheDocument();
+  });
+
+  // @spec USAGE-UI-008
+  it("shows an edit button on every row", async () => {
+    renderTable();
+    for (const product of sampleUsage) {
+      const tr = await row(product.name);
+      expect(within(tr).getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    }
+  });
+
+  // @spec USAGE-UI-009
+  it("opens an empty product dialog from the Add product button", async () => {
+    renderTable();
+    fireEvent.click(await screen.findByRole("button", { name: "Add product" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Add product" })).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Name")).toHaveValue("");
+  });
+
+  // @spec USAGE-UI-010
+  it("opens the product dialog for the row's product from its edit button", async () => {
+    renderTable();
+    fireEvent.click(within(await row("Cushion Glass Original")).getByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Edit product" })).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Name")).toHaveValue("Cushion Glass Original");
+  });
+
+  // @spec USAGE-UI-009
+  it("opens empty again after editing a product and cancelling", async () => {
+    renderTable();
+    fireEvent.click(within(await row("Cushion Glass Original")).getByRole("button", { name: "Edit" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    fireEvent.click(await screen.findByRole("button", { name: "Add product" }));
+    expect(within(await screen.findByRole("dialog")).getByLabelText("Name")).toHaveValue("");
+  });
+});
+
 describe("logging from the usage table", () => {
   // @spec USAGE-LOG-001
   it("sends a +1 for the row's product when + is clicked", async () => {

@@ -41,7 +41,7 @@ describe("/api/usage", () => {
     vi.useRealTimers();
   });
 
-  // @spec USAGE-001
+  // @spec PROD-001
   it("returns product records with id, name, brand, category, uses, current month, and current-month count", async () => {
     await writeData("usage.json", sampleUsage);
     const result = await get();
@@ -51,7 +51,7 @@ describe("/api/usage", () => {
     );
   });
 
-  // @spec USAGE-002
+  // @spec PROD-002
   it("finds products by id, not by position in usage.json", async () => {
     const reordered = [
       { ...sampleUsage[0], id: 7 },

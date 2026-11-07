@@ -39,7 +39,7 @@ Page frame and composition: root layout, theme, error page, routing, the home pa
 
 **Key Components:**
 1. `root.tsx` — HTML layout with the "Beauty Tracker" title and Inter font links; `Shell` (Chakra `Provider` + `<Toaster />`) around every page including the error page; Chakra-styled `ErrorBoundary`
-2. `routes.ts` — index route plus `/api/usage` and `/api/configs`
+2. `routes.ts` — index route plus `/api/usage`, `/api/products`, and `/api/configs`
 3. `home.tsx` — server loader reads `configs.json` and usage through `loadUsage()`, 500 "Your data could not be loaded." when either is unreadable; renders `RoutineCard` above `UsageTable`
 4. `AddMinusButtons` — shared + / − button pair used by the usage table and routine cards (`add-minus-buttons/main.tsx`)
 5. `components/ui/*` — Chakra snippets: `provider.tsx` (app system with Inter), `color-mode.tsx` (`ColorModeProvider` only), `toaster.tsx`

@@ -24,7 +24,7 @@ Routines are defined in `configs.json` under the `routines` key:
 ```
 
 - **Key** — the routine's display name. Object keys make names unique.
-- **Value** — ordered array of product ids, each matching a product record's `id` field (usage segment, USAGE-002).
+- **Value** — ordered array of product ids, each matching a product record's `id` field (products segment, PROD-002).
 - **Order** — routines display in object key order; products within a routine display in array order. JavaScript orders integer-like keys (such as `"2"`) before all other keys, so a routine named with a whole number displays ahead of the rest.
 - A product may appear in more than one routine.
 
@@ -78,13 +78,14 @@ The + control calls the usage segment's `addUsesToItems(productIds)` with the ro
 
 ### Deferred
 1. **Routine editor** — HLD Goal 4 requires creating, renaming, reordering, and deleting routines in the app, sending changes through `/api/configs`. Not yet designed.
-2. **Deleting a product listed in a routine** — once product editing exists, deleting such a product would break the routine's logging. The product editor must either block the deletion or remove the product from routines.
+2. **Deleting a product listed in a routine** — once products can be deleted, deleting such a product would break the routine's logging. The products segment must either block the deletion or remove the product from routines.
 
 ## References
 
 - src/features/routine/routine-card.tsx
 - src/features/routine/routine-rules.ts
 - src/assets/data/configs.json
+- docs/intent/products/products-design.md
 - docs/intent/usage/usage-design.md
 - docs/intent/data-store/data-store-design.md
 - docs/arrows/routines.md

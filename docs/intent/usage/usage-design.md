@@ -7,33 +7,9 @@ prefix: USAGE
 
 ## Context and Design Philosophy
 
-The usage segment is the core of beauty-tracker: one record per product the user owns, with a running count of how often it has been used each month. These counts are the denominator of cost per use (HLD Goal 2) and the "how much do I use it" half of the inventory view (Goal 3), so they must be trustworthy — never negative, never silently lost.
+The usage segment is the core of beauty-tracker: a running count of how often each product is used each month. The products segment defines the product record and its rules (products design, *Product Record*), and usage owns every change to its count fields: `uses`, `currentMonth`, and `usesThisMonth`. These counts are the denominator of cost per use (HLD Goal 2) and the "how much do I use it" half of the inventory view (Goal 3), so they must be trustworthy — never negative, never silently lost.
 
 Logging must stay one click (HLD *Low friction over precision*). A click sends only the change — which products, +1 or −1 — and the server applies it to the current file. The client never rewrites the product list.
-
-Usage also owns the category list in `configs.json → categories` and its rules, since categories exist to organize products.
-
-## Product Record
-
-Each product is an `ItemUsage` (`src/features/usage/types.ts`) stored in `usage.json`:
-
-| Field | Type | Meaning |
-|---|---|---|
-| `id` | integer | Unique product identifier. Records may be in any order; products are always found by `id`, never by array position. |
-| `name` | string | Product name |
-| `brand` | string | Brand name |
-| `category` | string | A category name listed in `configs.json → categories` |
-| `uses` | `Record<"YYYY-MM", integer>` | Use counts for closed months, keyed by month |
-| `currentMonth` | `"YYYY-MM"` | The month `usesThisMonth` counts |
-| `usesThisMonth` | integer | Use count for `currentMonth` |
-
-**Record rules.** Every record in `usage.json` satisfies:
-- `id` is an integer, unique across all records.
-- `category` names a category present in `configs.json → categories`.
-- `usesThisMonth` and every value in `uses` are integers ≥ 0.
-- Every key of `uses`, and `currentMonth`, has the form `YYYY-MM`.
-
-Logging and month rollover preserve these rules by construction. A future product editor (HLD Goal 4) validates submitted records against them.
 
 ## Month Rollover
 
@@ -51,7 +27,7 @@ A record whose `currentMonth` equals or is later than the current month is left 
 
 If the rollover write fails, loading fails: the home page shows the error page, and `/api/usage` responds 500. Serving rolled-over data that was never saved would show the user history that disappears on the next load.
 
-The server-side function that loads usage data with rollover applied is the only way other segments read `usage.json`.
+The server-side function that loads usage data with rollover applied is the only way other segments read counts from `usage.json`. The products segment does not use counts, so it reads records through the data store instead.
 
 ## Logging a Use
 
@@ -74,28 +50,18 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 
 ## Usage Table
 
-`UsageTable` (`src/features/usage/usage-table.tsx`) renders one row per product with columns: Category, Product, Brand, Overall Uses, This Month's Uses, and +/- controls.
+`UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button above one row per product, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, +/- controls, and an edit button.
 
 - **Sort order** — rows are ordered by the position of their `category` in the concatenation of all category groups, taken in the groups' configured order. Rows with equal position keep file order (stable sort). If `configs.json` has no `categories` key, there are no groups: every row has the same position and the table shows file order.
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
 - **This Month's Uses** — `usesThisMonth`.
-
-## Categories
-
-`configs.json → categories` maps a group name (such as `skincare`) to an ordered list of category names (such as `Cleanser`). Groups and categories display in configured order.
-
-**Category rules.** A `categories` value submitted to `/api/configs` is valid when:
-- It is an object whose values are arrays of non-empty strings. A group's array may be empty, so a group can be set up before it has categories.
-- No category name appears more than once across all groups.
-- Every category used by a product in `usage.json` is still present.
-
-The data-store segment's `/api/configs` route applies these rules (data-store design, *Configuration API*).
+- **Add product and edit buttons** — open the products segment's `ProductDialog`, to add a product or to edit that row's product.
 
 ## API
 
 | Endpoint | Method | Request | Response |
 |---|---|---|---|
-| `/api/usage` | GET | — | Full `ItemUsage[]`, with rollover applied; 500 with `{ "error": "<message>" }` if unreadable |
+| `/api/usage` | GET | — | Full `Product[]`, with rollover applied; 500 with `{ "error": "<message>" }` if unreadable |
 | `/api/usage` | POST | `{ "ids": [integer, ...], "delta": 1 \| -1 }` | `null`; changes applied |
 | `/api/usage` | POST (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/usage` | POST (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
@@ -108,30 +74,21 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 |----------|--------|------------------------|-----------|
 | Logging write model | Client sends `{ ids, delta }`; server applies it to the current file inside the per-file update queue | Client sends the whole updated list | Applying the change on the server, one update at a time, means no click is lost to stale data or overlapping requests; only the small request body needs validating |
 | Rapid clicks | Every click sends its own uncancelled request | One shared fetcher that cancels in-flight submissions | Each click is a real use; cancellation would make a double-click count once or twice depending on timing |
-| Item addressing | Find records by `id` | Array index with `id` = position | Products can be removed or reordered without renumbering routines |
 | Count floor | Counts never go below 0; −1 at 0 is a no-op | Allow negatives | The − control is an undo for a mistaken +; negative counts would distort cost per use |
 | Monthly history shape | Closed months in `uses`; current month in `usesThisMonth` tagged with `currentMonth` | Single map including current month; lifetime total only | The tag lets the server roll counts over without user action; monthly counts serve the goals (HLD Key Design Decisions) |
 | Month rollover | Automatic on load, using the server's local clock | Manual "close month" action | No user action needed (*Low friction over precision*) |
 | Rollover write failure | Loading fails with an error | Serve rolled-over data unsaved and retry next load | Unsaved rollover would show history that vanishes on reload |
 | Duplicate ids in a logging request | Rejected as invalid | Count each occurrence; count once | No caller has a reason to send one — routines may not list a product twice — so a duplicate signals a bug |
 | Overall Uses | Past months plus current month | Closed months only | Matches the real total used so far, which is what cost per use divides by |
-| Category groups | Any number of groups, sorted in configured order | Fixed `skincare`, `makeup`, `lips` | New groups (such as hair or body) need no code change |
-| Category membership | Product categories must be configured; deleting a category in use is rejected | Free-text categories; allow deleting used categories | Every product stays sortable and groupable for the inventory view |
 | Save failure feedback | Error notification; page keeps last saved data | Silent failure; optimistic update with rollback | The user must know a use wasn't recorded; showing saved data needs no rollback logic |
-
-## Open Questions & Future Decisions
-
-### Deferred
-1. **Product editing** — HLD Goal 4 requires creating, editing, and deleting products in the app. Not yet designed; expected alongside purchases and inventory. It will validate records against the record rules above.
-2. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
+| Typed count corrections | None; the +/- controls are the only way to change a count | A typed count in the usage table or product dialog | One write path for counts keeps them trustworthy. The cost is that a large miscount takes many clicks. Closed months stay as recorded, so cost per use cannot change by accident |
 
 ## References
 
-- src/features/usage/types.ts
 - src/features/usage/use-usage.ts
 - src/features/usage/usage.server.ts
-- src/features/usage/category-rules.ts
 - src/features/usage/usage-table.tsx
 - src/app/routes/api.usage.ts
+- docs/intent/products/products-design.md
 - docs/intent/data-store/data-store-design.md
 - docs/arrows/usage.md
