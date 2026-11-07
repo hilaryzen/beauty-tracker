@@ -51,20 +51,20 @@ A React Router app rendered on the server, storing all data as JSON files on the
 | usage | Monthly use counts, logging a use, the usage table | [usage-design.md](intent/usage/usage-design.md) | `USAGE` |
 | routines | Named product groups logged together in one click | [routines-design.md](intent/routines/routines-design.md) | `ROUT` |
 | data-store | JSON file storage, dev/prod data folders, configuration API | [data-store-design.md](intent/data-store/data-store-design.md) | `STORE` |
-| app-shell | Root layout, theme, error page, routes, home page composition, shared controls | [app-shell-design.md](intent/app-shell/app-shell-design.md) | `SHELL` |
+| app-shell | Root layout, theme, error page, routes, navigation, page composition, shared controls | [app-shell-design.md](intent/app-shell/app-shell-design.md) | `SHELL` |
 
 Purchases and inventory (Goals 2 and 3) are not yet designed and have no segments.
 
 ```mermaid
 flowchart TD
-  shell[app-shell: home page] --> routines
+  shell[app-shell: pages] --> routines
   shell --> usage
   routines -->|logs via useUsage| usage
   routines -->|finds products by id| products
   usage -->|opens the product dialog| products
   usage -->|/api/usage| store[data-store: JSON files]
   products -->|/api/products, /api/configs| store
-  shell -->|home loader reads| store
+  shell -->|page loaders read| store
 ```
 
 ## Key Design Decisions
