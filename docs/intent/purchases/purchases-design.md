@@ -69,7 +69,7 @@ Purchases
 
 - An "Add purchase" button opens the purchase dialog.
 - Products with a `purchase` are grouped into purchases: products whose purchase has the same `date` and the same `store` (or no store) form one purchase. Store names match exactly.
-- Purchases are listed newest first by date. Purchases on the same date are listed by store name in alphabetical order, with the purchase that has no store last.
+- Purchases are listed newest first by date. Purchases on the same date are listed by store name in alphabetical order, ignoring capitalization, with the purchase that has no store last.
 - Each purchase shows its date as month abbreviation, day, and year (`Nov 7, 2026`), its store when it has one, its total (the sum of its products' prices), and each product's brand, name, and price, in product `id` order.
 - Amounts show as US dollars with two decimal places (`$32.00`).
 - With no product purchases recorded, the list shows "No purchases yet."
@@ -94,7 +94,7 @@ Purchases
 - **Store** — optional text, suggesting the stores already used on purchases.
 - **Items** — the dialog opens with one empty item. "Add item" appends another empty item. Each item has a remove control, disabled while it is the only item.
 - **Product** (per item) — a dropdown of the products that can be bought: those with no `purchase` and not chosen on another item of this form. Products are listed under their category, categories under their groups, in configured order, each shown as brand then name. Products whose category is not configured are listed last, under "Other". A product chosen on this item stays listed for it. The dropdown ends with a "New product" option.
-- **Price** (per item) — a text input for dollars, accepting digits with an optional decimal point and at most two decimal places (`32`, `32.5`, `32.50`, `.99`). A leading `$` and surrounding whitespace are ignored. A price that does not match this form is marked invalid.
+- **Price** (per item) — a text input for dollars, accepting digits with an optional decimal point and at most two decimal places (`32`, `32.`, `32.5`, `32.50`, `.99`). A leading `$` and surrounding whitespace are ignored. A price that does not match this form is marked invalid.
 - **Total** — the sum of the valid prices entered, updated as prices are typed.
 
 **New product.** Choosing "New product" on an item opens the product dialog (products design, *Product Dialog*) over the purchase dialog, to add a product. When the product saves, the product dialog closes and the new product is chosen on that item. When the product dialog is closed without saving, the item keeps the product it had before "New product" was chosen. The new product is saved even if the purchase is never saved.

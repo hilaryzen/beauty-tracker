@@ -13,7 +13,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PURCH-LIST-001**: The purchase list shall show an "Add purchase" button.
 - [ ] **PURCH-LIST-002**: The purchase list shall show the products whose purchases have the same date and the same store, or the same date and no store, as one purchase.
 - [ ] **PURCH-LIST-003**: The purchase list shall order purchases by date, newest first.
-- [ ] **PURCH-LIST-004**: The purchase list shall order purchases with the same date by store name in alphabetical order, with the purchase that has no store last.
+- [ ] **PURCH-LIST-004**: The purchase list shall order purchases with the same date by store name in alphabetical order ignoring capitalization, with the purchase that has no store last.
 - [ ] **PURCH-LIST-005**: The purchase list shall show each purchase's date as the month abbreviation, day, and year, such as `Nov 7, 2026`.
 - [ ] **PURCH-LIST-006**: The purchase list shall show each purchase's store when it has one.
 - [ ] **PURCH-LIST-007**: The purchase list shall show each purchase's total, the sum of its products' prices.
@@ -38,7 +38,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PURCH-DLG-013**: When the user chooses "New product" on an item, the page shall open the product dialog to add a product over the purchase dialog.
 - [ ] **PURCH-DLG-014**: When the product dialog opened from an item adds a product, the purchase dialog shall choose that product on that item.
 - [ ] **PURCH-DLG-015**: When the product dialog opened from an item closes without adding a product, the purchase dialog shall keep the product the item had before "New product" was chosen.
-- [ ] **PURCH-DLG-016**: While an item's price is not blank and, ignoring surrounding whitespace and one leading `$`, is not digits with an optional decimal point and at most two decimal places, the purchase dialog shall mark that price input invalid.
+- [ ] **PURCH-DLG-016**: While an item's price is not blank and, ignoring surrounding whitespace and one leading `$`, is not digits with an optional decimal point and at most two decimal places (such as `32`, `32.`, `32.5`, `32.50`, or `.99`), the purchase dialog shall mark that price input invalid.
 - [ ] **PURCH-DLG-017**: The purchase dialog shall show the sum of the valid prices entered as the purchase total.
 - [ ] **PURCH-DLG-018**: While any item in the purchase dialog has no product chosen, the dialog shall disable Save.
 - [ ] **PURCH-DLG-019**: While any item's price in the purchase dialog is blank or invalid, the dialog shall disable Save.
