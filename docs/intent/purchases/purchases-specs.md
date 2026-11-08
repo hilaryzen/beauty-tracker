@@ -31,7 +31,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **PURCH-DLG-006**: When the user activates an item's remove control in the purchase dialog, the dialog shall remove that item.
 - [ ] **PURCH-DLG-007**: While the purchase dialog has one item, the dialog shall disable that item's remove control.
 - [ ] **PURCH-DLG-008**: Each item's product dropdown in the purchase dialog shall list the products that have no purchase and are not chosen on another item, including the product chosen on that item.
-- [ ] **PURCH-DLG-009**: Each item's product dropdown in the purchase dialog shall list products under their categories, with categories under their groups, in configured order.
+- [ ] **PURCH-DLG-009**: Each item's product dropdown in the purchase dialog shall list products in sections labeled with their category name, ordered by group and then by category in configured order, with no section for a category that has no product to list.
 - [ ] **PURCH-DLG-010**: Each item's product dropdown in the purchase dialog shall list products whose category is not configured after all configured categories, under "Other".
 - [ ] **PURCH-DLG-011**: Each item's product dropdown in the purchase dialog shall label each product with its brand followed by its name.
 - [ ] **PURCH-DLG-012**: Each item's product dropdown in the purchase dialog shall end with a "New product" option.

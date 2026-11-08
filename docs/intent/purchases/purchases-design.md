@@ -93,7 +93,7 @@ Purchases
 - **Date** — a date input, required, starting at today's local date. Dates after today cannot be chosen.
 - **Store** — optional text, suggesting the stores already used on purchases.
 - **Items** — the dialog opens with one empty item. "Add item" appends another empty item. Each item has a remove control, disabled while it is the only item.
-- **Product** (per item) — a dropdown of the products that can be bought: those with no `purchase` and not chosen on another item of this form. Products are listed under their category, categories under their groups, in configured order, each shown as brand then name. Products whose category is not configured are listed last, under "Other". A product chosen on this item stays listed for it. The dropdown ends with a "New product" option.
+- **Product** (per item) — a dropdown of the products that can be bought: those with no `purchase` and not chosen on another item of this form. Products are listed in a section per category, labeled with the category name, ordered by group and then by category in configured order; a category with no product to list has no section. Each product is shown as brand then name. Products whose category is not configured are listed last, under "Other". A product chosen on this item stays listed for it. The dropdown ends with a "New product" option.
 - **Price** (per item) — a text input for dollars, accepting digits with an optional decimal point and at most two decimal places (`32`, `32.`, `32.5`, `32.50`, `.99`). A leading `$` and surrounding whitespace are ignored. A price that does not match this form is marked invalid.
 - **Total** — the sum of the valid prices entered, updated as prices are typed.
 
@@ -144,7 +144,7 @@ The purchases page loader (app-shell design, *Purchases Page*) reads `usage.json
 | Store | Optional | Required | Not needed for cost per use |
 | Purchase date | Required, no later than today, starting at today | Optional; any date | Most purchases are entered the day they happen; a future purchase is a typo |
 | Products offered | Only products with no purchase, plus "New product" | Every product, rejecting repeats on save | The dropdown never offers a choice the save would reject |
-| Product dropdown | Grouped native dropdown, brand then name | Searchable combobox | Matches the product dialog's category dropdown and needs no new component |
+| Product dropdown | Native dropdown with a section per category, brand then name | Searchable combobox; sections labeled with group and category | Matches the product dialog's category dropdown and needs no new component. A native dropdown has one level of sections, and the category alone is what the user picks by |
 | Opening a new product from an item | "New product" option in the item's product dropdown, choosing the saved product on that item | A separate "New product" button for the whole form | The product lands on the item it was created for, with no extra step to choose it |
 | Abandoned purchases | A product created from the purchase form stays when the purchase is not saved | Delete it; save it only with the purchase | The user owns the product either way; products cannot be deleted, and saving it only with the purchase would mean two write paths for products (HLD *New products during a purchase*) |
 | Product reads | `usage.json` through the data store, no rollover | Usage's loader | Keeps purchases independent of usage; nothing purchases reads depends on rollover |
