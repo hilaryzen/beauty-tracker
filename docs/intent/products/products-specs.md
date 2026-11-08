@@ -8,6 +8,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 - [x] **PROD-001**: The system shall store each tracked product as a record with an integer id, name, brand, category, a map of closed-month use counts keyed by `YYYY-MM`, a current month in `YYYY-MM` form, and a use count for that current month.
 - [x] **PROD-002**: The system shall locate a product record by its `id` field, independent of the record's position in `usage.json`.
+- [ ] **PROD-003**: The system shall allow a product record to carry an optional `purchase` field, which only the purchases segment sets.
 
 ## Product Dialog
 
@@ -46,6 +47,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-SAVE-012**: If a request from the product dialog gets no response, then the page shall show an error notification stating that the change was not saved.
 - [x] **PROD-SAVE-013**: If the POST to `/api/configs` from the product dialog succeeds and the request to `/api/products` fails, then the page shall revalidate its loaders.
 - [x] **PROD-SAVE-014**: If a request from the product dialog responds with an error status and no JSON body with a non-empty string `error`, then the page shall show an error notification stating that the change was not saved.
+- [ ] **PROD-SAVE-015**: When a POST to `/api/products` from the product dialog succeeds, the page shall report the new product's `id` to the component that opened the dialog.
 
 ## Product API
 
@@ -68,6 +70,9 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-017**: When `/api/products` receives overlapping POST requests that pass validation, the system shall assign each new product record a different id.
 - [x] **PROD-API-018**: If `/api/products` receives a PATCH or DELETE request, then the system shall respond with 405 and a JSON body of the form `{ "error": "<message>" }`.
 - [x] **PROD-API-019**: If `/api/products` receives a PATCH or DELETE request, then the system shall leave `usage.json` unchanged.
+- [ ] **PROD-API-020**: When `/api/products` adds a product record, the system shall respond with a JSON body of the form `{ "id": <id> }` holding the new record's id.
+- [ ] **PROD-API-021**: When `/api/products` adds a product record, the system shall give it no `purchase` field.
+- [ ] **PROD-API-022**: When `/api/products` receives a PUT whose body passes validation, the system shall leave that product record's `purchase` field, or its absence, unchanged.
 
 ## Categories
 
