@@ -60,6 +60,17 @@ describe("month rollover", () => {
     expect(saved.uses["2026-10"]).toBe(5);
   });
 
+  // @spec USAGE-ROLL-008
+  it("keeps every field other than the count fields when rolling a record over", async () => {
+    const purchased = { ...october, purchase: { date: "2026-10-02", store: "Sephora", price: 3200 } };
+    await writeData("usage.json", [purchased]);
+    await loadUsage();
+    const [saved] = await readData("usage.json");
+    const { uses, currentMonth, usesThisMonth, ...rest } = saved;
+    const { uses: _u, currentMonth: _c, usesThisMonth: _t, ...before } = purchased;
+    expect(rest).toEqual(before);
+  });
+
   // @spec USAGE-ROLL-004
   it("leaves a record whose current month is equal to or later than the server's month unchanged", async () => {
     const november = { ...october, id: 2, currentMonth: "2026-11" };
