@@ -5,5 +5,6 @@ export default [
   route("purchases", "routes/purchases.tsx"),
   route("api/usage", "routes/api.usage.ts"),
   route("api/products", "routes/api.products.ts"),
+  route("api/purchases", "routes/api.purchases.ts"),
   route("api/configs", "routes/api.configs.ts"),
 ] satisfies RouteConfig;
