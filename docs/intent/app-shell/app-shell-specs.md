@@ -31,7 +31,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 ## Purchases Page
 
 - [x] **SHELL-PURCH-001**: The purchases page (`/purchases`) shall show the top-level heading "Purchases".
-- [x] **SHELL-PURCH-002**: The purchases page (`/purchases`) shall show the text "Purchase tracking is coming soon."
+- [ ] **SHELL-PURCH-003**: The purchases page (`/purchases`) shall show the purchase list below its heading.
+- [ ] **SHELL-PURCH-004**: If `configs.json` or `usage.json` cannot be read when the purchases page loads, then the system shall respond with status 500 and the status text "Your data could not be loaded."
 
 ## Error Page
 

@@ -9,7 +9,7 @@ prefix: SHELL
 
 The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, navigation header, notifications, and the pages that place the feature components together. It also holds small UI controls shared by more than one feature.
 
-The app has one page per tracked area — the home page for usage and a purchases page — reached from a header on every page. The shell composes features but owns none of their behavior. The home page loads data through each owning segment and hands it to the usage and routines components, which decide what to display and how logging works.
+The app has one page per tracked area — the home page for usage and a purchases page — reached from a header on every page. The shell composes features but owns none of their behavior. Each page's loader reads the data its features need and hands it to their components, which decide what to display and how changes are made.
 
 ## Stack
 
@@ -26,6 +26,7 @@ The app has one page per tracked area — the home page for usage and a purchase
 | `/purchases` | `routes/purchases.tsx` | Purchases page |
 | `/api/usage` | `routes/api.usage.ts` | Usage data API (usage segment) |
 | `/api/products` | `routes/api.products.ts` | Product add and edit API (products segment) |
+| `/api/purchases` | `routes/api.purchases.ts` | Purchase add API (purchases segment) |
 | `/api/configs` | `routes/api.configs.ts` | Configuration API (data-store segment) |
 
 ## Root Layout
@@ -70,7 +71,10 @@ The link for the page being shown is highlighted and marked as the current page 
 
 ## Purchases Page
 
-`src/app/routes/purchases.tsx` is a placeholder until purchases are designed (HLD: purchases have no segment yet). It shows the top-level heading "Purchases" and the text "Purchase tracking is coming soon." It has no loader, so it reads no data and cannot fail to load.
+`src/app/routes/purchases.tsx`:
+
+- **Loader** (server) — reads `usage.json` and `configs.json` through the data store, without month rollover (purchases design, *Page Data*). If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". Returns `{ usage, categories }`.
+- **Component** — shows the top-level heading "Purchases", then `PurchaseList` (purchases segment), passing it the loader data.
 
 ## Shared Controls
 
@@ -86,14 +90,13 @@ The link for the page being shown is highlighted and marked as the current page 
 | Styling system | Chakra UI only | Chakra plus Tailwind; Tailwind only | One system to learn and maintain; Chakra already supplies every component the features use |
 | Color mode | Follow the system preference; no toggle | In-app toggle | Nothing to build or remember; the system setting already expresses the preference |
 | Notifications | One shared Chakra toaster mounted in the root layout | Per-feature inline error messages | Any feature (first, usage save failures) can notify without its own UI |
-| Unreadable data on the home page | 500 with "Your data could not be loaded." | 404 Not Found | The page exists; a 404 message would misdescribe the failure |
+| Unreadable page data | 500 with "Your data could not be loaded." | 404 Not Found | The page exists; a 404 message would misdescribe the failure |
 | Document title | "Beauty Tracker", set in the root layout for every page | Per-route titles | One app, one title; root placement keeps it on the error page |
 | Meta description | One description, set in the root layout for every page | Per-route descriptions | The description names the whole app, so it fits every page; root placement keeps it on the error page |
 | App name in the header | Plain text | A link to `/` | The Usage link already goes to `/`; one way there is enough |
 | Page structure | One page per tracked area (usage, purchases), linked from a header | Everything on one page; usage at `/usage` with `/` redirecting | Each area's content grows independently. Usage stays at `/` because it is the page used every day |
 | Routines placement | On the usage page, above the usage table | Their own page | Routines are a way of logging usage |
 | Navigation | A header on every page, including the error page | Sidebar; header on normal pages only | Few pages fit in a header; on the error page it gives a way back |
-| Purchases page content | Placeholder text | No page until purchases are designed | Sets up the page and its navigation now; the page gets real content when purchases are designed |
 | Shared +/− control | One `AddMinusButtons` component | Per-feature buttons | [inferred] Identical control in both features |
 | Unused generated snippets | Delete them | Keep for possible future use | The Chakra CLI regenerates any snippet on demand |
 
@@ -110,4 +113,5 @@ The link for the page being shown is highlighted and marked as the current page 
 - src/components/ui/
 - react-router.config.ts, vite.config.ts, tsconfig.json
 - docs/intent/usage/usage-design.md
+- docs/intent/purchases/purchases-design.md
 - docs/arrows/app-shell.md
