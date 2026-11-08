@@ -165,11 +165,14 @@ The purchases page loader (app-shell design, *Purchases Page*) reads `usage.json
 ## References
 
 - src/features/purchases/types.ts
+- src/features/purchases/money.ts
 - src/features/purchases/purchase-list.tsx
 - src/features/purchases/purchase-dialog.tsx
 - src/features/purchases/use-purchase-editor.ts
 - src/app/routes/api.purchases.ts
 - src/app/routes/purchases.tsx
+- src/utils/send-json.ts
+- src/utils/today.ts
 - docs/high-level-design.md
 - docs/intent/products/products-design.md
 - docs/intent/data-store/data-store-design.md
