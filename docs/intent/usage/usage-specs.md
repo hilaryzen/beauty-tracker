@@ -13,6 +13,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-ROLL-005**: If writing `usage.json` after rollover fails while the home page loads, then the system shall show the error page.
 - [x] **USAGE-ROLL-006**: If writing `usage.json` after rollover fails while handling a GET of `/api/usage`, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
 - [x] **USAGE-ROLL-007**: If any product record in `usage.json` has no current month in `YYYY-MM` form when usage data is loaded, then the system shall treat `usage.json` as unreadable.
+- [ ] **USAGE-ROLL-008**: When rollover changes a product record, the system shall leave every field of the record other than `uses`, `currentMonth`, and `usesThisMonth` unchanged.
 
 ## Usage Table
 
@@ -40,6 +41,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-LOG-009**: When a use is logged while an earlier POST to `/api/usage` is still in flight, the page shall send a new POST without cancelling the earlier one.
 - [x] **USAGE-LOG-010**: If a POST to `/api/usage` gets no response, then the page shall show an error notification stating that the change was not saved.
 - [x] **USAGE-LOG-011**: If a POST to `/api/usage` gets no response, then the page shall continue to show the last saved usage data.
+- [ ] **USAGE-LOG-012**: When a logged use changes a product record, the system shall leave every field of the record other than `usesThisMonth` unchanged.
 
 ## API
 

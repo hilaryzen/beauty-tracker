@@ -19,7 +19,7 @@ When a month ends, each product's current count moves into its history. Rollover
 2. For each record whose `currentMonth` is earlier than the current month: add `usesThisMonth` to `uses[currentMonth]`, set `usesThisMonth` to 0, and set `currentMonth` to the current month.
 3. If any record changed, write `usage.json` before returning.
 
-Rollover and logging both change `usage.json` through the data store's per-file update queue (data-store design, *Serialized updates*), so a rollover and a click arriving together never overwrite each other.
+Rollover and logging both change `usage.json` through the data store's per-file update queue (data-store design, *Serialized updates*), so a rollover and a click arriving together never overwrite each other. Both change only the count fields — `uses`, `currentMonth`, and `usesThisMonth`; every other field of a record, including fields other segments own such as `purchase`, is kept as it was.
 
 A record whose `currentMonth` equals or is later than the current month is left unchanged — rollover only moves counts forward, so a misset clock never rewrites history. Months with no app activity get no `uses` entry; a missing month means zero uses.
 
