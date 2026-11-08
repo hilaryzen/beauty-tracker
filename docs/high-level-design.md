@@ -9,7 +9,7 @@ It is hard to judge whether a beauty product was worth what it cost, and easy to
 Track three things per product and combine them:
 
 - **Usage** — a running count of how often each product is used, kept per month. Logging must be fast enough to do every day: one click per product, or one click per routine for products used together.
-- **Purchases** — what each product cost. Combined with usage, this gives **cost per use**: price divided by total uses.
+- **Purchases** — what each product cost: the date it was bought, the store, and the price paid. Each product record is bought at most once; buying the same item again means adding a new product record, so each bottle has its own uses and its own price. Products bought on the same date at the same store show together as one purchase. Combined with usage, this gives **cost per use**: the product's purchase price divided by its total uses.
 - **Inventory** — which products you currently own, grouped by category. Before buying, you can see what you already have in that category and how much each is used.
 
 All data is entered by hand in the app. The app shows numbers; the user draws conclusions.
@@ -43,22 +43,26 @@ In priority order — when two conflict, the higher one wins.
 
 ## System Design
 
-A React Router app rendered on the server, storing all data as JSON files on the local machine. Five segments, all at the root level of the design tree:
+A React Router app rendered on the server, storing all data as JSON files on the local machine. Six segments, all at the root level of the design tree:
 
 | Segment | Purpose | Design | Spec prefix |
 |---|---|---|---|
 | products | Product records, categories, adding and editing products | [products-design.md](intent/products/products-design.md) | `PROD` |
 | usage | Monthly use counts, logging a use, the usage table | [usage-design.md](intent/usage/usage-design.md) | `USAGE` |
 | routines | Named product groups logged together in one click | [routines-design.md](intent/routines/routines-design.md) | `ROUT` |
+| purchases | A product's purchase, adding purchases, the purchase list | [purchases-design.md](intent/purchases/purchases-design.md) | `PURCH` |
 | data-store | JSON file storage, dev/prod data folders, configuration API | [data-store-design.md](intent/data-store/data-store-design.md) | `STORE` |
 | app-shell | Root layout, theme, error page, routes, navigation, page composition, shared controls | [app-shell-design.md](intent/app-shell/app-shell-design.md) | `SHELL` |
 
-Purchases and inventory (Goals 2 and 3) are not yet designed and have no segments.
+Inventory (Goal 3) is not yet designed and has no segment.
 
 ```mermaid
 flowchart TD
   shell[app-shell: pages] --> routines
   shell --> usage
+  shell --> purchases
+  purchases -->|opens the product dialog, finds products by id| products
+  purchases -->|/api/purchases| store
   routines -->|logs via useUsage| usage
   routines -->|finds products by id| products
   usage -->|opens the product dialog| products
@@ -75,7 +79,10 @@ flowchart TD
 | Storage | JSON files on local disk | SQLite; hosted database | Small data, one writer, no infrastructure; consistent with *Simplicity over robustness* |
 | Usage granularity | Counts per product per month | Timestamped log of each use; a single lifetime total | Monthly counts answer cost-per-use and usage-trend questions at a fraction of the data; per-use timestamps add nothing the goals need |
 | Write validation | Each segment validates writes to the data it owns, at the API route that accepts them; the data store only reads and writes files | Central per-file schemas enforced by the data store; validation only in editing forms | Keeps data rules with the segment that defines the data and adds no dependency; form-only validation would let other callers bypass *The app is the only writer* |
-| Product ownership | A products segment owns the record and categories; usage depends on it and owns changes to counts | Products depends on usage; product editing stays inside usage | A count belongs to a product, not the reverse, so purchases and inventory can build on products without depending on usage. Both segments' fields share one record in `usage.json`, so no data migration is needed |
+| Product ownership | A products segment owns the record and categories; usage depends on it and owns changes to counts, and purchases owns changes to the purchase field | Products depends on usage; product editing stays inside usage | A count belongs to a product, not the reverse, so purchases and inventory can build on products without depending on usage. Each segment's fields share one record in `usage.json`, so no data migration is needed |
+| Purchase model | Each product record carries at most one purchase (date, optional store, price) in `usage.json`; products with the same date and store show as one purchase | Purchase records in their own `purchases.json`, each with line items naming products by `id` | With one purchase per product, a field on the record enforces that rule by its shape, and adding a purchase is one write to one file. The cost is that two trips to the same store on the same day show as one purchase, and allowing several purchases per product would need a data migration |
+| Purchases per product | At most one purchase per product record; a repurchase is a new product record | Several purchases per product, with cost per use as total spent divided by total uses | Each bottle keeps its own price and uses, so cost per use describes one bottle. A product already tracked can be given its purchase afterward, so past purchases can be recorded |
+| New products during a purchase | The purchase form opens the product dialog, which saves the product before the purchase | One purchase request that also creates products; the browser chaining product and purchase requests in one save | Products keep one validated write path (*The app is the only writer*), and a failed or abandoned purchase never duplicates a product. The cost is one dialog per new product |
 | Bulk logging | Routines that log every product in them at once | Per-product logging only | Daily routines would otherwise take a click per product, against *Low friction over precision* |
 
 ## Success Metrics
