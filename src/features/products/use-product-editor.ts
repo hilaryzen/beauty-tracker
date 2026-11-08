@@ -1,5 +1,6 @@
 import { useRevalidator } from "react-router";
 import { toaster } from "@/components/ui/toaster";
+import { sendJson } from "@/utils/send-json";
 
 export type Categories = Record<string, string[]>;
 
@@ -34,29 +35,19 @@ function withNewCategory(categories: Categories | undefined, category: string, t
 }
 
 /** Sends one request; returns the message to show if it failed, or undefined if it succeeded. */
-// @spec PROD-SAVE-011, PROD-SAVE-012, PROD-SAVE-014
 async function send(url: string, method: "POST" | "PUT", body: unknown) {
-  const notSaved = "Your change was not saved.";
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    return notSaved;
-  }
-  if (response.ok) return undefined;
-  const parsed = await response.json().catch(() => undefined);
-  return typeof parsed?.error === "string" && parsed.error !== "" ? parsed.error : notSaved;
+  const result = await sendJson(url, method, body);
+  return result.ok ? undefined : result.message;
 }
 
 // @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013
 export function useProductEditor(categories: Categories | undefined) {
   const { revalidate } = useRevalidator();
 
-  /** Saves a new category if there is one, then the product. Returns whether everything saved. */
+  /**
+   * Saves a new category if there is one, then the product, then reloads the page's data.
+   * Returns undefined if anything failed; otherwise the added product's id (none for an edit).
+   */
   async function saveProduct({ id, name, brand, category, group }: ProductDraft) {
     const existing = findCategory(categories, category);
     const categoryName = existing?.category ?? category.trim();
@@ -67,23 +58,24 @@ export function useProductEditor(categories: Categories | undefined) {
       });
       if (message) {
         toaster.create({ type: "error", title: message });
-        return false;
+        return undefined;
       }
     }
 
     const fields = { name: name.trim(), brand: brand.trim(), category: categoryName };
-    const message = await (id === undefined
-      ? send("/api/products", "POST", fields)
-      : send("/api/products", "PUT", { id, ...fields }));
-    if (message) {
-      toaster.create({ type: "error", title: message });
+    const result = await (id === undefined
+      ? sendJson("/api/products", "POST", fields)
+      : sendJson("/api/products", "PUT", { id, ...fields }));
+    if (!result.ok) {
+      toaster.create({ type: "error", title: result.message });
       // A category saved in the first step should now appear in the dropdown.
       if (!existing) await revalidate();
-      return false;
+      return undefined;
     }
 
     await revalidate();
-    return true;
+    const added = (result.data as { id?: unknown } | null | undefined)?.id;
+    return { id: id === undefined && Number.isInteger(added) ? (added as number) : undefined };
   }
 
   return { saveProduct };

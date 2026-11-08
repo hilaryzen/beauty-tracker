@@ -12,9 +12,11 @@ type ProductDialogProps = {
   product?: Product;
   categories?: Categories;
   onClose: () => void;
+  /** Called with a newly added product's id, after the page's data has reloaded. */
+  onSaved?: (id: number) => void;
 };
 
-type ProductFormProps = Pick<ProductDialogProps, "product" | "categories"> & {
+type ProductFormProps = Pick<ProductDialogProps, "product" | "categories" | "onSaved"> & {
   saving: boolean;
   onSavingChange: (saving: boolean) => void;
   onClose: () => void;
@@ -26,8 +28,8 @@ function isConfigured(categories: Categories | undefined, category: string) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-SAVE-008, PROD-SAVE-010
-function ProductForm({ product, categories, saving, onSavingChange, onClose }: ProductFormProps) {
+// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
+function ProductForm({ product, categories, saving, onSavingChange, onClose, onSaved }: ProductFormProps) {
   const { saveProduct } = useProductEditor(categories);
   const [name, setName] = useState(product?.name ?? "");
   const [brand, setBrand] = useState(product?.brand ?? "");
@@ -62,7 +64,9 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose }: P
       group: isNewGroup ? newGroup : group,
     });
     onSavingChange(false);
-    if (saved) onClose();
+    if (!saved) return;
+    if (saved.id !== undefined) onSaved?.(saved.id);
+    onClose();
   }
 
   return (
@@ -137,7 +141,7 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose }: P
 }
 
 // @spec PROD-EDIT-003, PROD-EDIT-015, PROD-EDIT-016, PROD-EDIT-017
-export const ProductDialog = ({ open, product, categories, onClose }: ProductDialogProps) => {
+export const ProductDialog = ({ open, product, categories, onClose, onSaved }: ProductDialogProps) => {
   const [saving, setSaving] = useState(false);
 
   return (
@@ -164,6 +168,7 @@ export const ProductDialog = ({ open, product, categories, onClose }: ProductDia
               saving={saving}
               onSavingChange={setSaving}
               onClose={onClose}
+              onSaved={onSaved}
             />
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" disabled={saving} />

@@ -42,7 +42,7 @@ function checkShape(body: unknown): string | undefined {
 }
 
 /** Applies the change to every listed product, never taking a count below 0. */
-// @spec PROD-002, USAGE-LOG-003, USAGE-LOG-006
+// @spec PROD-002, USAGE-LOG-003, USAGE-LOG-006, USAGE-LOG-012
 function applyChange(usage: Product[], { ids, delta }: UsageChange): Product[] {
   const unknown = ids.find((id) => !usage.some((record) => record.id === id));
   if (unknown !== undefined) throw new ValidationError(`No product has id ${unknown}`);

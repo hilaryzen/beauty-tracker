@@ -6,6 +6,7 @@ taxonomy:
     - products
     - usage
     - routines
+    - purchases
   platform:
     - data-store
     - app-shell
@@ -14,10 +15,10 @@ arrows:
   products:
     status: MAPPED
     parent: null
-    sampled: 2026-11-03
+    sampled: 2026-11-07
     audited: null
     audited_sha: null
-    blocks: [usage, routines]
+    blocks: [usage, routines, purchases]
     blockedBy: [data-store]
     detail: products.md
     next: "Design deleting products and the category editor (HLD Goal 4)"
@@ -26,7 +27,7 @@ arrows:
   usage:
     status: MAPPED
     parent: null
-    sampled: 2026-10-25
+    sampled: 2026-11-07
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: [routines, app-shell]
@@ -47,13 +48,25 @@ arrows:
     next: "Design the routine editor (HLD Goal 4)"
     drift: null
 
+  purchases:
+    status: MAPPED
+    parent: null
+    sampled: 2026-11-07
+    audited: null
+    audited_sha: null
+    blocks: [app-shell]
+    blockedBy: [data-store, products]
+    detail: purchases.md
+    next: "Design editing and deleting purchases, and cost per use (HLD Goals 2 and 4)"
+    drift: null
+
   data-store:
     status: MAPPED
     parent: null
     sampled: 2026-10-25
     audited: 2026-10-25
     audited_sha: 8527123
-    blocks: [products, usage]
+    blocks: [products, usage, purchases]
     blockedBy: []
     detail: data-store.md
     next: "Connect /api/configs to the routine and category editors when they arrive"
@@ -66,7 +79,7 @@ arrows:
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: []
-    blockedBy: [usage, routines]
+    blockedBy: [usage, routines, purchases]
     detail: app-shell.md
     next: "Add an Inventory header link when inventory gets a page"
     drift: null
