@@ -21,12 +21,13 @@ export function stubMatchMedia(prefersDark = false) {
 
 // Renders a page component at "/" inside a router stub, with a loader the
 // test controls, so useLoaderData and revalidation work as in the app.
-export function renderPage<T>(Page: () => ReactElement, loader: () => T) {
+// `url` sets the starting URL, such as "/?group=lips".
+export function renderPage<T>(Page: () => ReactElement, loader: () => T, url = "/") {
   stubMatchMedia();
   const Stub = createRoutesStub([{ path: "/", Component: Page, loader, HydrateFallback: () => null }]);
   return render(
     <Provider>
-      <Stub initialEntries={["/"]} />
+      <Stub initialEntries={[url]} />
       <Toaster />
     </Provider>,
   );
