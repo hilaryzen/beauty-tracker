@@ -11,6 +11,7 @@ import { ProductDialog } from "./product-dialog";
 type Categories = Record<string, string[]>;
 
 const primer = sampleUsage[0];
+const shaded = { ...primer, shade: "Berry" };
 
 function renderDialog({
   product,
@@ -133,17 +134,34 @@ describe("product dialog fields", () => {
     renderDialog();
     await dialogReady();
     expect(screen.getByLabelText("Name")).toHaveValue("");
+    expect(screen.getByLabelText("Shade")).toHaveValue("");
     expect(screen.getByLabelText("Brand")).toHaveValue("");
     expect((screen.getByLabelText("Category") as HTMLSelectElement).value).toBe("");
   });
 
   // @spec PROD-EDIT-002
-  it("shows the product's name, brand, and category when editing", async () => {
+  it("shows the product's name, shade, brand, and category when editing", async () => {
+    renderDialog({ product: shaded });
+    await dialogReady();
+    expect(screen.getByLabelText("Name")).toHaveValue(shaded.name);
+    expect(screen.getByLabelText("Shade")).toHaveValue("Berry");
+    expect(screen.getByLabelText("Brand")).toHaveValue(shaded.brand);
+    expect(selectedText("Category")).toBe(shaded.category);
+  });
+
+  // @spec PROD-EDIT-002
+  it("shows an empty shade when editing a product without one", async () => {
     renderDialog({ product: primer });
     await dialogReady();
-    expect(screen.getByLabelText("Name")).toHaveValue(primer.name);
-    expect(screen.getByLabelText("Brand")).toHaveValue(primer.brand);
-    expect(selectedText("Category")).toBe(primer.category);
+    expect(screen.getByLabelText("Shade")).toHaveValue("");
+  });
+
+  // @spec PROD-EDIT-019
+  it("shows the name, shade, brand, and category inputs in that order", async () => {
+    renderDialog();
+    await dialogReady();
+    const labels = Array.from(screen.getByRole("dialog").querySelectorAll("label")).map((label) => label.textContent);
+    expect(labels).toEqual(["Name", "Shade", "Brand", "Category"]);
   });
 
   // @spec PROD-EDIT-003
@@ -253,6 +271,15 @@ describe("product dialog fields", () => {
 });
 
 describe("when Save is disabled", () => {
+  // @spec PROD-EDIT-020
+  it("keeps Save enabled while the shade is blank", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    expect(button("Save")).toBeEnabled();
+    fill("Shade", "   ");
+    expect(button("Save")).toBeEnabled();
+  });
+
   // @spec PROD-EDIT-007
   it("disables Save while the name or brand is blank after trimming", async () => {
     renderDialog();
@@ -490,6 +517,52 @@ describe("saving a product", () => {
     const call = requestsTo("/api/products")[0];
     expect((call[1] as RequestInit).method?.toUpperCase()).toBe("PUT");
     expect(bodyOf(call)).toEqual({ id: primer.id, name: "Renamed", brand: primer.brand, category: "Foundation" });
+  });
+
+  // @spec PROD-SAVE-016
+  it("sends the trimmed shade with a new product", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    fill("Shade", "  Berry ");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodyOf(requestsTo("/api/products")[0])).toEqual({
+      name: "Dew Serum", brand: "Saie", category: "Cleanser", shade: "Berry",
+    });
+  });
+
+  // @spec PROD-SAVE-016
+  it("sends the trimmed shade when editing a product", async () => {
+    renderDialog({ product: shaded });
+    await dialogReady();
+    fill("Shade", " Plum ");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodyOf(requestsTo("/api/products")[0])).toEqual({
+      id: shaded.id, name: shaded.name, brand: shaded.brand, category: shaded.category, shade: "Plum",
+    });
+  });
+
+  // @spec PROD-SAVE-017
+  it("leaves shade out of a new product's request when it is blank after trimming", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    fill("Shade", "   ");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodyOf(requestsTo("/api/products")[0])).not.toHaveProperty("shade");
+  });
+
+  // @spec PROD-SAVE-017
+  it("leaves shade out of the request when an edited product's shade is cleared", async () => {
+    renderDialog({ product: shaded });
+    await dialogReady();
+    fill("Shade", "");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodyOf(requestsTo("/api/products")[0])).toEqual({
+      id: shaded.id, name: shaded.name, brand: shaded.brand, category: shaded.category,
+    });
   });
 
   // @spec PROD-SAVE-001, PROD-SAVE-006

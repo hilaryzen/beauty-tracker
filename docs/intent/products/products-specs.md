@@ -9,11 +9,12 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-001**: The system shall store each tracked product as a record with an integer id, name, brand, category, a map of closed-month use counts keyed by `YYYY-MM`, a current month in `YYYY-MM` form, and a use count for that current month.
 - [x] **PROD-002**: The system shall locate a product record by its `id` field, independent of the record's position in `usage.json`.
 - [x] **PROD-003**: The system shall allow a product record to carry an optional `purchase` field.
+- [x] **PROD-004**: The system shall allow a product record to carry an optional `shade` field.
 
 ## Product Dialog
 
-- [x] **PROD-EDIT-001**: When the product dialog opens to add a product, the dialog shall show an empty name, an empty brand, and no category chosen.
-- [x] **PROD-EDIT-002**: When the product dialog opens to edit a product, the dialog shall show that product's name, brand, and category.
+- [x] **PROD-EDIT-001**: When the product dialog opens to add a product, the dialog shall show an empty name, an empty shade, an empty brand, and no category chosen.
+- [x] **PROD-EDIT-002**: When the product dialog opens to edit a product, the dialog shall show that product's name, shade (empty if the product has none), brand, and category.
 - [x] **PROD-EDIT-003**: While the product dialog is open, the page shall prevent interaction with the usage table and routine cards.
 - [x] **PROD-EDIT-004**: The product dialog's category dropdown shall list the configured categories under their groups, in configured order, followed by a "New category" option.
 - [x] **PROD-EDIT-005**: When the user chooses "New category" in the product dialog, the dialog shall show a new category name input and a group dropdown listing the existing groups in configured order, followed by a "New group" option.
@@ -30,6 +31,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-EDIT-016**: When the user clicks outside the product dialog, the page shall keep the dialog open.
 - [x] **PROD-EDIT-017**: While a save from the product dialog is in flight, the page shall ignore Cancel, Esc, and the close control.
 - [x] **PROD-EDIT-018**: When the page's loaders revalidate while the product dialog is open, the dialog shall keep the contents of its fields.
+- [x] **PROD-EDIT-019**: The product dialog shall show its name, shade, brand, and category inputs in that order.
+- [x] **PROD-EDIT-020**: The product dialog shall not disable Save because the shade input is blank.
 
 ## Saving a Product
 
@@ -48,6 +51,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-SAVE-013**: If the POST to `/api/configs` from the product dialog succeeds and the request to `/api/products` fails, then the page shall revalidate its loaders.
 - [x] **PROD-SAVE-014**: If a request from the product dialog responds with an error status and no JSON body with a non-empty string `error`, then the page shall show an error notification stating that the change was not saved.
 - [x] **PROD-SAVE-015**: When a POST to `/api/products` from the product dialog succeeds, the page shall report the new product's `id` to the component that opened the dialog after revalidating its loaders.
+- [x] **PROD-SAVE-016**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed shade is not blank, the page shall include the trimmed shade as `shade` in the request body.
+- [x] **PROD-SAVE-017**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed shade is blank, the page shall leave `shade` out of the request body.
 
 ## Product API
 
@@ -57,8 +62,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-004**: When `/api/products` receives a PUT whose body passes validation, the system shall replace the name, brand, and category of the product record whose `id` matches the body's `id`.
 - [x] **PROD-API-005**: When `/api/products` receives a PUT whose body passes validation, the system shall leave that product record's id, closed-month use counts, current month, and current-month use count unchanged.
 - [x] **PROD-API-006**: When `/api/products` applies a POST or PUT that passes validation, the system shall write `usage.json` once.
-- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any other top-level key, then the system shall treat the body as failing validation.
-- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any other top-level key, then the system shall treat the body as failing validation.
+- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any top-level key other than those and `shade`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any top-level key other than those and `shade`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-009**: If `name` or `brand` in a body to `/api/products` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
 - [x] **PROD-API-010**: If `category` in a body to `/api/products` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-011**: If `id` in a PUT body to `/api/products` is not an integer matching a product record's `id`, then the system shall treat the body as failing validation.
@@ -73,6 +78,11 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-020**: When `/api/products` adds a product record, the system shall respond with a JSON body of the form `{ "id": <id> }` holding the new record's id.
 - [x] **PROD-API-021**: When `/api/products` adds a product record, the system shall give it no `purchase` field.
 - [x] **PROD-API-022**: When `/api/products` receives a PUT whose body passes validation, the system shall leave that product record's `purchase` field, or its absence, unchanged.
+- [x] **PROD-API-023**: If a body to `/api/products` contains `shade` and it is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
+- [x] **PROD-API-024**: When `/api/products` receives a POST whose body passes validation and contains `shade`, the system shall give the new product record the body's `shade`.
+- [x] **PROD-API-025**: When `/api/products` receives a POST whose body passes validation and has no `shade`, the system shall give the new product record no `shade` field.
+- [x] **PROD-API-026**: When `/api/products` receives a PUT whose body passes validation and contains `shade`, the system shall set the matching product record's `shade` to the body's `shade`.
+- [x] **PROD-API-027**: When `/api/products` receives a PUT whose body passes validation and has no `shade`, the system shall remove the `shade` field from the matching product record.
 
 ## Categories
 

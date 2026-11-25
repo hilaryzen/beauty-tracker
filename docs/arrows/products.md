@@ -15,7 +15,7 @@ What a product is: the product record, categories, and adding and editing produc
 - docs/intent/products/products-design.md
 
 ### EARS
-- docs/intent/products/products-specs.md (62 specs)
+- docs/intent/products/products-specs.md (72 specs)
 
 ### Tests
 - src/app/routes/api.products.test.ts
@@ -38,7 +38,7 @@ What a product is: the product record, categories, and adding and editing produc
 **Purpose:** Define the product record and category rules, and let the user add and edit products without opening a data file.
 
 **Key Components:**
-1. `Product` type — product record shape, including the optional `purchase` field set only by purchases (`types.ts`)
+1. `Product` type — product record shape, including the optional `shade` and the optional `purchase` field set only by purchases (`types.ts`)
 2. `checkCategories` — category rules applied by `/api/configs` (`category-rules.ts`)
 3. `ProductDialog` and `useProductEditor` — one modal form for add and edit; saves a new category through `/api/configs`, then the product through `/api/products`, and reports an added product's id through `onSaved` (`product-dialog.tsx`, `use-product-editor.ts`)
 4. `/api/products` route — POST adds (responding with the new id) and PUT edits, validated inside the `usage.json` queue, with no rollover (`api.products.ts`)
@@ -47,17 +47,18 @@ What a product is: the product record, categories, and adding and editing produc
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Record | PROD-001 to PROD-003 | 3 | 0 | 0 |
-| Dialog | PROD-EDIT-001 to PROD-EDIT-018 | 18 | 0 | 0 |
-| Saving | PROD-SAVE-001 to PROD-SAVE-015 | 15 | 0 | 0 |
-| API | PROD-API-001 to PROD-API-022 | 22 | 0 | 0 |
+| Record | PROD-001 to PROD-004 | 4 | 0 | 0 |
+| Dialog | PROD-EDIT-001 to PROD-EDIT-020 | 20 | 0 | 0 |
+| Saving | PROD-SAVE-001 to PROD-SAVE-017 | 17 | 0 | 0 |
+| API | PROD-API-001 to PROD-API-027 | 27 | 0 | 0 |
 | Categories | PROD-CAT-001 to PROD-CAT-004 | 4 | 0 | 0 |
 
-**Summary:** 62 specs, all `[x]`.
+**Summary:** 72 specs, all `[x]`.
 
 ## Key Findings
 
 1. **Deleting products and a category editor are not designed** — both are needed for HLD Goal 4 (LLD deferred questions 1 and 2).
+2. **Shade shows only in the usage table and product dialog** — routine cards and the purchases page show products without it (LLD deferred question 3).
 
 ## Work Required
 

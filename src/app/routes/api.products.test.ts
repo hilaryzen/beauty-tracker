@@ -102,6 +102,18 @@ describe("/api/products", () => {
       expect((await readData("usage.json")).at(-1)).not.toHaveProperty("purchase");
     });
 
+    // @spec PROD-API-024
+    it("gives the new record the body's shade", async () => {
+      await post({ ...newProduct, shade: "Berry" });
+      expect((await readData("usage.json")).at(-1)).toMatchObject({ ...newProduct, shade: "Berry" });
+    });
+
+    // @spec PROD-API-025
+    it("gives the new record no shade when the body has none", async () => {
+      await post(newProduct);
+      expect((await readData("usage.json")).at(-1)).not.toHaveProperty("shade");
+    });
+
     // @spec PROD-API-017
     it("gives overlapping adds different ids", async () => {
       await Promise.all([post(newProduct), post(newProduct), post(newProduct)]);
@@ -128,6 +140,26 @@ describe("/api/products", () => {
       const usage = await readData("usage.json");
       expect(usage[0].purchase).toEqual(purchase);
       expect(usage[1]).not.toHaveProperty("purchase");
+    });
+
+    // @spec PROD-004, PROD-API-026
+    it("sets the matching record's shade to the body's shade", async () => {
+      await writeData("usage.json", [{ ...sampleUsage[0], shade: "Berry" }, ...sampleUsage.slice(1)]);
+      expect(await put({ ...changes, shade: "Plum" })).toBeNull();
+      expect(await put({ ...changes, id: 1, shade: "Light" })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0].shade).toBe("Plum");
+      expect(usage[1].shade).toBe("Light");
+    });
+
+    // @spec PROD-API-027
+    it("removes the matching record's shade when the body has none", async () => {
+      await writeData("usage.json", [{ ...sampleUsage[0], shade: "Berry" }, ...sampleUsage.slice(1)]);
+      expect(await put(changes)).toBeNull();
+      expect(await put({ ...changes, id: 1 })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0]).not.toHaveProperty("shade");
+      expect(usage[1]).not.toHaveProperty("shade");
     });
 
     // @spec PROD-002, PROD-API-004
@@ -186,6 +218,23 @@ describe("/api/products", () => {
       await expectError(await put({ id: 0, name: "Dew", brand: "Saie" }), 400);
       await expectError(await put({ ...changes, usesThisMonth: 3 }), 400);
       await expectError(await put({ ...changes, uses: {} }), 400);
+    });
+
+    // @spec PROD-API-007, PROD-API-008
+    it("accepts shade as the one optional key on a POST or PUT", async () => {
+      const added = await post({ ...newProduct, shade: "Berry" });
+      expect(added).toBeInstanceOf(Response);
+      expect((added as Response).status).toBe(200);
+      expect(await put({ ...changes, shade: "Berry" })).toBeNull();
+    });
+
+    // @spec PROD-API-023
+    it("rejects a shade that is not a string, is blank, or has surrounding whitespace", async () => {
+      for (const bad of ["", "   ", " Berry", "Berry ", 3, null]) {
+        await expectError(await post({ ...newProduct, shade: bad }), 400);
+        await expectError(await put({ ...changes, shade: bad }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
     });
 
     // @spec PROD-API-009
