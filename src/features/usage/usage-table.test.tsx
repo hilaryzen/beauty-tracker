@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toaster } from "@/components/ui/toaster";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
@@ -11,13 +11,26 @@ type PageData = { usage: typeof sampleUsage; categories?: Record<string, string[
 
 function Page() {
   const { usage, categories } = useLoaderData() as PageData;
-  return <UsageTable usage={usage} categories={categories as Record<string, string[]>} />;
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <UsageTable usage={usage} categories={categories as Record<string, string[]>} />
+      {/* Test-only probes: the current URL's search string, and a browser Back. */}
+      <output data-testid="search">{location.search}</output>
+      <button onClick={() => navigate(-1)}>Test back</button>
+    </>
+  );
 }
 
 function renderTable(data: PageData = { usage: sampleUsage, categories: sampleConfigs.categories }, url = "/") {
   const loader = vi.fn(() => data);
   renderPage(Page, loader, url);
   return loader;
+}
+
+function currentSearch() {
+  return screen.getByTestId("search").textContent;
 }
 
 async function tabNames() {
@@ -326,5 +339,71 @@ describe("usage table group tabs", () => {
   it("shows only the All tab when there are no categories", async () => {
     renderTable({ usage: sampleUsage });
     expect(await tabNames()).toEqual(["All"]);
+  });
+
+  // @spec USAGE-UI-018
+  it("selects the group named in the URL's group parameter", async () => {
+    renderTable(undefined, "/?group=skincare");
+    expect(await selectedTab()).toEqual(["skincare"]);
+  });
+
+  // @spec USAGE-UI-018
+  it("keeps the selected group after a logged use reloads the page data", async () => {
+    const loader = renderTable(undefined, "/?group=makeup");
+    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
+    await waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
+    expect(await selectedTab()).toEqual(["makeup"]);
+    expect(await productOrder()).toEqual(["Hydro Grip Primer", "Cushion Glass Original"]);
+  });
+
+  // @spec USAGE-UI-019
+  it("selects the All tab when the URL has no group parameter", async () => {
+    renderTable(undefined, "/");
+    expect(await selectedTab()).toEqual(["All"]);
+  });
+
+  // @spec USAGE-UI-020
+  it("selects the All tab and shows every product when the group parameter names no group", async () => {
+    renderTable(undefined, "/?group=Makeup");
+    expect(await selectedTab()).toEqual(["All"]);
+    expect(await productOrder()).toHaveLength(sampleUsage.length);
+  });
+
+  // @spec USAGE-UI-021
+  it("sets the group parameter when a group tab is selected", async () => {
+    renderTable();
+    fireEvent.click(await screen.findByRole("tab", { name: "skincare" }));
+    await waitFor(() => expect(currentSearch()).toBe("?group=skincare"));
+    expect(await selectedTab()).toEqual(["skincare"]);
+    expect(await productOrder()).toEqual(["Blueberry Bounce Gentle Cleanser"]);
+  });
+
+  // @spec USAGE-UI-022
+  it("removes the group parameter when the All tab is selected", async () => {
+    renderTable(undefined, "/?group=skincare");
+    fireEvent.click(await screen.findByRole("tab", { name: "All" }));
+    await waitFor(() => expect(currentSearch()).toBe(""));
+    expect(await selectedTab()).toEqual(["All"]);
+  });
+
+  // @spec USAGE-UI-023
+  it("adds a history entry for each tab change, so Back returns to the previous tab", async () => {
+    renderTable();
+    fireEvent.click(await screen.findByRole("tab", { name: "skincare" }));
+    await waitFor(() => expect(currentSearch()).toBe("?group=skincare"));
+    fireEvent.click(screen.getByRole("tab", { name: "makeup" }));
+    await waitFor(() => expect(currentSearch()).toBe("?group=makeup"));
+    fireEvent.click(screen.getByRole("button", { name: "Test back" }));
+    await waitFor(() => expect(currentSearch()).toBe("?group=skincare"));
+    expect(await selectedTab()).toEqual(["skincare"]);
+  });
+
+  // @spec USAGE-UI-024
+  it("leaves the URL unchanged when the selected tab is clicked", async () => {
+    renderTable(undefined, "/?group=hair");
+    fireEvent.click(await screen.findByRole("tab", { name: "All" }));
+    // Give any navigation a chance to happen before checking it did not.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(currentSearch()).toBe("?group=hair");
   });
 });
