@@ -156,6 +156,64 @@ describe("a product's shade in the usage table", () => {
   });
 });
 
+describe("a product's dates in the usage table", () => {
+  const DATE_COLUMNS = ["Purchased", "Opened", "Expires", "Removed"];
+
+  function headers() {
+    return screen.getAllByRole("columnheader").map((header) => header.textContent);
+  }
+
+  // The text of the row's Purchased, Opened, Expires, and Removed cells, found by their headers' positions.
+  function dateCells(tr: HTMLElement) {
+    const cells = within(tr).getAllByRole("cell");
+    return DATE_COLUMNS.map((column) => cells[headers().indexOf(column)].textContent);
+  }
+
+  const dated = {
+    ...sampleUsage[0],
+    purchase: { date: "2026-09-14", store: "Sephora", price: 3200 },
+    opened: "2026-09-20",
+    expires: "2027-09-20",
+    removed: "2026-10-05",
+  };
+
+  // @spec USAGE-UI-026
+  it("shows Purchased, Opened, Expires, and Removed columns after This Month's Uses and before the controls", async () => {
+    renderTable();
+    await screen.findAllByRole("cell");
+    const all = headers();
+    const at = all.indexOf("This Month's Uses");
+    expect(all.slice(at + 1, at + 5)).toEqual(DATE_COLUMNS);
+    // The +/− and edit controls stay in the last column.
+    const cells = within(await row("Hydro Grip Primer")).getAllByRole("cell");
+    expect(cells).toHaveLength(all.length);
+    expect(within(cells.at(-1) as HTMLElement).getByRole("button", { name: "Edit" })).toBeInTheDocument();
+  });
+
+  // @spec USAGE-UI-027, USAGE-UI-028
+  it("shows each date as stored, in YYYY-MM-DD form", async () => {
+    renderTable({ usage: [dated, ...sampleUsage.slice(1)], categories: sampleConfigs.categories });
+    expect(dateCells(await row("Hydro Grip Primer"))).toEqual(["2026-09-14", "2026-09-20", "2027-09-20", "2026-10-05"]);
+  });
+
+  // @spec USAGE-UI-029, USAGE-UI-030
+  it("leaves a date cell empty when the product has no such date", async () => {
+    renderTable({
+      usage: [{ ...sampleUsage[0], expires: "2027-01-01" }, ...sampleUsage.slice(1)],
+      categories: sampleConfigs.categories,
+    });
+    expect(dateCells(await row("Hydro Grip Primer"))).toEqual(["", "", "2027-01-01", ""]);
+    expect(dateCells(await row("Cushion Glass Original"))).toEqual(["", "", "", ""]);
+  });
+
+  // @spec USAGE-UI-029
+  it("leaves the Purchased cell empty for a product with no purchase, while showing its other dates", async () => {
+    const { purchase: _purchase, ...unbought } = dated;
+    renderTable({ usage: [unbought, ...sampleUsage.slice(1)], categories: sampleConfigs.categories });
+    expect(dateCells(await row("Hydro Grip Primer"))).toEqual(["", "2026-09-20", "2027-09-20", "2026-10-05"]);
+  });
+});
+
 describe("opening the product dialog", () => {
   // @spec USAGE-UI-007
   it("shows an Add product button above the rows", async () => {
