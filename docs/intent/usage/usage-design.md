@@ -106,6 +106,7 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 - src/features/usage/use-usage.ts
 - src/features/usage/usage.server.ts
 - src/features/usage/usage-table.tsx
+- src/features/purchases/money.ts
 - src/app/routes/api.usage.ts
 - docs/intent/products/products-design.md
 - docs/intent/purchases/purchases-design.md
