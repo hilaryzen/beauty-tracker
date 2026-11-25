@@ -71,6 +71,17 @@ describe("routine cards", () => {
     ]);
   });
 
+  // @spec ROUT-UI-007
+  it("shows a product's shade after its name, as plain text in the same style", async () => {
+    const usage = [{ ...sampleUsage[0], shade: "Berry" }, ...sampleUsage.slice(1)];
+    renderPage(Page, () => ({ usage, routines: { Makeup: [0, 1] } }));
+    const [shaded, plain] = within(await card("Makeup")).getAllByRole("listitem");
+    expect(shaded.textContent).toBe("Hydro Grip Primer – Berry");
+    // One plain text node: no element can give the shade a style of its own.
+    expect(shaded.children).toHaveLength(0);
+    expect(plain.textContent).toBe("Cushion Glass Original");
+  });
+
   // @spec ROUT-UI-004
   it("shows a + and a − control on each card", async () => {
     renderCards({ Makeup: [0, 1] });
