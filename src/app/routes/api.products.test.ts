@@ -35,8 +35,9 @@ async function expectError(result: unknown, status: number) {
   expect(body.error.length).toBeGreaterThan(0);
 }
 
-const newProduct = { name: "Dew Serum", brand: "Saie", category: "Cleanser" };
-const changes = { id: 0, name: "Renamed Primer", brand: "New Brand", category: "Foundation" };
+const newProduct = { name: "Dew Serum", brand: "Saie", category: "Cleanser", status: "Backlog" };
+const changes = { id: 0, name: "Renamed Primer", brand: "New Brand", category: "Foundation", status: "Panned" };
+const statuses = ["Backlog", "Opened", "In Progress", "Panned", "Decluttered"];
 // The tests run on 2026-10-26.
 const dates = { opened: "2026-10-01", expires: "2027-10-01", removed: "2026-10-26" };
 const details = { size: { amount: 1.7, unit: "fl oz" }, rating: 4, notes: "Pills under sunscreen.\n\nGreat alone." };
@@ -158,6 +159,14 @@ describe("/api/products", () => {
       expect(usage[1]).not.toHaveProperty("notes");
     });
 
+    // @spec PROD-001, PROD-API-045
+    it("gives the new record the body's status", async () => {
+      for (const status of statuses) {
+        await post({ ...newProduct, status });
+        expect((await readData("usage.json")).at(-1).status).toBe(status);
+      }
+    });
+
     // @spec PROD-API-017
     it("gives overlapping adds different ids", async () => {
       await Promise.all([post(newProduct), post(newProduct), post(newProduct)]);
@@ -172,6 +181,14 @@ describe("/api/products", () => {
       expect(await put(changes)).toBeNull();
       const usage = await readData("usage.json");
       expect(usage[0]).toMatchObject({ name: "Renamed Primer", brand: "New Brand", category: "Foundation" });
+      expect(usage.slice(1)).toEqual(sampleUsage.slice(1));
+    });
+
+    // @spec PROD-API-046
+    it("sets the matching record's status to the body's status", async () => {
+      expect(await put({ ...changes, status: "Decluttered" })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0].status).toBe("Decluttered");
       expect(usage.slice(1)).toEqual(sampleUsage.slice(1));
     });
 
@@ -287,19 +304,21 @@ describe("/api/products", () => {
   describe("validation", () => {
     // @spec PROD-API-007
     it("rejects a POST missing a required key or with any other key", async () => {
-      await expectError(await post({ brand: "Saie", category: "Cleanser" }), 400);
-      await expectError(await post({ name: "Dew", category: "Cleanser" }), 400);
-      await expectError(await post({ name: "Dew", brand: "Saie" }), 400);
+      await expectError(await post({ brand: "Saie", category: "Cleanser", status: "Backlog" }), 400);
+      await expectError(await post({ name: "Dew", category: "Cleanser", status: "Backlog" }), 400);
+      await expectError(await post({ name: "Dew", brand: "Saie", status: "Backlog" }), 400);
+      await expectError(await post({ name: "Dew", brand: "Saie", category: "Cleanser" }), 400);
       await expectError(await post({ ...newProduct, id: 4 }), 400);
       await expectError(await post({ ...newProduct, usesThisMonth: 3 }), 400);
     });
 
     // @spec PROD-API-008
     it("rejects a PUT missing a required key or with any other key", async () => {
-      await expectError(await put({ name: "Dew", brand: "Saie", category: "Cleanser" }), 400);
-      await expectError(await put({ id: 0, brand: "Saie", category: "Cleanser" }), 400);
-      await expectError(await put({ id: 0, name: "Dew", category: "Cleanser" }), 400);
-      await expectError(await put({ id: 0, name: "Dew", brand: "Saie" }), 400);
+      await expectError(await put({ name: "Dew", brand: "Saie", category: "Cleanser", status: "Backlog" }), 400);
+      await expectError(await put({ id: 0, brand: "Saie", category: "Cleanser", status: "Backlog" }), 400);
+      await expectError(await put({ id: 0, name: "Dew", category: "Cleanser", status: "Backlog" }), 400);
+      await expectError(await put({ id: 0, name: "Dew", brand: "Saie", status: "Backlog" }), 400);
+      await expectError(await put({ id: 0, name: "Dew", brand: "Saie", category: "Cleanser" }), 400);
       await expectError(await put({ ...changes, usesThisMonth: 3 }), 400);
       await expectError(await put({ ...changes, uses: {} }), 400);
     });
@@ -310,6 +329,17 @@ describe("/api/products", () => {
       expect(added).toBeInstanceOf(Response);
       expect((added as Response).status).toBe(200);
       expect(await put({ ...changes, shade: "Berry", ...dates, ...details })).toBeNull();
+    });
+
+    // @spec PROD-009, PROD-API-044
+    it("rejects a status other than the five, matching capitalization exactly", async () => {
+      for (const bad of ["in progress", "IN PROGRESS", "InProgress", "Used up", "", null, 2]) {
+        await expectError(await post({ ...newProduct, status: bad }), 400);
+        await expectError(await put({ ...changes, status: bad }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+
+      for (const status of statuses) expect(await put({ ...changes, status })).toBeNull();
     });
 
     // @spec PROD-API-035
