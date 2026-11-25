@@ -23,6 +23,8 @@ export type ProductDraft = {
   rating?: string;
   /** Blank means the product has no notes. */
   notes?: string;
+  /** The chosen status. */
+  status: string;
   /** An existing category's name, or a typed name. */
   category: string;
   /** The group for a typed category name that matches no existing category. */
@@ -55,7 +57,7 @@ async function send(url: string, method: "POST" | "PUT", body: unknown) {
   return result.ok ? undefined : result.message;
 }
 
-// @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013, PROD-SAVE-016, PROD-SAVE-017, PROD-SAVE-018, PROD-SAVE-019, PROD-SAVE-020, PROD-SAVE-021, PROD-SAVE-022, PROD-SAVE-023, PROD-SAVE-024, PROD-SAVE-025
+// @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013, PROD-SAVE-016, PROD-SAVE-017, PROD-SAVE-018, PROD-SAVE-019, PROD-SAVE-020, PROD-SAVE-021, PROD-SAVE-022, PROD-SAVE-023, PROD-SAVE-024, PROD-SAVE-025, PROD-SAVE-026
 export function useProductEditor(categories: Categories | undefined) {
   const { revalidate } = useRevalidator();
 
@@ -64,7 +66,7 @@ export function useProductEditor(categories: Categories | undefined) {
    * Returns undefined if anything failed; otherwise the added product's id (none for an edit).
    */
   async function saveProduct({
-    id, name, brand, shade, opened, expires, removed, sizeAmount, sizeUnit, rating, notes, category, group,
+    id, name, brand, status, shade, opened, expires, removed, sizeAmount, sizeUnit, rating, notes, category, group,
   }: ProductDraft) {
     const existing = findCategory(categories, category);
     const categoryName = existing?.category ?? category.trim();
@@ -87,6 +89,7 @@ export function useProductEditor(categories: Categories | undefined) {
       name: name.trim(),
       brand: brand.trim(),
       category: categoryName,
+      status,
       // A blank shade is left out, which removes any shade the product had.
       ...(trimmedShade === "" ? {} : { shade: trimmedShade }),
       // Likewise, an empty date picker leaves its date out, which removes it from the product.

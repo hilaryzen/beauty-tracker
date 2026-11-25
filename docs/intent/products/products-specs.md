@@ -60,14 +60,14 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-EDIT-039**: The product dialog shall not disable Save because the size amount input is empty, whether or not a size unit is chosen.
 - [x] **PROD-EDIT-040**: The product dialog shall not disable Save because the rating dropdown is blank or the notes input is empty.
 - [x] **PROD-EDIT-041**: While no size unit is chosen, the product dialog's size unit dropdown shall show the placeholder `Unit`.
-- [ ] **PROD-EDIT-042**: The product dialog shall show a status dropdown after its category input and before its date opened picker.
-- [ ] **PROD-EDIT-043**: The product dialog's status dropdown shall offer `Backlog`, `Opened`, `In Progress`, `Panned`, and `Decluttered`, in that order, and no other option.
-- [ ] **PROD-EDIT-044**: When the product dialog opens to add a product, the dialog shall show `Backlog` chosen in the status dropdown.
-- [ ] **PROD-EDIT-045**: When the product dialog opens to edit a product whose `status` is `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the dialog shall show that status chosen in the status dropdown.
-- [ ] **PROD-EDIT-046**: When the product dialog opens to edit a product that has no `status`, or a `status` other than `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the dialog shall show no status chosen.
-- [ ] **PROD-EDIT-047**: While no status is chosen in the product dialog, the dialog shall disable Save.
-- [ ] **PROD-EDIT-048**: When the user chooses a status in the product dialog, the dialog shall leave the date opened, date expiring, and date removed pickers unchanged.
-- [ ] **PROD-EDIT-049**: While no status is chosen in the product dialog, the status dropdown shall show the placeholder `Status`.
+- [x] **PROD-EDIT-042**: The product dialog shall show a status dropdown after its category input and before its date opened picker.
+- [x] **PROD-EDIT-043**: The product dialog's status dropdown shall offer `Backlog`, `Opened`, `In Progress`, `Panned`, and `Decluttered`, in that order, and no other option.
+- [x] **PROD-EDIT-044**: When the product dialog opens to add a product, the dialog shall show `Backlog` chosen in the status dropdown.
+- [x] **PROD-EDIT-045**: When the product dialog opens to edit a product whose `status` is `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the dialog shall show that status chosen in the status dropdown.
+- [x] **PROD-EDIT-046**: When the product dialog opens to edit a product that has no `status`, or a `status` other than `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the dialog shall show no status chosen.
+- [x] **PROD-EDIT-047**: While no status is chosen in the product dialog, the dialog shall disable Save.
+- [x] **PROD-EDIT-048**: When the user chooses a status in the product dialog, the dialog shall leave the date opened, date expiring, and date removed pickers unchanged.
+- [x] **PROD-EDIT-049**: While no status is chosen in the product dialog, the status dropdown shall show the placeholder `Status`.
 
 ## Saving a Product
 
@@ -96,7 +96,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-SAVE-023**: When the product dialog sends a POST or PUT to `/api/products` and the rating dropdown is blank, the page shall leave `rating` out of the request body.
 - [x] **PROD-SAVE-024**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed notes are not blank, the page shall include the trimmed notes, with their inner line breaks, as `notes` in the request body.
 - [x] **PROD-SAVE-025**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed notes are blank, the page shall leave `notes` out of the request body.
-- [ ] **PROD-SAVE-026**: When the product dialog sends a POST or PUT to `/api/products`, the page shall include the chosen status as `status` in the request body.
+- [x] **PROD-SAVE-026**: When the product dialog sends a POST or PUT to `/api/products`, the page shall include the chosen status as `status` in the request body.
 
 ## Product API
 
