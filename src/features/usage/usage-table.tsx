@@ -10,11 +10,16 @@ type UsageTableProps = {
   categories?: Record<string, Array<string>>
 }
 
+/** The product's name, followed by its shade when it has one. */
+function productLabel(item: Product) {
+  return item.shade === undefined ? item.name : `${item.name} – ${item.shade}`;
+}
+
 function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-LOG-001, USAGE-LOG-002
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,7 +59,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
         {sortedUsage.map((item) => (
           <Table.Row key={item.id}>
             <Table.Cell>{item.category}</Table.Cell>
-            <Table.Cell>{item.name}</Table.Cell>
+            <Table.Cell>{productLabel(item)}</Table.Cell>
             <Table.Cell>{item.brand}</Table.Cell>
             <Table.Cell>{overallUses(item)}</Table.Cell>
             <Table.Cell>{item.usesThisMonth}</Table.Cell>
