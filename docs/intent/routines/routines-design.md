@@ -51,7 +51,7 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 
 - Title: routine name.
 - Controls: + and −, from the shared `AddMinusButtons` component (app-shell segment).
-- Body: ordered list of product names, looked up by `id` in the usage list.
+- Body: ordered list of product names with their shades (products design, *Product Name with Shade*), looked up by `id` in the usage list.
 
 A listed id with no matching product — possible only in data that predates the routine rules — is shown as "Unknown product (id N)" so the card still renders. Logging that routine then fails usage validation (USAGE-API-007) as a whole, so none of its products are logged, and usage's save-error notification appears.
 
