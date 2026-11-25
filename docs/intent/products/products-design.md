@@ -79,12 +79,12 @@ Routines refer to products by `id`, so renaming a product updates its routine ca
 
 ## Saving on the Server
 
-Inside the `usage.json` update queue (data-store design, *Serialized updates*), the `/api/products` route validates the body and writes the file once:
+Inside one multi-file update holding `configs.json` and `usage.json` (data-store design, *Multi-file updates*), the `/api/products` route validates the body, including that its category is configured, and writes `usage.json` once:
 
 - **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, and `shade` when the body has one, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
 - **Edit** — replaces `name`, `brand`, and `category`; sets `shade` to the body's shade, or removes it when the body has none; and leaves every other field unchanged.
 
-The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queue, overlapping adds each see the previous one's record and get different ids.
+The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queues, overlapping adds each see the previous one's record and get different ids, and a category edit cannot remove the product's category between the check and the write.
 
 ## Categories
 
@@ -179,6 +179,7 @@ An `/api/products` body is valid when it is a JSON object with the keys listed f
 |----------|--------|------------------------|-----------|
 | Item addressing | Find records by `id` | Array index with `id` = position | Products can be removed or reordered without renumbering routines |
 | Starting values for counts | Products sets `uses`, `currentMonth`, and `usesThisMonth` on a new record | Usage fills them in on first load; store counts in a separate file | Keeps products independent of usage and needs no data migration. The cost is that products knows the names of the count fields |
+| Queues held by `/api/products` | `configs.json` and `usage.json` | `usage.json` only | The category check reads `configs.json`; without holding it, a category removed or renamed between the check and the write would leave the product in a category that is not configured (HLD *Cross-file writes*) |
 | No rollover on product writes | The route applies none | Call usage's rollover first | Calling it would make products depend on usage. Product writes never touch counts, so a record that has not rolled over is still correct |
 | Product dialog placement | Modal dialog opened from the usage table | Inline row editing; separate products page | Keeps one place to manage products, without crowding the table's logging controls or adding the app's first navigation |
 | Add response | The new product's `id` | `null`, leaving the caller to find the new record | A caller such as the purchase form needs to know which product it created; matching by name fails for duplicate products |

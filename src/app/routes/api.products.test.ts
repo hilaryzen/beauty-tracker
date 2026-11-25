@@ -2,6 +2,7 @@ import { chmod, rename, rm } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dataDir, readData, sampleConfigs, sampleUsage, settle, writeData } from "@/test/data-dir";
 import { action } from "./api.products";
+import { modifyFile } from "@/utils/files.server";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
@@ -289,6 +290,24 @@ describe("/api/products", () => {
       await put({ ...changes, id: 99 });
       await send("POST", "{not json");
       expect(await readData("usage.json")).toEqual(sampleUsage);
+    });
+  });
+
+  describe("holding both files", () => {
+    // @spec PROD-API-028
+    it("checks the category and writes the product without a category edit landing in between", async () => {
+      await writeData("configs.json", { ...sampleConfigs, categories: { ...sampleConfigs.categories, lips: ["Toner"] } });
+
+      // A slow category edit that removes Toner, already holding configs.json when the product save arrives.
+      const removal = modifyFile("configs.json", async (configs: typeof sampleConfigs) => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return { ...configs, categories: sampleConfigs.categories };
+      });
+      const result = await put({ ...changes, category: "Toner" });
+      await removal;
+
+      await expectError(result, 400);
+      expect((await readData("usage.json"))[0].category).toBe("Primer");
     });
   });
 

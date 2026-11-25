@@ -83,6 +83,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-025**: When `/api/products` receives a POST whose body passes validation and has no `shade`, the system shall give the new product record no `shade` field.
 - [x] **PROD-API-026**: When `/api/products` receives a PUT whose body passes validation and contains `shade`, the system shall set the matching product record's `shade` to the body's `shade`.
 - [x] **PROD-API-027**: When `/api/products` receives a PUT whose body passes validation and has no `shade`, the system shall remove the `shade` field from the matching product record.
+- [x] **PROD-API-028**: When `/api/products` receives a POST or PUT, the system shall check the body's category against `configs.json` and write `usage.json` within one multi-file update holding both files.
 
 ## Categories
 
