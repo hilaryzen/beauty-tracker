@@ -21,12 +21,12 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **STORE-009**: If writing a data file fails at any point, then the data store shall leave the target file with its previous contents.
 - [x] **STORE-010**: When two or more read-change-write updates target the same data file, the data store shall run them one at a time in arrival order, each starting from the contents the previous one wrote.
 - [x] **STORE-012**: When a data file is written without reading it first while a read-change-write update to the same file is pending or running, the data store shall perform the write after that update, in arrival order.
-- [ ] **STORE-013**: When a multi-file update is requested, the data store shall start its task only after every update to each named file that arrived before it has finished.
-- [ ] **STORE-014**: While a multi-file update's task is running, the data store shall start no other update to any of the files it names.
-- [ ] **STORE-015**: When a multi-file update is requested, the data store shall join the named files' update queues in alphabetical order of file name.
-- [ ] **STORE-016**: If a multi-file update's task throws or rejects, then the data store shall reject the update and leave each named file with the contents the task last wrote to it, or its previous contents if the task wrote none.
-- [ ] **STORE-017**: If a multi-file update's task reads or writes a file it did not name, then the data store shall reject that read or write.
-- [ ] **STORE-018**: If a multi-file update's task reads a named file that cannot be read or parsed as JSON, then the data store shall reject that read.
+- [x] **STORE-013**: When a multi-file update is requested, the data store shall start its task only after every update to each named file that arrived before it has finished.
+- [x] **STORE-014**: While a multi-file update's task is running, the data store shall start no other update to any of the files it names.
+- [x] **STORE-015**: When a multi-file update is requested, the data store shall join the named files' update queues in alphabetical order of file name.
+- [x] **STORE-016**: If a multi-file update's task throws or rejects, then the data store shall reject the update and leave each named file with the contents the task last wrote to it, or its previous contents if the task wrote none.
+- [x] **STORE-017**: If a multi-file update's task reads or writes a file it did not name, then the data store shall reject that read or write.
+- [x] **STORE-018**: If a multi-file update's task reads a named file that cannot be read or parsed as JSON, then the data store shall reject that read.
 
 ## Configuration API
 

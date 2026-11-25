@@ -71,3 +71,58 @@ export function modifyFile<T>(fileName: string, change: (current: T) => T | Prom
     return next;
   });
 }
+
+export type FileAccess = {
+  /** Reads a named file; rejects if it is not one of the update's files or cannot be read or parsed. */
+  read<T>(fileName: string): Promise<T>;
+  /** Replaces a named file atomically; rejects if it is not one of the update's files or the write fails. */
+  write(fileName: string, data: unknown): Promise<void>;
+};
+
+/**
+ * Holds the update queues of every named file while `task` runs, so no other update to any of them
+ * starts in between. Writes are not undone: if `task` fails partway, each file keeps what it last
+ * wrote, so callers order their writes to leave valid data at every step.
+ */
+// @spec STORE-013, STORE-014, STORE-015, STORE-016, STORE-017, STORE-018
+export async function modifyFiles<R>(fileNames: string[], task: (files: FileAccess) => Promise<R>): Promise<R> {
+  const names = [...new Set(fileNames)].sort();
+  let release!: () => void;
+  const done = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  // Join every queue now, in a fixed order; each place in line is held until the task finishes.
+  const held = names.map(
+    (name) =>
+      new Promise<void>((acquired) => {
+        enqueue(name, () => {
+          acquired();
+          return done;
+        });
+      }),
+  );
+
+  function checkNamed(fileName: string) {
+    if (!names.includes(fileName)) throw new Error(`${fileName} is not part of this update`);
+  }
+
+  const files: FileAccess = {
+    async read<T>(fileName: string) {
+      checkNamed(fileName);
+      const contents = await getFile(fileName);
+      if (contents === undefined) throw new Error(`${fileName} could not be read`);
+      return contents as T;
+    },
+    async write(fileName, data) {
+      checkNamed(fileName);
+      await writeAtomically(fileName, data);
+    },
+  };
+
+  await Promise.all(held);
+  try {
+    return await task(files);
+  } finally {
+    release();
+  }
+}
