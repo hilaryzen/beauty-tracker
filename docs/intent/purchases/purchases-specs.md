@@ -20,7 +20,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PURCH-LIST-008**: The purchase list shall show each product in a purchase with its brand, name, and price, in product `id` order.
 - [x] **PURCH-LIST-009**: The purchase list shall show every amount as US dollars with two decimal places, such as `$32.00`.
 - [x] **PURCH-LIST-010**: While no product record has a purchase, the purchase list shall show "No purchases yet."
-- [ ] **PURCH-LIST-011**: While a product in a purchase has a `shade`, the purchase list shall show ` – ` (space, en dash, space) and the shade immediately after that product's name, all in the same text style as the name.
+- [x] **PURCH-LIST-011**: While a product in a purchase has a `shade`, the purchase list shall show ` – ` (space, en dash, space) and the shade immediately after that product's name, all in the same text style as the name.
 
 ## Purchase Dialog
 

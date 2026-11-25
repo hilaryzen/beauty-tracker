@@ -15,7 +15,7 @@ What each product cost: a product's purchase (date, store, price), the purchase 
 - docs/intent/purchases/purchases-design.md
 
 ### EARS
-- docs/intent/purchases/purchases-specs.md (68 specs)
+- docs/intent/purchases/purchases-specs.md (70 specs)
 
 ### Tests
 - src/app/routes/api.purchases.test.ts
@@ -47,12 +47,12 @@ What each product cost: a product's purchase (date, store, price), the purchase 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
 | Field | PURCH-001 | 1 | 0 | 0 |
-| List | PURCH-LIST-001 to PURCH-LIST-010 | 10 | 0 | 0 |
-| Dialog | PURCH-DLG-001 to PURCH-DLG-027 | 27 | 0 | 0 |
+| List | PURCH-LIST-001 to PURCH-LIST-011 | 11 | 0 | 0 |
+| Dialog | PURCH-DLG-001 to PURCH-DLG-028 | 27 | 0 | 1 |
 | Saving | PURCH-SAVE-001 to PURCH-SAVE-009 | 9 | 0 | 0 |
 | API | PURCH-API-001 to PURCH-API-021 | 21 | 0 | 0 |
 
-**Summary:** 68 specs, all `[x]`.
+**Summary:** 70 specs, 69 `[x]`, 1 `[ ]` (PURCH-DLG-028).
 
 ## Key Findings
 
