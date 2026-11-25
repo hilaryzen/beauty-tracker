@@ -27,6 +27,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-008**: The usage table shall show an edit button on every product row.
 - [x] **USAGE-UI-009**: When the user activates the Add product button, the usage table shall open the product dialog to add a product.
 - [x] **USAGE-UI-010**: When the user activates a product row's edit button, the usage table shall open the product dialog to edit that product.
+- [ ] **USAGE-UI-011**: While a product record has a `shade`, the usage table shall show in that row's Product column the product name, followed by ` – ` (space, en dash, space) and the shade, all in the same text style as the name.
+- [ ] **USAGE-UI-012**: While a product record has no `shade`, the usage table shall show only the product name in that row's Product column.
 
 ## Logging
 
