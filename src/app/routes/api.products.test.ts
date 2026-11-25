@@ -39,6 +39,7 @@ const newProduct = { name: "Dew Serum", brand: "Saie", category: "Cleanser" };
 const changes = { id: 0, name: "Renamed Primer", brand: "New Brand", category: "Foundation" };
 // The tests run on 2026-10-26.
 const dates = { opened: "2026-10-01", expires: "2027-10-01", removed: "2026-10-26" };
+const details = { size: { amount: 1.7, unit: "fl oz" }, rating: 4, notes: "Pills under sunscreen.\n\nGreat alone." };
 
 describe("/api/products", () => {
   beforeEach(async () => {
@@ -137,6 +138,26 @@ describe("/api/products", () => {
       expect(usage[1]).not.toHaveProperty("removed");
     });
 
+    // @spec PROD-006, PROD-007, PROD-008, PROD-API-040
+    it("gives the new record each of size, rating, and notes the body has", async () => {
+      await post({ ...newProduct, ...details });
+      expect((await readData("usage.json")).at(-1)).toMatchObject({ ...newProduct, ...details });
+
+      await post({ ...newProduct, rating: 1 });
+      expect((await readData("usage.json")).at(-1).rating).toBe(1);
+    });
+
+    // @spec PROD-API-041
+    it("gives the new record no size, rating, or notes field the body does not have", async () => {
+      await writeData("usage.json", []);
+      await post(newProduct);
+      await post({ ...newProduct, rating: 5 });
+      const usage = await readData("usage.json");
+      for (const key of ["size", "rating", "notes"]) expect(usage[0]).not.toHaveProperty(key);
+      expect(usage[1]).not.toHaveProperty("size");
+      expect(usage[1]).not.toHaveProperty("notes");
+    });
+
     // @spec PROD-API-017
     it("gives overlapping adds different ids", async () => {
       await Promise.all([post(newProduct), post(newProduct), post(newProduct)]);
@@ -205,6 +226,26 @@ describe("/api/products", () => {
       expect(usage[0]).not.toHaveProperty("removed");
     });
 
+    // @spec PROD-API-042
+    it("sets each of size, rating, and notes the body has on the matching record", async () => {
+      await writeData("usage.json", [{ ...sampleUsage[0], size: { amount: 30, unit: "mL" }, rating: 2 }, ...sampleUsage.slice(1)]);
+      expect(await put({ ...changes, ...details })).toBeNull();
+      expect(await put({ ...changes, id: 1, size: { amount: 0.25, unit: "g" } })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0]).toMatchObject(details);
+      expect(usage[1].size).toEqual({ amount: 0.25, unit: "g" });
+    });
+
+    // @spec PROD-API-043
+    it("removes from the matching record each of size, rating, and notes the body does not have", async () => {
+      await writeData("usage.json", [{ ...sampleUsage[0], ...details }, ...sampleUsage.slice(1)]);
+      expect(await put({ ...changes, rating: 3 })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0].rating).toBe(3);
+      expect(usage[0]).not.toHaveProperty("size");
+      expect(usage[0]).not.toHaveProperty("notes");
+    });
+
     // @spec PROD-002, PROD-API-004
     it("finds the record by id, not by position", async () => {
       await writeData("usage.json", [
@@ -264,11 +305,66 @@ describe("/api/products", () => {
     });
 
     // @spec PROD-API-007, PROD-API-008
-    it("accepts shade, opened, expires, and removed as optional keys on a POST or PUT", async () => {
-      const added = await post({ ...newProduct, shade: "Berry", ...dates });
+    it("accepts shade, opened, expires, removed, size, rating, and notes as optional keys on a POST or PUT", async () => {
+      const added = await post({ ...newProduct, shade: "Berry", ...dates, ...details });
       expect(added).toBeInstanceOf(Response);
       expect((added as Response).status).toBe(200);
-      expect(await put({ ...changes, shade: "Berry", ...dates })).toBeNull();
+      expect(await put({ ...changes, shade: "Berry", ...dates, ...details })).toBeNull();
+    });
+
+    // @spec PROD-API-035
+    it("rejects a size that is not an object with exactly amount and unit", async () => {
+      for (const bad of ["1.7 fl oz", 1.7, null, [], {}, { amount: 1.7 }, { unit: "g" }, { amount: 1.7, unit: "g", note: "x" }]) {
+        await expectError(await post({ ...newProduct, size: bad }), 400);
+        await expectError(await put({ ...changes, size: bad }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+    });
+
+    // @spec PROD-API-036
+    it("rejects a size amount that is not a finite number greater than 0", async () => {
+      for (const bad of [0, -1, "1.7", null]) {
+        await expectError(await post({ ...newProduct, size: { amount: bad, unit: "g" } }), 400);
+        await expectError(await put({ ...changes, size: { amount: bad, unit: "g" } }), 400);
+      }
+      // JSON cannot carry Infinity; 1e999 parses to it.
+      await expectError(await send("POST", JSON.stringify(newProduct).replace(/}$/, ',"size":{"amount":1e999,"unit":"g"}}')), 400);
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+
+      expect(await put({ ...changes, size: { amount: 0.333, unit: "g" } })).toBeNull();
+    });
+
+    // @spec PROD-API-037
+    it("rejects a size unit other than oz, fl oz, g, and mL, matching exactly", async () => {
+      for (const bad of ["ml", "ML", "floz", "fl. oz", "lb", "", null]) {
+        await expectError(await post({ ...newProduct, size: { amount: 1, unit: bad } }), 400);
+        await expectError(await put({ ...changes, size: { amount: 1, unit: bad } }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+
+      for (const unit of ["oz", "fl oz", "g", "mL"]) expect(await put({ ...changes, size: { amount: 1, unit } })).toBeNull();
+    });
+
+    // @spec PROD-API-038
+    it("rejects a rating that is not an integer from 1 to 5", async () => {
+      for (const bad of [0, 6, 3.5, "4", null]) {
+        await expectError(await post({ ...newProduct, rating: bad }), 400);
+        await expectError(await put({ ...changes, rating: bad }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+
+      for (const rating of [1, 5]) expect(await put({ ...changes, rating })).toBeNull();
+    });
+
+    // @spec PROD-API-039
+    it("rejects notes that are not a string, are blank, or have surrounding whitespace", async () => {
+      for (const bad of ["", "   ", " Nice", "Nice ", "Nice\n", 3, null]) {
+        await expectError(await post({ ...newProduct, notes: bad }), 400);
+        await expectError(await put({ ...changes, notes: bad }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+
+      expect(await put({ ...changes, notes: "Line one\n\nLine two" })).toBeNull();
     });
 
     // @spec PROD-API-029
