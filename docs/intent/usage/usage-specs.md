@@ -48,11 +48,11 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 ## Usage Table Dates
 
-- [ ] **USAGE-UI-026**: The usage table shall show Purchased, Opened, Expires, and Removed columns, in that order, after the This Month's Uses column and before the + and − controls.
-- [ ] **USAGE-UI-027**: While a product record has a `purchase`, the usage table shall show the purchase's `date`, as stored in `YYYY-MM-DD` form, in that row's Purchased column.
-- [ ] **USAGE-UI-028**: While a product record has an `opened`, `expires`, or `removed` date, the usage table shall show that date, as stored in `YYYY-MM-DD` form, in that row's Opened, Expires, or Removed column respectively.
-- [ ] **USAGE-UI-029**: While a product record has no `purchase`, the usage table shall leave that row's Purchased cell empty.
-- [ ] **USAGE-UI-030**: While a product record has no `opened`, `expires`, or `removed` date, the usage table shall leave that row's Opened, Expires, or Removed cell respectively empty.
+- [x] **USAGE-UI-026**: The usage table shall show Purchased, Opened, Expires, and Removed columns, in that order, after the This Month's Uses column and before the + and − controls.
+- [x] **USAGE-UI-027**: While a product record has a `purchase`, the usage table shall show the purchase's `date`, as stored in `YYYY-MM-DD` form, in that row's Purchased column.
+- [x] **USAGE-UI-028**: While a product record has an `opened`, `expires`, or `removed` date, the usage table shall show that date, as stored in `YYYY-MM-DD` form, in that row's Opened, Expires, or Removed column respectively.
+- [x] **USAGE-UI-029**: While a product record has no `purchase`, the usage table shall leave that row's Purchased cell empty.
+- [x] **USAGE-UI-030**: While a product record has no `opened`, `expires`, or `removed` date, the usage table shall leave that row's Opened, Expires, or Removed cell respectively empty.
 
 ## Logging
 
