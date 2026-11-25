@@ -1,5 +1,6 @@
 import { Button, CloseButton, Dialog, Field, Input, NativeSelect, Portal, Stack } from "@chakra-ui/react";
 import { type FormEvent, useState } from "react";
+import { today } from "@/utils/today";
 import type { Product } from "./types";
 import { type Categories, findCategory, useProductEditor } from "./use-product-editor";
 
@@ -28,12 +29,15 @@ function isConfigured(categories: Categories | undefined, category: string) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
+// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-EDIT-021, PROD-EDIT-022, PROD-EDIT-023, PROD-EDIT-024, PROD-EDIT-025, PROD-EDIT-026, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
 function ProductForm({ product, categories, saving, onSavingChange, onClose, onSaved }: ProductFormProps) {
   const { saveProduct } = useProductEditor(categories);
   const [name, setName] = useState(product?.name ?? "");
   const [shade, setShade] = useState(product?.shade ?? "");
   const [brand, setBrand] = useState(product?.brand ?? "");
+  const [opened, setOpened] = useState(product?.opened ?? "");
+  const [expires, setExpires] = useState(product?.expires ?? "");
+  const [removed, setRemoved] = useState(product?.removed ?? "");
   const [category, setCategory] = useState(
     product && isConfigured(categories, product.category) ? product.category : "",
   );
@@ -45,8 +49,11 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
   const matched = isNewCategory ? findCategory(categories, newCategory) : undefined;
   const isNewGroup = isNewCategory && !matched && group === NEW_GROUP;
 
+  const maxDate = today();
   const canSave =
     !saving &&
+    opened <= maxDate &&
+    removed <= maxDate &&
     name.trim() !== "" &&
     brand.trim() !== "" &&
     category !== "" &&
@@ -61,6 +68,9 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
       id: product?.id,
       name,
       shade,
+      opened,
+      expires,
+      removed,
       brand,
       category: isNewCategory ? newCategory : category,
       group: isNewGroup ? newGroup : group,
@@ -136,6 +146,18 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
               <Input value={newGroup} onChange={(event) => setNewGroup(event.target.value)} />
             </Field.Root>
           )}
+          <Field.Root>
+            <Field.Label>Date opened</Field.Label>
+            <Input type="date" max={maxDate} value={opened} onChange={(event) => setOpened(event.target.value)} />
+          </Field.Root>
+          <Field.Root>
+            <Field.Label>Date expiring</Field.Label>
+            <Input type="date" value={expires} onChange={(event) => setExpires(event.target.value)} />
+          </Field.Root>
+          <Field.Root>
+            <Field.Label>Date removed</Field.Label>
+            <Input type="date" max={maxDate} value={removed} onChange={(event) => setRemoved(event.target.value)} />
+          </Field.Root>
         </Stack>
       </Dialog.Body>
       <Dialog.Footer>

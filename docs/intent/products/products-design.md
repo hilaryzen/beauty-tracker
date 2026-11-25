@@ -22,6 +22,9 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 | `brand` | string | Brand name | Products |
 | `category` | string | A category name listed in `configs.json → categories` | Products |
 | `shade` | string, optional | The product's shade or color variant, such as `Berry`. Absent when the product has none | Products |
+| `opened` | `"YYYY-MM-DD"`, optional | The day the product was first opened. Absent when not recorded | Products |
+| `expires` | `"YYYY-MM-DD"`, optional | The day the product expires. Absent when not recorded | Products |
+| `removed` | `"YYYY-MM-DD"`, optional | The day the product was used up, thrown out, or given away. Absent when not recorded | Products |
 | `uses` | `Record<"YYYY-MM", integer>` | Use counts for closed months, keyed by month | Usage |
 | `currentMonth` | `"YYYY-MM"` | The month `usesThisMonth` counts | Usage |
 | `usesThisMonth` | integer | Use count for `currentMonth` | Usage |
@@ -32,6 +35,8 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 - `name` and `brand` each contain at least one non-whitespace character and neither starts nor ends with whitespace.
 - `category` names a category present in `configs.json → categories`.
 - `shade`, when present, contains at least one non-whitespace character and neither starts nor ends with whitespace.
+- `opened`, `expires`, and `removed`, when present, are each a real calendar date in `YYYY-MM-DD` form.
+- `opened` and `removed`, when present, are no later than the server's current local date. `expires` may be any date.
 - `usesThisMonth` and every value in `uses` are integers ≥ 0.
 - Every key of `uses`, and `currentMonth`, has the form `YYYY-MM`.
 - `purchase`, when present, satisfies the purchases design's field rules.
@@ -52,24 +57,29 @@ Where a page shows a product's name, it shows the name followed by ` – ` (spac
 │ Shade             [___________] │
 │ Brand             [___________] │
 │ Category          [Foundation ▾]│
+│ Date opened       [2026-11-07]  │
+│ Date expiring     [__________]  │
+│ Date removed      [__________]  │
 │              [Cancel]  [Save]   │
 └─────────────────────────────────┘
 ```
 
-**Fields.** Name, brand, and category are required. Shade is optional: when editing, it starts with the product's shade, or blank if it has none, and saving with it blank leaves the product with no shade. Category is a dropdown of the configured categories, listed under their groups in configured order, ending with a "New category" option. Two products may have the same name and brand, so a repurchase can be tracked separately.
+**Fields.** Name, brand, and category are required. Shade is optional: when editing, it starts with the product's shade, or blank if it has none, and saving with it blank leaves the product with no shade.
+
+Date opened, date expiring, and date removed are optional date pickers (native date inputs), shown after category. Each starts blank when adding; when editing, each starts with the product's date, or blank if it has none, and saving with one blank leaves the product without that date. Date opened and date removed do not offer dates after today's local date; date expiring offers any date. Dates are not checked against each other or against the purchase date: they are entered by hand, often long after the fact, and an odd combination is the user's to fix (*Low friction over precision*). Category is a dropdown of the configured categories, listed under their groups in configured order, ending with a "New category" option. Two products may have the same name and brand, so a repurchase can be tracked separately.
 
 **New categories.** Choosing "New category" reveals a new category name input and a group dropdown of the existing groups, ending with a "New group" option that reveals a new group name input. A new category goes at the end of its group, and a new group goes after the existing groups, which together set where the category sorts in the usage table. With no categories configured, the category dropdown offers only "New category" and the group dropdown offers only "New group".
 
 **Saving.** `useProductEditor()` (`src/features/products/use-product-editor.ts`) trims the text fields and saves in up to two requests, one at a time:
 
 1. If the category name is new, POST the current categories plus the new one to `/api/configs`, which applies the category rules. If this fails, nothing is saved and step 2 does not run.
-2. POST (add) or PUT (edit) the product to `/api/products`. The request carries `shade` only when the trimmed shade is not blank.
+2. POST (add) or PUT (edit) the product to `/api/products`. The request carries `shade` only when the trimmed shade is not blank, and each of `opened`, `expires`, and `removed` only when its date picker holds a date.
 
 The category is saved first so that a failure between the two steps leaves at worst an unused category, never a product whose category is not configured. An unused category is valid and appears in the dropdown.
 
 A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling and step 1 is skipped. While the name matches, the group dropdown shows that category's group and is disabled, and the new group name input is hidden, so the form shows where the product is going and does not offer a choice it would ignore. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
 
-**After saving.** On success the dialog closes and the page's loaders revalidate. When it has added a product, the dialog then reports the new product's `id`, once the loaders have revalidated, to the component that opened it (`onSaved`), so the purchase form can choose the product it just created. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
+**After saving.** On success the dialog closes and the page's loaders revalidate. When it has added a product, the dialog then reports the new product's `id`, once the loaders have revalidated, to the component that opened it (`onSaved`), so the purchase form can choose the product it just created. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen, or while date opened or date removed is after today. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
 
 **Closing.** Cancel, Esc, and the close control close the dialog and discard its contents. A click outside the dialog does nothing, so a stray click cannot lose what was typed. While a save is in flight the dialog cannot be closed, so the result of the save, including a failure, is seen in context.
 
@@ -81,8 +91,8 @@ Routines refer to products by `id`, so renaming a product updates its routine ca
 
 Inside one multi-file update holding `configs.json` and `usage.json` (data-store design, *Multi-file updates*), the `/api/products` route validates the body, including that its category is configured, and writes `usage.json` once:
 
-- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, and `shade` when the body has one, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
-- **Edit** — replaces `name`, `brand`, and `category`; sets `shade` to the body's shade, or removes it when the body has none; and leaves every other field unchanged.
+- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, and each of `shade`, `opened`, `expires`, and `removed` that the body has, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
+- **Edit** — replaces `name`, `brand`, and `category`; sets each of `shade`, `opened`, `expires`, and `removed` to the body's value, or removes it when the body has none; and leaves every other field unchanged.
 
 The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queues, overlapping adds each see the previous one's record and get different ids, and a category edit cannot remove the product's category between the check and the write.
 
@@ -161,8 +171,8 @@ A case-only rename (`cleanser` to `Cleanser`) cannot hold both names at once, be
 
 | Endpoint | Method | Request | Response |
 |---|---|---|---|
-| `/api/products` | POST | `{ "name", "brand", "category", "shade"? }` | `{ "id": <new id> }`; product added |
-| `/api/products` | PUT | `{ "id", "name", "brand", "category", "shade"? }` | `null`; product changed |
+| `/api/products` | POST | `{ "name", "brand", "category", "shade"?, "opened"?, "expires"?, "removed"? }` | `{ "id": <new id> }`; product added |
+| `/api/products` | PUT | `{ "id", "name", "brand", "category", "shade"?, "opened"?, "expires"?, "removed"? }` | `null`; product changed |
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | PATCH or DELETE | Any | 405 with `{ "error": "<message>" }`; file unchanged |
@@ -171,7 +181,7 @@ A case-only rename (`cleanser` to `Cleanser`) cannot hold both names at once, be
 | `/api/categories` | POST (storage failure) | Any | 500 with `{ "error": "<message>" }`; files keep the steps completed before the failure |
 | `/api/categories` | GET, PUT, PATCH, or DELETE | Any | 405 with `{ "error": "<message>" }`; files unchanged |
 
-An `/api/products` body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade` may be left out; `name`, `brand`, and `shade` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
+An `/api/products` body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade`, `opened`, `expires`, and `removed` may be left out; `name`, `brand`, and each of `shade`, `opened`, `expires`, and `removed` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
 
 ## Decisions & Alternatives
 
@@ -194,6 +204,13 @@ An `/api/products` body is valid when it is a JSON object with the keys listed f
 | Shade in requests | Omitted when there is none; a PUT without `shade` removes it | Send `""` or `null` for no shade | A PUT already replaces every field products owns, and an absent key matches an absent field on the record. One rule — any `shade` sent must be a clean name — needs no special values |
 | Showing a shade | One format, defined here and built by `productName()`, used wherever a page shows a product | Each segment formats the shade its own way | A product reads the same on every page, and a change to the format is made once |
 | Shade in error messages | Left out; a server error names a product by its name alone | Use the name with shade there too | Errors that name a product are rare and cannot come from the app's own forms, so the shade would add nothing a user would see |
+| Opened, expiring, and removed dates | Three optional `YYYY-MM-DD` fields on the record, owned by products and edited in the product dialog | Owned by purchases beside the purchase date; a log of dated events per product | They describe the product itself, not what it cost, and are set one product at a time, so they belong with the other fields the product dialog edits. Three named fields are all the usage table needs |
+| Date checks | Each date is a real calendar date; opened and removed are no later than today; expiring is any date; dates are not compared with each other or the purchase date | Also require purchase ≤ opened ≤ removed and opened ≤ expiring | Opening or removing in the future is a typo, but an expiry is usually in the future. Cross-date checks would block saves over data entered from memory (*Low friction over precision*) |
+| Clearing a date | A blank date picker removes that date from the record, and a request leaves the key out | Keep the stored date; send `null` | Same rule as shade: a date, once set, can be removed in the app, and an absent key matches an absent field |
+| Incomplete dates in the dialog | A date picker holding a partly typed date counts as blank | Disable Save while a picker holds an incomplete date | The native picker makes a partial date hard to leave behind, and a missing date is corrected by editing (*Simplicity over robustness*) |
+| Malformed dates already stored | A stored date the date picker cannot show, such as `Nov 5`, starts blank, so saving the product removes it | Report the bad value in the dialog; reject the edit | Only a hand edit can store one, as with a partly typed date (*Simplicity over robustness*) |
+| Future opened or removed dates already stored | The dialog shows them, and Save stays disabled until they are corrected | Accept them on edit | Only a hand edit can store one, and correcting it in the dialog takes one step |
+| Date removed and ownership | Stored and shown only; a removed product still appears and can be logged everywhere | Hide or dim removed products | What "currently owned" means belongs to the inventory design (HLD Goal 3) |
 | Duplicate products | Allowed | Reject a repeated name and brand | A repurchase can be tracked separately |
 | Group for an existing category typed as new | Filled in and locked | Require a group and ignore it; hide the group dropdown | Shows where the product is going without offering a choice that would be ignored |
 | Clicking outside the dialog | Does nothing; Cancel, Esc, and the close control close it | Chakra's default of closing on an outside click | A stray click should not lose what was typed |
@@ -229,6 +246,8 @@ An `/api/products` body is valid when it is a JSON object with the keys listed f
 - src/features/products/use-product-editor.ts
 - src/features/products/product-name.ts
 - src/app/routes/api.products.ts
+- src/utils/calendar-date.ts
+- src/utils/today.ts
 - src/features/products/category-editor.tsx
 - src/app/routes/api.categories.ts
 - src/utils/send-json.ts

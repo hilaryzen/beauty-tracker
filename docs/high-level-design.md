@@ -69,6 +69,7 @@ flowchart TD
   routines -->|finds products by id| products
   routines -->|shows purchase dates in the routine editor| purchases
   usage -->|opens the product dialog| products
+  usage -->|shows purchase dates in the usage table| purchases
   usage -->|/api/usage| store[data-store: JSON files]
   products -->|/api/products, /api/configs, /api/categories| store
   shell -->|page loaders read| store

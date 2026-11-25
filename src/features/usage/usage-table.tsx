@@ -23,7 +23,7 @@ function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-LOG-001, USAGE-LOG-002
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-UI-026, USAGE-UI-027, USAGE-UI-028, USAGE-UI-029, USAGE-UI-030, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -95,6 +95,10 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
                 <Table.ColumnHeader>Brand</Table.ColumnHeader>
                 <Table.ColumnHeader>Overall Uses</Table.ColumnHeader>
                 <Table.ColumnHeader>This Month's Uses</Table.ColumnHeader>
+                <Table.ColumnHeader>Purchased</Table.ColumnHeader>
+                <Table.ColumnHeader>Opened</Table.ColumnHeader>
+                <Table.ColumnHeader>Expires</Table.ColumnHeader>
+                <Table.ColumnHeader>Removed</Table.ColumnHeader>
                 <Table.ColumnHeader></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
@@ -106,6 +110,11 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
                   <Table.Cell>{item.brand}</Table.Cell>
                   <Table.Cell>{overallUses(item)}</Table.Cell>
                   <Table.Cell>{item.usesThisMonth}</Table.Cell>
+                  {/* Dates show as stored, YYYY-MM-DD; a missing date leaves its cell empty. */}
+                  <Table.Cell>{item.purchase?.date}</Table.Cell>
+                  <Table.Cell>{item.opened}</Table.Cell>
+                  <Table.Cell>{item.expires}</Table.Cell>
+                  <Table.Cell>{item.removed}</Table.Cell>
                   <Table.Cell textAlign="end">
                     <AddMinusButtons onAddClick={() => addUsesToItems([item.id])} onMinusClick={() => removeUsesFromItems([item.id])} />
                     <Button variant="outline" ml="2" onClick={() => openDialog(item)}>Edit</Button>

@@ -37,6 +37,8 @@ async function expectError(result: unknown, status: number) {
 
 const newProduct = { name: "Dew Serum", brand: "Saie", category: "Cleanser" };
 const changes = { id: 0, name: "Renamed Primer", brand: "New Brand", category: "Foundation" };
+// The tests run on 2026-10-26.
+const dates = { opened: "2026-10-01", expires: "2027-10-01", removed: "2026-10-26" };
 
 describe("/api/products", () => {
   beforeEach(async () => {
@@ -115,6 +117,26 @@ describe("/api/products", () => {
       expect((await readData("usage.json")).at(-1)).not.toHaveProperty("shade");
     });
 
+    // @spec PROD-005, PROD-API-031
+    it("gives the new record each date the body has", async () => {
+      await post({ ...newProduct, ...dates });
+      expect((await readData("usage.json")).at(-1)).toMatchObject({ ...newProduct, ...dates });
+
+      await post({ ...newProduct, expires: "2027-01-31" });
+      expect((await readData("usage.json")).at(-1).expires).toBe("2027-01-31");
+    });
+
+    // @spec PROD-API-032
+    it("gives the new record no date field the body does not have", async () => {
+      await writeData("usage.json", []);
+      await post(newProduct);
+      await post({ ...newProduct, opened: "2026-10-01" });
+      const usage = await readData("usage.json");
+      for (const key of ["opened", "expires", "removed"]) expect(usage[0]).not.toHaveProperty(key);
+      expect(usage[1]).not.toHaveProperty("expires");
+      expect(usage[1]).not.toHaveProperty("removed");
+    });
+
     // @spec PROD-API-017
     it("gives overlapping adds different ids", async () => {
       await Promise.all([post(newProduct), post(newProduct), post(newProduct)]);
@@ -161,6 +183,26 @@ describe("/api/products", () => {
       const usage = await readData("usage.json");
       expect(usage[0]).not.toHaveProperty("shade");
       expect(usage[1]).not.toHaveProperty("shade");
+    });
+
+    // @spec PROD-API-033
+    it("sets each date the body has on the matching record", async () => {
+      await writeData("usage.json", [{ ...sampleUsage[0], opened: "2026-01-01", expires: "2026-12-01" }, ...sampleUsage.slice(1)]);
+      expect(await put({ ...changes, ...dates })).toBeNull();
+      expect(await put({ ...changes, id: 1, removed: "2026-09-30" })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0]).toMatchObject(dates);
+      expect(usage[1].removed).toBe("2026-09-30");
+    });
+
+    // @spec PROD-API-034
+    it("removes from the matching record each date the body does not have", async () => {
+      await writeData("usage.json", [{ ...sampleUsage[0], ...dates }, ...sampleUsage.slice(1)]);
+      expect(await put({ ...changes, expires: "2027-02-01" })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0].expires).toBe("2027-02-01");
+      expect(usage[0]).not.toHaveProperty("opened");
+      expect(usage[0]).not.toHaveProperty("removed");
     });
 
     // @spec PROD-002, PROD-API-004
@@ -222,11 +264,33 @@ describe("/api/products", () => {
     });
 
     // @spec PROD-API-007, PROD-API-008
-    it("accepts shade as the one optional key on a POST or PUT", async () => {
-      const added = await post({ ...newProduct, shade: "Berry" });
+    it("accepts shade, opened, expires, and removed as optional keys on a POST or PUT", async () => {
+      const added = await post({ ...newProduct, shade: "Berry", ...dates });
       expect(added).toBeInstanceOf(Response);
       expect((added as Response).status).toBe(200);
-      expect(await put({ ...changes, shade: "Berry" })).toBeNull();
+      expect(await put({ ...changes, shade: "Berry", ...dates })).toBeNull();
+    });
+
+    // @spec PROD-API-029
+    it("rejects a date that is not a real calendar date in YYYY-MM-DD form", async () => {
+      for (const key of ["opened", "expires", "removed"]) {
+        for (const bad of ["", "2026-02-30", "2026-1-05", "2026-10-1", "Oct 1, 2026", "2026-13-01", 20261001, null]) {
+          await expectError(await post({ ...newProduct, [key]: bad }), 400);
+          await expectError(await put({ ...changes, [key]: bad }), 400);
+        }
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+    });
+
+    // @spec PROD-API-030
+    it("rejects an opened or removed date after today, but accepts today and any expiry date", async () => {
+      for (const key of ["opened", "removed"]) {
+        await expectError(await post({ ...newProduct, [key]: "2026-10-27" }), 400);
+        await expectError(await put({ ...changes, [key]: "2026-10-27" }), 400);
+      }
+      expect(await readData("usage.json")).toEqual(sampleUsage);
+
+      expect(await put({ ...changes, opened: "2026-10-26", removed: "2026-10-26", expires: "2030-01-01" })).toBeNull();
     });
 
     // @spec PROD-API-023

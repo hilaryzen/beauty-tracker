@@ -50,7 +50,7 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 
 ## Usage Table
 
-`UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button, a row of group tabs, and one row per product shown on the selected tab, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, +/- controls, and an edit button.
+`UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button, a row of group tabs, and one row per product shown on the selected tab, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, Purchased, Opened, Expires, Removed, +/- controls, and an edit button.
 
 - **Group tabs** — an "All" tab comes first, followed by one tab per category group in `configs.json → categories`, in configured order and labeled with the group name. The "All" tab shows every product. A group's tab shows only the products whose `category` is in that group. A group whose tab has no products shows the message "No products in this group." in place of rows. If `configs.json` has no `categories` key, only the "All" tab is shown.
 - **Selected tab in the URL** — the selected group is kept in the page URL's `group` search parameter (for example `/?group=lips`), and the "All" tab is selected when the parameter is absent. Choosing a different group tab sets the parameter to the group name, and choosing "All" from another tab removes it. Each such choice adds a browser history entry, so Back returns to the previous tab. Choosing the tab that is already selected does nothing, so an unrecognized parameter stays in the URL until another tab is chosen. With the keyboard, the arrow keys move focus between tabs without selecting them, and Enter or Space selects the focused tab, so passing over tabs adds no history entries. The header's Usage link points to `/`, so following it shows the "All" tab. Because the selection lives in the URL, it survives the page's loader revalidation after logging a use or saving a product, a page refresh, and returning to the page through a bookmarked link. If the parameter names no configured group (for example, after a group is renamed in `configs.json`), the "All" tab is selected and every product is shown.
@@ -60,6 +60,7 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 - **Product** — the product's name with its shade (products design, *Product Name with Shade*).
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
 - **This Month's Uses** — `usesThisMonth`.
+- **Purchased, Opened, Expires, Removed** — the product's purchase date (`purchase.date`, purchases design, *Purchase Field*) and its `opened`, `expires`, and `removed` dates (products design, *Product Record*), each shown as stored, in `YYYY-MM-DD` form. A cell is empty when the product has no such date. The table only shows these dates; they are changed in the product dialog and, for the purchase date, by adding a purchase.
 - **Add product and edit buttons** — open the products segment's `ProductDialog`, to add a product or to edit that row's product.
 
 ## API
@@ -90,6 +91,8 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 | Where the selected tab lives | The page URL's `group` search parameter | Component state | It survives loader revalidation, refresh, and bookmarks, and Back works. The cost is that choosing a tab reruns the home page loader: cheap for local JSON files, and if a data file cannot be read at that moment, the tab click shows the error page as any other reload would (*Simplicity over robustness*) |
 | Keyboard tab selection | Arrow keys move focus; Enter or Space selects | Arrow keys select the tab they reach | Each selection adds a history entry and reruns the loader, so selecting on arrow keys would leave one Back step for every tab passed over |
 | Groups with no products | Shown as a tab with an empty-group message | Hidden | The tab row follows `configs.json` exactly, so a new group appears as soon as it is created |
+| Product dates in the table | Purchased, Opened, Expires, and Removed columns after the use counts, in `YYYY-MM-DD` form, empty when absent | Before the use counts; `Nov 7, 2026` as on the purchases page | The logging columns keep their place beside the product. `YYYY-MM-DD` is compact across four columns and lines up row to row |
+| Removed products in the table | Shown and logged like any other product | Hidden or dimmed | What "currently owned" means belongs to the inventory design (HLD Goal 3) |
 | Typed count corrections | None; the +/- controls are the only way to change a count | A typed count in the usage table or product dialog | One write path for counts keeps them trustworthy. The cost is that a large miscount takes many clicks. Closed months stay as recorded, so cost per use cannot change by accident |
 
 ## References
@@ -99,5 +102,6 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 - src/features/usage/usage-table.tsx
 - src/app/routes/api.usage.ts
 - docs/intent/products/products-design.md
+- docs/intent/purchases/purchases-design.md
 - docs/intent/data-store/data-store-design.md
 - docs/arrows/usage.md
