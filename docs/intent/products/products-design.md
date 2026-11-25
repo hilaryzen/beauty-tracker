@@ -96,7 +96,23 @@ The route reads and writes records through the data store, not through usage's l
 - No category name appears more than once across all groups.
 - Every category used by a product in `usage.json` is still present.
 
-The data-store segment's `/api/configs` route applies these rules (data-store design, *Configuration API*).
+The data-store segment's `/api/configs` route applies these rules (data-store design, *Configuration API*). Because they require every used category to stay present, a `categories` value sent there can add, remove, reorder, or move categories, or add, rename, or remove groups, but cannot rename a category that a product uses. Renaming a category is done through `/api/categories` (*Renaming a Category*).
+
+Two names *match* when they are equal after trimming and ignoring capitalization, as in the product dialog.
+
+## Renaming a Category
+
+`/api/categories` renames a category everywhere it appears. Holding the update queues of both `configs.json` and `usage.json` (data-store design, *Multi-file updates*), it reads both files, validates the body, and writes in three steps:
+
+1. Write `configs.json` with the new name inserted directly after the old one, so both are configured.
+2. Write `usage.json` with every product that used the old name using the new name. Skipped when no product uses it.
+3. Write `configs.json` with the old name removed.
+
+Every step leaves both files satisfying the record and category rules. If a step fails, the route responds 500 and the files keep what the steps before it wrote: at worst the new name is configured alongside the old one and some products already use it. Both names stay valid, and the editor shows them both with their product counts. At least one of them is unused, so its Delete is enabled. If the old name is the unused one, deleting it finishes the rename. If the new name is the unused one, deleting it and renaming again does.
+
+A case-only rename (`cleanser` to `Cleanser`) cannot hold both names at once, because they are duplicates. It writes `configs.json` with the name replaced in place, then `usage.json`. A failure between the two leaves products using a name no longer configured; this is accepted because a capitalization change is rare and the write failures that cause it are rarer (*Simplicity over robustness*).
+
+**Validation.** A body is valid when it is a JSON object with exactly the keys `from` and `to`; `from` is a configured category; `to` satisfies the category name rule; and `to` matches no configured category other than `from`. A `to` equal to `from` is valid and writes nothing. The error message describes the first failure found.
 
 ## API
 
@@ -107,8 +123,12 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | PATCH or DELETE | Any | 405 with `{ "error": "<message>" }`; file unchanged |
+| `/api/categories` | POST | `{ "from", "to" }` | `null`; category renamed in `configs.json` and every product using it |
+| `/api/categories` | POST (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; files unchanged |
+| `/api/categories` | POST (storage failure) | Any | 500 with `{ "error": "<message>" }`; files keep the steps completed before the failure |
+| `/api/categories` | GET, PUT, PATCH, or DELETE | Any | 405 with `{ "error": "<message>" }`; files unchanged |
 
-A body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade` may be left out; `name`, `brand`, and `shade` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
+An `/api/products` body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade` may be left out; `name`, `brand`, and `shade` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
 
 ## Decisions & Alternatives
 
@@ -140,6 +160,10 @@ A body is valid when it is a JSON object with the keys listed for its method and
 | Saving a new category from two open tabs | Accepted; the later save can drop the earlier tab's unused category | Merge on the server | `/api/configs` replaces `categories` as a whole, and this needs two tabs open at once for one user (*Simplicity over robustness*) |
 | Category groups | Any number of groups, sorted in configured order | Fixed `skincare`, `makeup`, `lips` | New groups (such as hair or body) need no code change |
 | Category membership | Product categories must be configured; deleting a category in use is rejected | Free-text categories; allow deleting used categories | Every product stays sortable and groupable for the inventory view |
+| Renaming a used category | A dedicated `/api/categories` route renames it in `configs.json` and every product, in one request | Allow renaming only unused categories; the browser chains `/api/configs` and `/api/products` writes | Renaming never needs products moved out first or a hand edit; one server request can hold both files' queues, which the browser cannot |
+| Rename write order | Add the new name, move products, remove the old name | Replace the name in `configs.json`, then update products | Every step leaves valid data, so a failure needs no hand edit (HLD *Cross-file writes*) |
+| Case-only renames | Replaced in place in two writes, accepting a rare invalid state on failure | Reject case-only renames; rename through a temporary name | Fixing capitalization should be possible in the app; a temporary name adds two writes for a case that almost never fails |
+| Merging categories | Not supported; renaming to another category's name is blocked | Renaming into an existing category merges them | Out of scope; a product can be moved to another category one at a time in the product dialog |
 
 ## Open Questions & Future Decisions
 
@@ -156,6 +180,7 @@ A body is valid when it is a JSON object with the keys listed for its method and
 - src/features/products/use-product-editor.ts
 - src/features/products/product-name.ts
 - src/app/routes/api.products.ts
+- src/app/routes/api.categories.ts
 - src/utils/send-json.ts
 - docs/intent/purchases/purchases-design.md
 - src/utils/this-month.ts

@@ -90,3 +90,29 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-CAT-002**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any category name appears more than once across all groups.
 - [x] **PROD-CAT-003**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if it omits a category that any product record in `usage.json` uses.
 - [x] **PROD-CAT-004**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any group name or category name contains no non-whitespace character or has leading or trailing whitespace.
+
+## Renaming a Category
+
+- [ ] **PROD-CATAPI-001**: When `/api/categories` receives a POST whose body passes validation, the system shall replace `from` with `to` in `configs.json → categories`, at the same position in the same group.
+- [ ] **PROD-CATAPI-002**: When `/api/categories` receives a POST whose body passes validation, the system shall set the `category` of every product record whose category is `from` to `to`.
+- [ ] **PROD-CATAPI-003**: When `/api/categories` renames a category, the system shall leave every other field of every product record, and every product record using another category, unchanged.
+- [ ] **PROD-CATAPI-004**: When `/api/categories` renames a category, the system shall leave `configs.json → routines` unchanged.
+- [ ] **PROD-CATAPI-005**: When `/api/categories` completes a rename, the system shall respond with status 200 and the JSON body `null`.
+- [ ] **PROD-CATAPI-006**: When `/api/categories` renames a category to a name that does not match `from` ignoring capitalization, the system shall first write `configs.json` with `to` inserted directly after `from` and `from` still present.
+- [ ] **PROD-CATAPI-007**: When `/api/categories` renames a category to a name that does not match `from` ignoring capitalization, the system shall write `usage.json` only after the write that configures both names has succeeded.
+- [ ] **PROD-CATAPI-008**: When `/api/categories` renames a category to a name that does not match `from` ignoring capitalization, the system shall write `configs.json` without `from` only after the write to `usage.json` has succeeded, or after the first write when no product uses `from`.
+- [ ] **PROD-CATAPI-009**: When `/api/categories` renames a category that no product record uses, the system shall not write `usage.json`.
+- [ ] **PROD-CATAPI-010**: When `/api/categories` renames a category to a name that differs from `from` only in capitalization, the system shall write `configs.json` with `from` replaced by `to` before writing `usage.json`.
+- [ ] **PROD-CATAPI-011**: When `/api/categories` receives a POST whose body passes validation and whose `to` equals `from`, the system shall write neither `configs.json` nor `usage.json`.
+- [ ] **PROD-CATAPI-012**: When `/api/categories` receives a POST, the system shall read, validate, and write `configs.json` and `usage.json` within one multi-file update holding both files.
+- [ ] **PROD-CATAPI-013**: If a body to `/api/categories` is not valid JSON or is not a JSON object, then the system shall treat the body as failing validation.
+- [ ] **PROD-CATAPI-014**: If a body to `/api/categories` lacks `from` or `to`, or contains any other top-level key, then the system shall treat the body as failing validation.
+- [ ] **PROD-CATAPI-015**: If `from` in a body to `/api/categories` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
+- [ ] **PROD-CATAPI-016**: If `to` in a body to `/api/categories` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
+- [ ] **PROD-CATAPI-017**: If `to` in a body to `/api/categories` matches a configured category other than `from`, ignoring capitalization, then the system shall treat the body as failing validation.
+- [ ] **PROD-CATAPI-018**: If a body to `/api/categories` fails validation, then the system shall respond with 400 and a JSON body of the form `{ "error": "<message>" }` describing the first failure found.
+- [ ] **PROD-CATAPI-019**: If a body to `/api/categories` fails validation, then the system shall leave `configs.json` and `usage.json` unchanged.
+- [ ] **PROD-CATAPI-020**: If a POST to `/api/categories` cannot complete because `configs.json` or `usage.json` cannot be read or written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
+- [ ] **PROD-CATAPI-021**: If a write made by `/api/categories` fails, then the system shall make none of the rename's later writes.
+- [ ] **PROD-CATAPI-022**: If `/api/categories` receives a GET, PUT, PATCH, or DELETE request, then the system shall respond with 405 and a JSON body of the form `{ "error": "<message>" }`.
+- [ ] **PROD-CATAPI-023**: If `/api/categories` receives a GET, PUT, PATCH, or DELETE request, then the system shall leave `configs.json` and `usage.json` unchanged.
