@@ -9,7 +9,7 @@ prefix: SHELL
 
 The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, navigation header, notifications, and the pages that place the feature components together. It also holds small UI controls shared by more than one feature.
 
-The app has one page per tracked area — the home page for usage and a purchases page — reached from a header on every page. The shell composes features but owns none of their behavior. Each page's loader reads the data its features need and hands it to their components, which decide what to display and how changes are made.
+The app has one page per tracked area — the home page for usage and a purchases page — plus a settings page for editing how the data is organized, all reached from a header on every page. The shell composes features but owns none of their behavior. Each page's loader reads the data its features need and hands it to their components, which decide what to display and how changes are made.
 
 ## Stack
 
@@ -24,10 +24,12 @@ The app has one page per tracked area — the home page for usage and a purchase
 |---|---|---|
 | `/` | `routes/home.tsx` | Home page (usage) |
 | `/purchases` | `routes/purchases.tsx` | Purchases page |
+| `/settings` | `routes/settings.tsx` | Settings page |
 | `/api/usage` | `routes/api.usage.ts` | Usage data API (usage segment) |
 | `/api/products` | `routes/api.products.ts` | Product add and edit API (products segment) |
 | `/api/purchases` | `routes/api.purchases.ts` | Purchase add API (purchases segment) |
 | `/api/configs` | `routes/api.configs.ts` | Configuration API (data-store segment) |
+| `/api/categories` | `routes/api.categories.ts` | Category rename API (products segment) |
 
 ## Root Layout
 
@@ -48,8 +50,9 @@ The app has one page per tracked area — the home page for usage and a purchase
 |---|---|
 | Usage | `/` |
 | Purchases | `/purchases` |
+| Settings | `/settings` |
 
-The link for the page being shown is highlighted and marked as the current page (`aria-current="page"`). Which link is current follows the path, not what the page renders: on `/`, Usage is current even when the home page fails to load and the error page shows instead. The Usage link matches `/` exactly, so it is not highlighted on `/purchases`. On a path that matches no route, no link is highlighted. Links navigate on the client without a full page reload.
+The link for the page being shown is highlighted and marked as the current page (`aria-current="page"`). Which link is current follows the path, not what the page renders: on `/`, Usage is current even when the home page fails to load and the error page shows instead. The Usage link matches `/` exactly, so it is not highlighted on `/purchases` or `/settings`. On a path that matches no route, no link is highlighted. Links navigate on the client without a full page reload.
 
 ## Error Page
 
@@ -76,6 +79,13 @@ The link for the page being shown is highlighted and marked as the current page 
 - **Loader** (server) — reads `usage.json` and `configs.json` through the data store, without month rollover (purchases design, *Page Data*). If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". Returns `{ usage, categories }`.
 - **Component** — shows the top-level heading "Purchases", then `PurchaseList` (purchases segment), passing it the loader data.
 
+## Settings Page
+
+`src/app/routes/settings.tsx`:
+
+- **Loader** (server) — reads `usage.json` and `configs.json` through the data store, without month rollover; the page uses no counts, only which category each product has. If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". Returns `{ usage, categories }`.
+- **Component** — shows the top-level heading "Settings", then `CategoryEditor` (products segment) under it, passing it the loader data.
+
 ## Shared Controls
 
 `AddMinusButtons` (`src/components/add-minus-buttons/main.tsx`) renders a "+" button and a "−" button, calling `onAddClick` / `onMinusClick`. Used by the usage table rows and routine cards.
@@ -94,7 +104,8 @@ The link for the page being shown is highlighted and marked as the current page 
 | Document title | "Beauty Tracker", set in the root layout for every page | Per-route titles | One app, one title; root placement keeps it on the error page |
 | Meta description | One description, set in the root layout for every page | Per-route descriptions | The description names the whole app, so it fits every page; root placement keeps it on the error page |
 | App name in the header | Plain text | A link to `/` | The Usage link already goes to `/`; one way there is enough |
-| Page structure | One page per tracked area (usage, purchases), linked from a header | Everything on one page; usage at `/usage` with `/` redirecting | Each area's content grows independently. Usage stays at `/` because it is the page used every day |
+| Page structure | One page per tracked area (usage, purchases) plus a settings page, linked from a header | Everything on one page; usage at `/usage` with `/` redirecting | Each area's content grows independently. Usage stays at `/` because it is the page used every day |
+| Category editing placement | A settings page at `/settings` | A `/categories` page; on the usage page | A settings page can later hold other configuration, such as a routine editor, without another header link |
 | Routines placement | On the usage page, above the usage table | Their own page | Routines are a way of logging usage |
 | Navigation | A header on every page, including the error page | Sidebar; header on normal pages only | Few pages fit in a header; on the error page it gives a way back |
 | Shared +/− control | One `AddMinusButtons` component | Per-feature buttons | [inferred] Identical control in both features |
