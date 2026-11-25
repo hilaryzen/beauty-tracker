@@ -39,13 +39,13 @@ arrows:
   routines:
     status: MAPPED
     parent: null
-    sampled: 2026-10-25
+    sampled: 2026-11-25
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: [app-shell]
-    blockedBy: [usage, products]
+    blockedBy: [usage, products, purchases]
     detail: routines.md
-    next: "Design the routine editor (HLD Goal 4)"
+    next: "Handle deleting a product listed in a routine, once products can be deleted"
     drift: null
 
   purchases:
@@ -54,7 +54,7 @@ arrows:
     sampled: 2026-11-07
     audited: null
     audited_sha: null
-    blocks: [app-shell]
+    blocks: [routines, app-shell]
     blockedBy: [data-store, products]
     detail: purchases.md
     next: "Design editing and deleting purchases, and cost per use (HLD Goals 2 and 4)"
@@ -69,7 +69,7 @@ arrows:
     blocks: [products, usage, purchases]
     blockedBy: []
     detail: data-store.md
-    next: "Connect /api/configs to the routine editor when it arrives"
+    next: "None open"
     drift: null
 
   app-shell:

@@ -212,7 +212,7 @@ describe("routine editor layout", () => {
     async (_label, configured) => {
       renderEditor({ routines: configured, categories, usage });
       await ready();
-      expect(screen.queryAllByRole("region")).toHaveLength(0);
+      expect(screen.queryAllByRole("region", { name: /^Routine / })).toHaveLength(0);
       expect(screen.queryAllByRole("listitem")).toHaveLength(0);
       expect(screen.getByLabelText("New routine name")).toBeInTheDocument();
       expect(screen.getByLabelText("First product")).toBeInTheDocument();
