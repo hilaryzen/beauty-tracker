@@ -1,8 +1,8 @@
 import type { Route } from "./+types/api.configs";
 import { checkRoutines } from "@/features/routine/routine-rules";
 import { checkCategories } from "@/features/products/category-rules";
-import { loadUsage } from "@/features/usage/usage.server";
-import { getFile, modifyFile } from "@/utils/files.server";
+import type { Product } from "@/features/products/types";
+import { getFile, modifyFiles, type FileAccess } from "@/utils/files.server";
 
 const configKeys = ["categories", "routines"];
 
@@ -21,7 +21,7 @@ export async function loader() {
 
 /** Returns a message describing the first validation failure in `body`, or undefined if it is valid. */
 // @spec STORE-API-004, STORE-API-007
-async function validate(body: unknown): Promise<string | undefined> {
+async function validate(body: unknown, files: FileAccess): Promise<string | undefined> {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "The request body must be an object";
   }
@@ -31,8 +31,9 @@ async function validate(body: unknown): Promise<string | undefined> {
   const changes = body as Record<string, unknown>;
   if (!("categories" in changes) && !("routines" in changes)) return;
 
-  const usage = await loadUsage();
-  if (usage === undefined) throw new Error("usage.json could not be read");
+  // Read without rollover: validation needs only ids and categories, and a rollover write
+  // would wait behind the usage.json queue this update holds.
+  const usage = await files.read<Product[]>("usage.json");
 
   if ("categories" in changes) {
     const error = checkCategories(changes.categories, usage);
@@ -41,7 +42,7 @@ async function validate(body: unknown): Promise<string | undefined> {
   if ("routines" in changes) return checkRoutines(changes.routines, usage);
 }
 
-// @spec STORE-API-003, STORE-API-005, STORE-API-006, STORE-API-008, STORE-API-009
+// @spec STORE-API-003, STORE-API-005, STORE-API-006, STORE-API-008, STORE-API-009, STORE-API-011
 export async function action({ request }: Route.ActionArgs) {
   let body: unknown;
   try {
@@ -51,10 +52,12 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   try {
-    await modifyFile<Record<string, unknown>>("configs.json", async (configs) => {
-      const error = await validate(body);
+    // Holding usage.json too keeps product saves from landing between validation and the write.
+    await modifyFiles(["configs.json", "usage.json"], async (files) => {
+      const configs = await files.read<Record<string, unknown>>("configs.json");
+      const error = await validate(body, files);
       if (error) throw new ValidationError(error);
-      return { ...configs, ...(body as Record<string, unknown>) };
+      await files.write("configs.json", { ...configs, ...(body as Record<string, unknown>) });
     });
   } catch (error) {
     if (error instanceof ValidationError) return errorResponse(error.message, 400);

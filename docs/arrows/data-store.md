@@ -36,7 +36,7 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 
 **Key Components:**
 1. `files.server.ts` — `getDataDir()` (`DATA_DIR`, else `data-prod` when `ENV=prod`, else `data`); `getFile(name)`; `updateFile(name, data)` (atomic temp-file-then-rename, rethrows on failure); `modifyFile(name, change)` (read-change-write, queued per file); `modifyFiles(names, task)` (holds every named file's queue, joined alphabetically, while `task` reads and writes them)
-2. `/api/configs` route — GET returns `configs.json`; POST validates `categories` (`features/products/category-rules.ts`) and `routines` (`features/routine/routine-rules.ts`), then merges the sent keys inside `modifyFile`
+2. `/api/configs` route — GET returns `configs.json`; POST validates `categories` (`features/products/category-rules.ts`) and `routines` (`features/routine/routine-rules.ts`), then merges the sent keys inside a multi-file update holding `configs.json` and `usage.json`
 3. Data folders — `data/` (development, committed) and `data-prod/` (real data, git-ignored)
 
 ## Spec Coverage
@@ -45,9 +45,9 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 |----------|----------|-------------|----------|------|
 | Environment | STORE-001, STORE-002, STORE-011 | 3 | 0 | 0 |
 | File access | STORE-003 to STORE-010, STORE-012 to STORE-018 | 15 | 0 | 0 |
-| Config API | STORE-API-001 to STORE-API-011 | 10 | 0 | 1 |
+| Config API | STORE-API-001 to STORE-API-011 | 11 | 0 | 0 |
 
-**Summary:** 28 specs; 27 `[x]`, 1 `[ ]` (STORE-API-011).
+**Summary:** 28 specs, all `[x]`.
 
 ## Key Findings
 

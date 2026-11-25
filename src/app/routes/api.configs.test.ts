@@ -9,6 +9,13 @@ import {
   writeData,
 } from "@/test/data-dir";
 import { action, loader } from "./api.configs";
+import { action as productsAction } from "./api.products";
+import * as fsPromises from "node:fs/promises";
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return { ...actual, writeFile: vi.fn(actual.writeFile) };
+});
 
 function post(body: unknown) {
   const request = new Request("http://localhost/api/configs", {
@@ -146,5 +153,33 @@ describe("/api/configs", () => {
     await expectError(await post([{ routines: {} }]), 400);
     await expectError(await post(null), 400);
     expect(await readData("configs.json")).toEqual(sampleConfigs);
+  });
+
+  // @spec STORE-API-011
+  it("keeps product saves from landing between validation and the write", async () => {
+    const configs = { ...sampleConfigs, categories: { ...sampleConfigs.categories, lips: ["Toner"] } };
+    await writeData("configs.json", configs);
+    await writeData("usage.json", sampleUsage);
+
+    // Slow down writing configs.json, so a product save has time to slip in if usage.json is not held.
+    const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
+    vi.mocked(fsPromises.writeFile).mockImplementation(async (...args: Parameters<typeof actual.writeFile>) => {
+      if (String(args[0]).includes("configs.json")) await new Promise((resolve) => setTimeout(resolve, 30));
+      return actual.writeFile(...args);
+    });
+
+    // Remove the unused Toner while a product is being moved into it.
+    const removal = post({ categories: sampleConfigs.categories });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const move = new Request("http://localhost/api/products", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: 0, name: sampleUsage[0].name, brand: sampleUsage[0].brand, category: "Toner" }),
+    });
+    await Promise.all([removal, settle(() => productsAction({ request: move } as Parameters<typeof productsAction>[0]))]);
+
+    const configured = Object.values((await readData("configs.json")).categories).flat();
+    const usage = await readData("usage.json");
+    for (const product of usage) expect(configured).toContain(product.category);
   });
 });

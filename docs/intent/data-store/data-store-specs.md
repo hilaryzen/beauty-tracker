@@ -40,4 +40,4 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **STORE-API-010**: If a POST body to `/api/configs` is not valid JSON or is not a JSON object, then the system shall treat the body as failing validation.
 - [x] **STORE-API-008**: If a POST to `/api/configs` cannot complete because `configs.json` or `usage.json` cannot be read, or `configs.json` cannot be written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
 - [x] **STORE-API-009**: If a POST to `/api/configs` cannot complete because `configs.json` or `usage.json` cannot be read, or `configs.json` cannot be written, then the system shall leave `configs.json` unchanged.
-- [ ] **STORE-API-011**: When `/api/configs` receives a POST request, the system shall read `usage.json` for validation and write `configs.json` within one multi-file update holding both `configs.json` and `usage.json`.
+- [x] **STORE-API-011**: When `/api/configs` receives a POST request, the system shall read `usage.json` for validation and write `configs.json` within one multi-file update holding both `configs.json` and `usage.json`.
