@@ -3,6 +3,7 @@ import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { ProductDialog } from "@/features/products/product-dialog";
 import { formatSize, isProductSize, isRating } from "@/features/products/product-details";
 import { productName } from "@/features/products/product-name";
+import { isStatus, statusRank, STATUSES } from "@/features/products/product-status";
 import { formatDollars } from "@/features/purchases/money";
 import type { Product } from "@/features/products/types";
 import { useMemo, useState } from "react";
@@ -21,11 +22,16 @@ const ALL_TAB = "all";
 const GROUP_TAB_PREFIX = "group-";
 const groupTab = (index: number) => `${GROUP_TAB_PREFIX}${index}`;
 
+// A missing or unrecognized status can only come from a hand edit; all such products share one position, after Decluttered.
+function statusPosition(item: Product) {
+  return isStatus(item.status) ? statusRank(item.status) : STATUSES.length;
+}
+
 function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-UI-026, USAGE-UI-027, USAGE-UI-028, USAGE-UI-029, USAGE-UI-030, USAGE-UI-031, USAGE-UI-032, USAGE-UI-033, USAGE-UI-034, USAGE-UI-035, USAGE-UI-036, USAGE-UI-037, USAGE-LOG-001, USAGE-LOG-002
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-UI-026, USAGE-UI-027, USAGE-UI-028, USAGE-UI-029, USAGE-UI-030, USAGE-UI-031, USAGE-UI-032, USAGE-UI-033, USAGE-UI-034, USAGE-UI-035, USAGE-UI-036, USAGE-UI-037, USAGE-UI-038, USAGE-UI-039, USAGE-UI-040, USAGE-UI-041, USAGE-UI-042, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -57,9 +63,11 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const sortedUsage = useMemo(() => {
     // Every group's categories, in configured group order; no categories means one shared position.
     const allCategories = Object.values(categories ?? {}).flat();
-    // Array.prototype.sort is stable, so products with the same position keep stored order.
+    // Status first, then category; Array.prototype.sort is stable, so products with the same positions keep stored order.
     return [...usage].sort(
-      (a, b) => allCategories.indexOf(a.category) - allCategories.indexOf(b.category),
+      (a, b) =>
+        statusPosition(a) - statusPosition(b) ||
+        allCategories.indexOf(a.category) - allCategories.indexOf(b.category),
     );
   }, [usage, categories]);
 
@@ -92,6 +100,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row>
+                <Table.ColumnHeader>Status</Table.ColumnHeader>
                 <Table.ColumnHeader>Category</Table.ColumnHeader>
                 <Table.ColumnHeader>Product</Table.ColumnHeader>
                 <Table.ColumnHeader>Brand</Table.ColumnHeader>
@@ -110,6 +119,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
             <Table.Body>
               {shownUsage.map((item) => (
                 <Table.Row key={item.id}>
+                  <Table.Cell>{isStatus(item.status) ? item.status : null}</Table.Cell>
                   <Table.Cell>{item.category}</Table.Cell>
                   <Table.Cell>{productName(item)}</Table.Cell>
                   <Table.Cell>{item.brand}</Table.Cell>
