@@ -91,6 +91,55 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-CAT-003**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if it omits a category that any product record in `usage.json` uses.
 - [x] **PROD-CAT-004**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any group name or category name contains no non-whitespace character or has leading or trailing whitespace.
 
+## Category Editor
+
+- [ ] **PROD-CATEDIT-001**: The category editor shall show one section per configured group, in configured order, headed by the group name.
+- [ ] **PROD-CATEDIT-002**: The category editor shall list each group's categories within its section in configured order.
+- [ ] **PROD-CATEDIT-003**: The category editor shall show, beside each category, the number of product records whose `category` is that category, as `1 product` for one and `<n> products` otherwise.
+- [ ] **PROD-CATEDIT-004**: The category editor shall show Rename, Move up, Move down, and Delete controls for each group.
+- [ ] **PROD-CATEDIT-005**: The category editor shall show Rename, Move up, Move down, "Move to", and Delete controls for each category.
+- [ ] **PROD-CATEDIT-006**: The category editor's "Move to" dropdown for a category shall list every group other than the category's own, in configured order.
+- [ ] **PROD-CATEDIT-007**: The category editor shall end each group's section with a new category name input and an Add button.
+- [ ] **PROD-CATEDIT-008**: The category editor shall end with a new group name input and an Add group button, after every group's section.
+- [ ] **PROD-CATEDIT-009**: When the user activates Add in a group's section, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories plus the trimmed new category name at the end of that group.
+- [ ] **PROD-CATEDIT-010**: When the user activates Add group, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories plus an empty group with the trimmed new group name after the existing groups.
+- [ ] **PROD-CATEDIT-011**: When the user saves a group rename, the category editor shall send a POST to `/api/configs` with a `categories` value in which that group's name is replaced by the trimmed new name, keeping the group's position and categories.
+- [ ] **PROD-CATEDIT-012**: When the user activates Move up or Move down on a category, the category editor shall send a POST to `/api/configs` with a `categories` value in which that category has swapped places with the category before or after it in the same group.
+- [ ] **PROD-CATEDIT-013**: When the user activates Move up or Move down on a group, the category editor shall send a POST to `/api/configs` with a `categories` value in which that group has swapped places with the group before or after it.
+- [ ] **PROD-CATEDIT-014**: When the user chooses a group in a category's "Move to" dropdown, the category editor shall send a POST to `/api/configs` with a `categories` value in which that category is removed from its group and appended to the end of the chosen group.
+- [ ] **PROD-CATEDIT-015**: When the user activates Delete on a category, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories without that category.
+- [ ] **PROD-CATEDIT-016**: When the user activates Delete on a group, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories without that group.
+- [ ] **PROD-CATEDIT-017**: When the user saves a category rename, the category editor shall send a POST to `/api/categories` with a body of the form `{ "from": <current name>, "to": <trimmed new name> }`.
+- [ ] **PROD-CATEDIT-018**: While any product record uses a category, the category editor shall disable that category's Delete control.
+- [ ] **PROD-CATEDIT-019**: While a group contains at least one category, the category editor shall disable that group's Delete control.
+- [ ] **PROD-CATEDIT-020**: The category editor shall disable Move up on the first category of each group and on the first group.
+- [ ] **PROD-CATEDIT-021**: The category editor shall disable Move down on the last category of each group and on the last group.
+- [ ] **PROD-CATEDIT-022**: While only one group is configured, the category editor shall disable every category's "Move to" dropdown.
+- [ ] **PROD-CATEDIT-023**: While a group's new category name input is blank after trimming, the category editor shall disable that section's Add button.
+- [ ] **PROD-CATEDIT-024**: While a group's new category name input matches a configured category ignoring capitalization and surrounding whitespace, the category editor shall disable that section's Add button.
+- [ ] **PROD-CATEDIT-025**: While the new group name input is blank after trimming, the category editor shall disable Add group.
+- [ ] **PROD-CATEDIT-026**: While the new group name input matches an existing group name ignoring capitalization and surrounding whitespace, the category editor shall disable Add group.
+- [ ] **PROD-CATEDIT-027**: When the user activates Rename on a group or category, the category editor shall replace that name with a text input holding the current name, followed by Save and Cancel buttons.
+- [ ] **PROD-CATEDIT-028**: While a rename input is blank after trimming, the category editor shall disable its Save button.
+- [ ] **PROD-CATEDIT-029**: While a rename input's trimmed text equals the current name exactly, the category editor shall disable its Save button.
+- [ ] **PROD-CATEDIT-030**: While a category rename input matches a configured category other than the one being renamed, ignoring capitalization and surrounding whitespace, the category editor shall disable its Save button.
+- [ ] **PROD-CATEDIT-031**: While a group rename input matches a group other than the one being renamed, ignoring capitalization and surrounding whitespace, the category editor shall disable its Save button.
+- [ ] **PROD-CATEDIT-032**: When the user presses Enter in a rename input while its Save button is enabled, the category editor shall save the rename.
+- [ ] **PROD-CATEDIT-033**: When the user activates Cancel or presses Esc in a rename input, the category editor shall close the input without sending any request.
+- [ ] **PROD-CATEDIT-034**: When the user activates Rename while another rename input is open, the category editor shall close the other input without sending any request.
+- [ ] **PROD-CATEDIT-035**: While a request from the category editor is in flight, the category editor shall disable every Rename, Move up, Move down, "Move to", Delete, Add, Add group, and rename Save control.
+- [ ] **PROD-CATEDIT-036**: When a request from the category editor finishes, whether it succeeded or failed, the page shall revalidate its loaders.
+- [ ] **PROD-CATEDIT-037**: When an Add or Add group request from the category editor succeeds, the category editor shall clear the input it used.
+- [ ] **PROD-CATEDIT-038**: When a rename request from the category editor succeeds, the category editor shall close the rename input.
+- [ ] **PROD-CATEDIT-039**: If a request from the category editor fails, then the category editor shall keep the text in the add input that was used, or in the rename input if it is still open.
+- [ ] **PROD-CATEDIT-040**: If a request from the category editor responds with an error status and a JSON body with a non-empty string `error`, then the page shall show an error notification containing that message.
+- [ ] **PROD-CATEDIT-041**: If a request from the category editor responds with an error status and no JSON body with a non-empty string `error`, then the page shall show an error notification stating that the change was not saved.
+- [ ] **PROD-CATEDIT-042**: If a request from the category editor gets no response, then the page shall show an error notification stating that the change was not saved.
+- [ ] **PROD-CATEDIT-043**: While no groups are configured, the category editor shall show only the new group name input and the Add group button.
+- [ ] **PROD-CATEDIT-044**: When the user presses Enter in a group's new category name input while that section's Add button is enabled, the category editor shall add the category as Add does.
+- [ ] **PROD-CATEDIT-045**: When the user presses Enter in the new group name input while Add group is enabled, the category editor shall add the group as Add group does.
+- [ ] **PROD-CATEDIT-046**: While a rename request from the category editor is in flight, the category editor shall keep that rename input's text field and Cancel button enabled.
+
 ## Renaming a Category
 
 - [ ] **PROD-CATAPI-001**: When `/api/categories` receives a POST whose body passes validation, the system shall replace `from` with `to` in `configs.json → categories`, at the same position in the same group.
