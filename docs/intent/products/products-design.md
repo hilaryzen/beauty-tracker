@@ -273,6 +273,7 @@ An `/api/products` body is valid when it is a JSON object with the keys listed f
 - src/features/products/product-dialog.tsx
 - src/features/products/use-product-editor.ts
 - src/features/products/product-name.ts
+- src/features/products/product-details.ts
 - src/app/routes/api.products.ts
 - src/utils/calendar-date.ts
 - src/utils/today.ts
