@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useState } from "react";
 import { useLoaderData, useRevalidator } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -292,7 +292,7 @@ describe("product dialog dates", () => {
     renderDialog();
     await dialogReady();
     const labels = Array.from(screen.getByRole("dialog").querySelectorAll("label")).map((label) => label.textContent);
-    expect(labels.slice(0, 7)).toEqual(["Name", "Shade", "Brand", "Category", "Date opened", "Date expiring", "Date removed"]);
+    expect(labels.slice(0, 8)).toEqual(["Name", "Shade", "Brand", "Category", "Status", "Date opened", "Date expiring", "Date removed"]);
     for (const label of ["Date opened", "Date expiring", "Date removed"]) {
       expect(screen.getByLabelText(label)).toHaveAttribute("type", "date");
     }
@@ -366,7 +366,7 @@ describe("product dialog dates", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodySent()).toEqual({
-      name: "Dew Serum", brand: "Saie", category: "Cleanser",
+      name: "Dew Serum", brand: "Saie", category: "Cleanser", status: "Backlog",
       opened: "2026-11-01", expires: "2027-05-01", removed: "2026-11-06",
     });
   });
@@ -379,7 +379,7 @@ describe("product dialog dates", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodySent()).toEqual({
-      id: dated.id, name: dated.name, brand: dated.brand, category: dated.category,
+      id: dated.id, name: dated.name, brand: dated.brand, category: dated.category, status: dated.status,
       opened: "2026-10-01", expires: "2027-10-01", removed: "2026-11-05",
     });
   });
@@ -393,7 +393,7 @@ describe("product dialog dates", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodySent()).toEqual({
-      id: dated.id, name: dated.name, brand: dated.brand, category: dated.category, expires: "2027-10-01",
+      id: dated.id, name: dated.name, brand: dated.brand, category: dated.category, status: dated.status, expires: "2027-10-01",
     });
   });
 
@@ -405,6 +405,125 @@ describe("product dialog dates", () => {
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     const body = bodySent();
     for (const key of ["opened", "expires", "removed"]) expect(body).not.toHaveProperty(key);
+  });
+});
+
+describe("product dialog status", () => {
+  const lifecycle = ["Backlog", "Opened", "In Progress", "Panned", "Decluttered"];
+  const { status: _status, ...withoutStatus } = primer;
+  const noStatus = withoutStatus as unknown as typeof primer;
+  const badStatus = { ...primer, status: "Used up" } as unknown as typeof primer;
+
+  function statusValue() {
+    return (screen.getByLabelText("Status") as HTMLSelectElement).value;
+  }
+
+  async function save() {
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    return bodyOf(requestsTo("/api/products")[0]);
+  }
+
+  // @spec PROD-EDIT-042
+  it("shows a status dropdown after the category and before date opened", async () => {
+    renderDialog();
+    await dialogReady();
+    const [category, status, opened] = ["Category", "Status", "Date opened"].map((label) => screen.getByLabelText(label));
+    expect(status).toHaveProperty("tagName", "SELECT");
+    expect(category.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(status.compareDocumentPosition(opened) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  // @spec PROD-EDIT-043
+  it("offers the five statuses in lifecycle order and no other option", async () => {
+    renderDialog();
+    await dialogReady();
+    const choosable = Array.from((screen.getByLabelText("Status") as HTMLSelectElement).options).filter((option) => !option.disabled);
+    expect(choosable.map((option) => option.textContent)).toEqual(lifecycle);
+    expect(choosable.map((option) => option.value)).toEqual(lifecycle);
+  });
+
+  // @spec PROD-EDIT-044
+  it("starts at Backlog when adding a product", async () => {
+    renderDialog();
+    await dialogReady();
+    expect(statusValue()).toBe("Backlog");
+    expect(selectedText("Status")).toBe("Backlog");
+  });
+
+  // @spec PROD-EDIT-045
+  it("shows the product's status when editing", async () => {
+    for (const status of lifecycle) {
+      renderDialog({ product: { ...primer, status } as typeof primer });
+      await dialogReady();
+      expect(statusValue()).toBe(status);
+      cleanup();
+    }
+  });
+
+  // @spec PROD-EDIT-046
+  it("shows no status chosen when editing a product with no status", async () => {
+    renderDialog({ product: noStatus });
+    await dialogReady();
+    expect(statusValue()).toBe("");
+  });
+
+  // @spec PROD-EDIT-046
+  it("shows no status chosen when editing a product whose status is not one of the five", async () => {
+    renderDialog({ product: badStatus });
+    await dialogReady();
+    expect(statusValue()).toBe("");
+  });
+
+  // @spec PROD-EDIT-049
+  it("shows the Status placeholder while no status is chosen", async () => {
+    renderDialog({ product: noStatus });
+    await dialogReady();
+    expect(selectedText("Status")).toBe("Status");
+  });
+
+  // @spec PROD-EDIT-047
+  it("disables Save while no status is chosen", async () => {
+    renderDialog({ product: badStatus });
+    await dialogReady();
+    expect(button("Save")).toBeDisabled();
+    choose("Status", "Opened");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-EDIT-048
+  it("leaves the date pickers unchanged when a status is chosen", async () => {
+    renderDialog({ product: { ...primer, opened: "2026-10-01", expires: "2027-10-01" } });
+    await dialogReady();
+    for (const status of ["Panned", "Backlog", "Decluttered", "In Progress"]) {
+      choose("Status", status);
+      expect(screen.getByLabelText("Date opened")).toHaveValue("2026-10-01");
+      expect(screen.getByLabelText("Date expiring")).toHaveValue("2027-10-01");
+      expect(screen.getByLabelText("Date removed")).toHaveValue("");
+    }
+  });
+
+  // @spec PROD-SAVE-026
+  it("sends the chosen status with a new product", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    choose("Status", "In Progress");
+    expect((await save()).status).toBe("In Progress");
+  });
+
+  // @spec PROD-SAVE-026
+  it("sends the starting status with a new product when none is chosen", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    expect((await save()).status).toBe("Backlog");
+  });
+
+  // @spec PROD-SAVE-026
+  it("sends the chosen status when editing a product", async () => {
+    renderDialog({ product: primer });
+    await dialogReady();
+    choose("Status", "Panned");
+    expect((await save()).status).toBe("Panned");
   });
 });
 
@@ -601,7 +720,7 @@ describe("product dialog size, rating, and notes", () => {
     fill("Notes", "  Line one\n\nLine two \n");
     await save();
     expect(bodySent()).toEqual({
-      name: "Dew Serum", brand: "Saie", category: "Cleanser",
+      name: "Dew Serum", brand: "Saie", category: "Cleanser", status: "Backlog",
       size: { amount: 7.5, unit: "mL" }, rating: 5, notes: "Line one\n\nLine two",
     });
   });
@@ -614,7 +733,7 @@ describe("product dialog size, rating, and notes", () => {
     choose("Size unit", "oz");
     await save();
     expect(bodySent()).toEqual({
-      id: detailed.id, name: detailed.name, brand: detailed.brand, category: detailed.category,
+      id: detailed.id, name: detailed.name, brand: detailed.brand, category: detailed.category, status: detailed.status,
       size: { amount: 32, unit: "oz" }, rating: 4, notes: detailed.notes,
     });
   });
@@ -628,7 +747,7 @@ describe("product dialog size, rating, and notes", () => {
     fill("Notes", " \n ");
     await save();
     expect(bodySent()).toEqual({
-      id: detailed.id, name: detailed.name, brand: detailed.brand, category: detailed.category,
+      id: detailed.id, name: detailed.name, brand: detailed.brand, category: detailed.category, status: detailed.status,
     });
   });
 
@@ -799,7 +918,7 @@ describe("saving a product", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodyOf(requestsTo("/api/configs")[0]).categories.hair).toEqual(["Toner"]);
-    expect(bodyOf(requestsTo("/api/products")[0])).toEqual({ name: "Dew Serum", brand: "Saie", category: "Toner" });
+    expect(bodyOf(requestsTo("/api/products")[0])).toEqual({ name: "Dew Serum", brand: "Saie", category: "Toner", status: "Backlog" });
   });
 
   // @spec PROD-SAVE-001
@@ -884,7 +1003,7 @@ describe("saving a product", () => {
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     const call = requestsTo("/api/products")[0];
     expect((call[1] as RequestInit).method?.toUpperCase()).toBe("POST");
-    expect(bodyOf(call)).toEqual({ name: "Dew Serum", brand: "Saie", category: "Cleanser" });
+    expect(bodyOf(call)).toEqual({ name: "Dew Serum", brand: "Saie", category: "Cleanser", status: "Backlog" });
     expect(requestsTo("/api/configs")).toHaveLength(0);
   });
 
@@ -898,7 +1017,7 @@ describe("saving a product", () => {
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     const call = requestsTo("/api/products")[0];
     expect((call[1] as RequestInit).method?.toUpperCase()).toBe("PUT");
-    expect(bodyOf(call)).toEqual({ id: primer.id, name: "Renamed", brand: primer.brand, category: "Foundation" });
+    expect(bodyOf(call)).toEqual({ id: primer.id, name: "Renamed", brand: primer.brand, category: "Foundation", status: primer.status });
   });
 
   // @spec PROD-SAVE-016
@@ -909,7 +1028,7 @@ describe("saving a product", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodyOf(requestsTo("/api/products")[0])).toEqual({
-      name: "Dew Serum", brand: "Saie", category: "Cleanser", shade: "Berry",
+      name: "Dew Serum", brand: "Saie", category: "Cleanser", status: "Backlog", shade: "Berry",
     });
   });
 
@@ -921,7 +1040,7 @@ describe("saving a product", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodyOf(requestsTo("/api/products")[0])).toEqual({
-      id: shaded.id, name: shaded.name, brand: shaded.brand, category: shaded.category, shade: "Plum",
+      id: shaded.id, name: shaded.name, brand: shaded.brand, category: shaded.category, status: shaded.status, shade: "Plum",
     });
   });
 
@@ -943,7 +1062,7 @@ describe("saving a product", () => {
     fireEvent.click(button("Save"));
     await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
     expect(bodyOf(requestsTo("/api/products")[0])).toEqual({
-      id: shaded.id, name: shaded.name, brand: shaded.brand, category: shaded.category,
+      id: shaded.id, name: shaded.name, brand: shaded.brand, category: shaded.category, status: shaded.status,
     });
   });
 
