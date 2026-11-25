@@ -113,6 +113,28 @@ describe("usage table display", () => {
   });
 });
 
+describe("a product's shade in the usage table", () => {
+  function productCell(tr: HTMLElement) {
+    return within(tr).getAllByRole("cell")[1];
+  }
+
+  // @spec USAGE-UI-011
+  it("shows the name, an en dash, and the shade as plain text in the Product column", async () => {
+    renderTable({ usage: [{ ...sampleUsage[0], shade: "Berry" }, ...sampleUsage.slice(1)], categories: sampleConfigs.categories });
+    const cell = productCell(await row("Hydro Grip Primer – Berry"));
+    expect(cell.textContent).toBe("Hydro Grip Primer – Berry");
+    // One plain text node: no element can give the shade a style of its own.
+    expect(cell.children).toHaveLength(0);
+  });
+
+  // @spec USAGE-UI-012
+  it("shows only the name in the Product column for a product without a shade", async () => {
+    renderTable();
+    const cell = productCell(await row("Hydro Grip Primer"));
+    expect(cell.textContent).toBe("Hydro Grip Primer");
+  });
+});
+
 describe("opening the product dialog", () => {
   // @spec USAGE-UI-007
   it("shows an Add product button above the rows", async () => {
