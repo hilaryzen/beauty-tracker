@@ -14,10 +14,19 @@ function Page() {
   return <UsageTable usage={usage} categories={categories as Record<string, string[]>} />;
 }
 
-function renderTable(data: PageData = { usage: sampleUsage, categories: sampleConfigs.categories }) {
+function renderTable(data: PageData = { usage: sampleUsage, categories: sampleConfigs.categories }, url = "/") {
   const loader = vi.fn(() => data);
-  renderPage(Page, loader);
+  renderPage(Page, loader, url);
   return loader;
+}
+
+async function tabNames() {
+  return (await screen.findAllByRole("tab")).map((tab) => tab.textContent);
+}
+
+async function selectedTab() {
+  const tabs = await screen.findAllByRole("tab");
+  return tabs.filter((tab) => tab.getAttribute("aria-selected") === "true").map((tab) => tab.textContent);
 }
 
 async function row(name: string) {
@@ -52,12 +61,11 @@ afterEach(() => {
 
 describe("usage table display", () => {
   // @spec USAGE-UI-001
-  it("shows one row per product with category, name, brand, overall uses, and this month's uses", async () => {
+  it("shows category, name, brand, overall uses, and this month's uses for each product row", async () => {
     renderTable();
     for (const header of ["Category", "Product", "Brand", "Overall Uses", "This Month's Uses"]) {
       expect(await screen.findByRole("columnheader", { name: header })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole("row")).toHaveLength(sampleUsage.length + 1);
     const primer = await row("Hydro Grip Primer");
     expect(within(primer).getByText("Primer")).toBeInTheDocument();
     expect(within(primer).getByText("Milk Makeup")).toBeInTheDocument();
@@ -277,5 +285,46 @@ describe("logging from the usage table", () => {
     await screen.findByText(/not saved/i);
     expect(loader).toHaveBeenCalledTimes(1);
     expect(within(await row("Hydro Grip Primer")).getByText("27")).toBeInTheDocument();
+  });
+});
+
+describe("usage table group tabs", () => {
+  // @spec USAGE-UI-013
+  it("shows an All tab, then one tab per group in configured order", async () => {
+    renderTable({ usage: sampleUsage, categories: { makeup: ["Primer", "Foundation"], skincare: ["Cleanser"], lips: [] } });
+    expect(await tabNames()).toEqual(["All", "makeup", "skincare", "lips"]);
+  });
+
+  // @spec USAGE-UI-014
+  it("shows one row per product on the All tab", async () => {
+    renderTable();
+    expect(await selectedTab()).toEqual(["All"]);
+    expect(await productOrder()).toHaveLength(sampleUsage.length);
+  });
+
+  // @spec USAGE-UI-015
+  it("shows only the products whose category is in the selected group", async () => {
+    renderTable(undefined, "/?group=makeup");
+    expect(await productOrder()).toEqual(["Hydro Grip Primer", "Cushion Glass Original"]);
+  });
+
+  // @spec USAGE-UI-016
+  it("shows a message in place of rows for a group with no products", async () => {
+    renderTable(undefined, "/?group=lips");
+    expect(await screen.findByText("No products in this group.")).toBeInTheDocument();
+    expect(screen.queryByText("Hydro Grip Primer")).toBeNull();
+  });
+
+  // @spec USAGE-UI-016
+  it("does not show the empty-group message on a group with products", async () => {
+    renderTable(undefined, "/?group=skincare");
+    await screen.findByText("Blueberry Bounce Gentle Cleanser");
+    expect(screen.queryByText("No products in this group.")).toBeNull();
+  });
+
+  // @spec USAGE-UI-017
+  it("shows only the All tab when there are no categories", async () => {
+    renderTable({ usage: sampleUsage });
+    expect(await tabNames()).toEqual(["All"]);
   });
 });
