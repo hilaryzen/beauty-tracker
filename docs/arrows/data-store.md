@@ -51,4 +51,4 @@ JSON file storage for the app's data, with separate dev and prod data folders.
 
 ## Key Findings
 
-1. **`/api/configs` has no UI caller yet** — it exists for the planned routine and category editors.
+1. **`/api/configs` serves the category editor** — the routine editor, when designed, will use it too.

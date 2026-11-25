@@ -7,9 +7,11 @@ import { stubMatchMedia } from "@/test/render";
 import { ErrorBoundary, Shell } from "./root";
 import Home from "./routes/home";
 import Purchases from "./routes/purchases";
+import Settings from "./routes/settings";
 
 type HomeProps = Parameters<typeof Home>[0];
 type PurchasesProps = Parameters<typeof Purchases>[0];
+type SettingsProps = Parameters<typeof Settings>[0];
 type ErrorProps = Parameters<typeof ErrorBoundary>[0];
 
 function HomePage() {
@@ -20,6 +22,11 @@ function HomePage() {
 function PurchasesPage() {
   const loaderData = useLoaderData();
   return <Purchases {...({ loaderData } as PurchasesProps)} />;
+}
+
+function SettingsPage() {
+  const loaderData = useLoaderData();
+  return <Settings {...({ loaderData } as SettingsProps)} />;
 }
 
 const purchasesData = () => ({ usage: sampleUsage, categories: sampleConfigs.categories });
@@ -51,6 +58,7 @@ function renderApp(path: string, homeLoader: () => unknown = homeData) {
       children: [
         { index: true, Component: HomePage, loader: homeLoader },
         { path: "purchases", Component: PurchasesPage, loader: purchasesData },
+        { path: "settings", Component: SettingsPage, loader: purchasesData },
       ],
     },
   ]);
@@ -98,11 +106,11 @@ describe("navigation header", () => {
   });
 
   // @spec SHELL-NAV-003
-  it("links to Usage then Purchases", async () => {
+  it("links to Usage, then Purchases, then Settings", async () => {
     renderApp("/purchases");
     const links = within(await header()).getAllByRole("link");
-    expect(links.map((link) => link.textContent)).toEqual(["Usage", "Purchases"]);
-    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/", "/purchases"]);
+    expect(links.map((link) => link.textContent)).toEqual(["Usage", "Purchases", "Settings"]);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(["/", "/purchases", "/settings"]);
   });
 
   // @spec SHELL-NAV-004
@@ -129,6 +137,15 @@ describe("navigation header", () => {
     await header();
     expect(headerLink("Purchases")).toHaveAttribute("aria-current", "page");
     expect(headerLink("Usage")).not.toHaveAttribute("aria-current");
+  });
+
+  // @spec SHELL-NAV-009
+  it("marks only Settings as the current page at /settings", async () => {
+    renderApp("/settings");
+    await header();
+    expect(headerLink("Settings")).toHaveAttribute("aria-current", "page");
+    expect(headerLink("Usage")).not.toHaveAttribute("aria-current");
+    expect(headerLink("Purchases")).not.toHaveAttribute("aria-current");
   });
 
   // @spec SHELL-NAV-006
@@ -182,5 +199,22 @@ describe("purchases page", () => {
     expect(follows(heading, addPurchase)).toBe(true);
     expect(screen.getByText("No purchases yet.")).toBeInTheDocument();
     expect(screen.queryByText("Purchase tracking is coming soon.")).toBeNull();
+  });
+});
+
+describe("settings page", () => {
+  // @spec SHELL-SET-001
+  it("shows the top-level heading Settings", async () => {
+    renderApp("/settings");
+    expect(await screen.findByRole("heading", { level: 1, name: "Settings" })).toBeInTheDocument();
+  });
+
+  // @spec SHELL-SET-002
+  it("shows the category editor below the heading", async () => {
+    renderApp("/settings");
+    const heading = await screen.findByRole("heading", { level: 1, name: "Settings" });
+    const addGroup = await screen.findByRole("button", { name: "Add group" });
+    expect(follows(heading, addGroup)).toBe(true);
+    expect(screen.getByRole("region", { name: "makeup" })).toBeInTheDocument();
   });
 });
