@@ -4,6 +4,7 @@ import { useLoaderData, useRevalidator } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toaster } from "@/components/ui/toaster";
 import type { Product } from "@/features/products/types";
+import { waitForEscListener } from "@/test/dialog";
 import { renderPage } from "@/test/render";
 import { PurchaseList } from "./purchase-list";
 
@@ -377,6 +378,7 @@ describe("creating a product from an item", () => {
     renderPurchases();
     await openPurchaseDialog();
     const productDialog = await openProductDialog();
+    await waitForEscListener(productDialog);
     fireEvent.keyDown(within(productDialog).getByLabelText("Name"), { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Add product" })).toBeNull());
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -448,7 +450,8 @@ describe("closing the purchase dialog", () => {
   // @spec PURCH-DLG-023
   it("closes on Esc without sending a request", async () => {
     renderPurchases();
-    await fillValidPurchase();
+    const dialog = await fillValidPurchase();
+    await waitForEscListener(dialog);
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
     await expectClosedWithoutRequest();
   });
@@ -481,7 +484,8 @@ describe("closing the purchase dialog", () => {
   it("ignores Cancel, Esc, and the close control while a save is in flight", async () => {
     respond({ "/api/purchases": never });
     renderPurchases();
-    await fillValidPurchase();
+    const dialog = await fillValidPurchase();
+    await waitForEscListener(dialog);
     fireEvent.click(button("Save"));
     await waitFor(() => expect(button("Save")).toBeDisabled());
 

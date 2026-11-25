@@ -5,6 +5,7 @@ import { useLoaderData, useRevalidator } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toaster } from "@/components/ui/toaster";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
+import { waitForEscListener } from "@/test/dialog";
 import { renderPage } from "@/test/render";
 import { ProductDialog } from "./product-dialog";
 
@@ -362,6 +363,7 @@ describe("closing the dialog", () => {
   it("closes on Esc without sending a request", async () => {
     renderDialog();
     await fillValidNewProduct();
+    await waitForEscListener(screen.getByRole("dialog"));
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
     await expectClosedWithoutRequest();
   });
@@ -395,6 +397,7 @@ describe("closing the dialog", () => {
     respond({ products: never });
     renderDialog();
     await fillValidNewProduct();
+    await waitForEscListener(screen.getByRole("dialog"));
     fireEvent.click(button("Save"));
     await waitFor(() => expect(button("Save")).toBeDisabled());
 
