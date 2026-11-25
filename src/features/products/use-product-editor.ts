@@ -1,5 +1,6 @@
 import { useRevalidator } from "react-router";
 import { toaster } from "@/components/ui/toaster";
+import { parseSizeAmount } from "./product-details";
 import { sendJson } from "@/utils/send-json";
 
 export type Categories = Record<string, string[]>;
@@ -14,6 +15,14 @@ export type ProductDraft = {
   opened?: string;
   expires?: string;
   removed?: string;
+  /** The typed size amount; blank means the product has no size, whatever the unit. */
+  sizeAmount?: string;
+  /** The chosen size unit; blank when none is chosen. */
+  sizeUnit?: string;
+  /** The chosen rating, `1` to `5`; blank means the product is not rated. */
+  rating?: string;
+  /** Blank means the product has no notes. */
+  notes?: string;
   /** An existing category's name, or a typed name. */
   category: string;
   /** The group for a typed category name that matches no existing category. */
@@ -46,7 +55,7 @@ async function send(url: string, method: "POST" | "PUT", body: unknown) {
   return result.ok ? undefined : result.message;
 }
 
-// @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013, PROD-SAVE-016, PROD-SAVE-017, PROD-SAVE-018, PROD-SAVE-019
+// @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013, PROD-SAVE-016, PROD-SAVE-017, PROD-SAVE-018, PROD-SAVE-019, PROD-SAVE-020, PROD-SAVE-021, PROD-SAVE-022, PROD-SAVE-023, PROD-SAVE-024, PROD-SAVE-025
 export function useProductEditor(categories: Categories | undefined) {
   const { revalidate } = useRevalidator();
 
@@ -54,7 +63,9 @@ export function useProductEditor(categories: Categories | undefined) {
    * Saves a new category if there is one, then the product, then reloads the page's data.
    * Returns undefined if anything failed; otherwise the added product's id (none for an edit).
    */
-  async function saveProduct({ id, name, brand, shade, opened, expires, removed, category, group }: ProductDraft) {
+  async function saveProduct({
+    id, name, brand, shade, opened, expires, removed, sizeAmount, sizeUnit, rating, notes, category, group,
+  }: ProductDraft) {
     const existing = findCategory(categories, category);
     const categoryName = existing?.category ?? category.trim();
 
@@ -69,6 +80,9 @@ export function useProductEditor(categories: Categories | undefined) {
     }
 
     const trimmedShade = (shade ?? "").trim();
+    const trimmedNotes = (notes ?? "").trim();
+    // The form only allows saving with a blank amount or a valid amount and a unit.
+    const amount = (sizeAmount ?? "").trim() === "" ? undefined : parseSizeAmount(sizeAmount ?? "");
     const fields = {
       name: name.trim(),
       brand: brand.trim(),
@@ -79,6 +93,10 @@ export function useProductEditor(categories: Categories | undefined) {
       ...(opened ? { opened } : {}),
       ...(expires ? { expires } : {}),
       ...(removed ? { removed } : {}),
+      // A blank size amount, rating, or notes is left out too, which removes it from the product.
+      ...(amount !== undefined && sizeUnit ? { size: { amount, unit: sizeUnit } } : {}),
+      ...(rating ? { rating: Number(rating) } : {}),
+      ...(trimmedNotes === "" ? {} : { notes: trimmedNotes }),
     };
     const result = await (id === undefined
       ? sendJson("/api/products", "POST", fields)

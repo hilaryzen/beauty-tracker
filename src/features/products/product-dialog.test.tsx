@@ -409,7 +409,7 @@ describe("product dialog dates", () => {
 });
 
 describe("product dialog size, rating, and notes", () => {
-  const detailed = { ...primer, size: { amount: 1.7, unit: "fl oz" }, rating: 4, notes: "Pills under sunscreen.\n\nGreat alone." };
+  const detailed = { ...primer, size: { amount: 1.7, unit: "fl oz" as const }, rating: 4, notes: "Pills under sunscreen.\n\nGreat alone." };
 
   function bodySent() {
     return bodyOf(requestsTo("/api/products")[0]);
