@@ -12,9 +12,12 @@ type UsageTableProps = {
   categories?: Record<string, Array<string>>
 }
 
-// Tab values: "All" cannot collide with a group, even one named "All".
+// Tab values: "All" cannot collide with a group, even one named "All". Groups are
+// identified by position because the tabs build element ids from these values,
+// and a group name may contain spaces, which ids cannot.
 const ALL_TAB = "all";
-const groupTab = (group: string) => `group:${group}`;
+const GROUP_TAB_PREFIX = "group-";
+const groupTab = (index: number) => `${GROUP_TAB_PREFIX}${index}`;
 
 function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
@@ -33,6 +36,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const groups = categories ?? {};
+  const groupNames = Object.keys(groups);
   // The selected group comes from the URL; a name that is not a configured group selects "All".
   const requested = searchParams.get("group");
   const selectedGroup = requested !== null && Object.hasOwn(groups, requested) ? requested : undefined;
@@ -43,7 +47,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
     setSearchParams((params) => {
       const next = new URLSearchParams(params);
       if (value === ALL_TAB) next.delete("group");
-      else next.set("group", value.slice(groupTab("").length));
+      else next.set("group", groupNames[Number(value.slice(GROUP_TAB_PREFIX.length))]);
       return next;
     });
   }
@@ -57,7 +61,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
     );
   }, [usage, categories]);
 
-  const selectedTab = selectedGroup === undefined ? ALL_TAB : groupTab(selectedGroup);
+  const selectedTab = selectedGroup === undefined ? ALL_TAB : groupTab(groupNames.indexOf(selectedGroup));
   const shownUsage = selectedGroup === undefined
     ? sortedUsage
     : sortedUsage.filter((item) => groups[selectedGroup].includes(item.category));
@@ -75,8 +79,8 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
     >
       <Tabs.List>
         <Tabs.Trigger value={ALL_TAB}>All</Tabs.Trigger>
-        {Object.keys(groups).map((group) => (
-          <Tabs.Trigger key={group} value={groupTab(group)}>{group}</Tabs.Trigger>
+        {groupNames.map((group, index) => (
+          <Tabs.Trigger key={group} value={groupTab(index)}>{group}</Tabs.Trigger>
         ))}
       </Tabs.List>
       <Tabs.Content value={selectedTab}>

@@ -398,6 +398,15 @@ describe("usage table group tabs", () => {
     expect(await selectedTab()).toEqual(["skincare"]);
   });
 
+  // @spec USAGE-UI-013
+  it("names each group's tab panel after its tab, even when the group name has a space", async () => {
+    renderTable(
+      { usage: sampleUsage, categories: { "body care": ["Cleanser"], makeup: ["Primer", "Foundation"] } },
+      "/?group=body%20care",
+    );
+    expect(await screen.findByRole("tabpanel", { name: "body care" })).toBeInTheDocument();
+  });
+
   // @spec USAGE-UI-025
   it("moves focus without selecting a tab when the arrow keys are used", async () => {
     renderTable();
