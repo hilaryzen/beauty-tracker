@@ -20,7 +20,7 @@ function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-LOG-001, USAGE-LOG-002
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -31,11 +31,22 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
     setDialogOpen(true);
   }
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const groups = categories ?? {};
   // The selected group comes from the URL; a name that is not a configured group selects "All".
   const requested = searchParams.get("group");
   const selectedGroup = requested !== null && Object.hasOwn(groups, requested) ? requested : undefined;
+
+  // Tabs only report a change of tab, so clicking the selected tab leaves the URL as it is.
+  function selectTab(value: string) {
+    // setSearchParams pushes a history entry, so Back returns to the previous tab.
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params);
+      if (value === ALL_TAB) next.delete("group");
+      else next.set("group", value.slice(groupTab("").length));
+      return next;
+    });
+  }
 
   const sortedUsage = useMemo(() => {
     // Every group's categories, in configured group order; no categories means one shared position.
@@ -56,7 +67,10 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
     <Flex justify="flex-end" mb="2">
       <Button onClick={() => openDialog()}>Add product</Button>
     </Flex>
-    <Tabs.Root value={selectedTab}>
+    <Tabs.Root
+      value={selectedTab}
+      onValueChange={(details) => selectTab(details.value)}
+    >
       <Tabs.List>
         <Tabs.Trigger value={ALL_TAB}>All</Tabs.Trigger>
         {Object.keys(groups).map((group) => (

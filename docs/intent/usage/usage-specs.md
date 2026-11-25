@@ -40,10 +40,10 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-018**: While the home page URL's `group` search parameter equals the name of a configured category group, the usage table shall select that group's tab.
 - [x] **USAGE-UI-019**: While the home page URL has no `group` search parameter, the usage table shall select the "All" tab.
 - [x] **USAGE-UI-020**: If the home page URL's `group` search parameter matches no configured category group name, then the usage table shall select the "All" tab.
-- [ ] **USAGE-UI-021**: When the user selects a group tab other than the selected tab in the usage table, the system shall set the home page URL's `group` search parameter to that group's name.
-- [ ] **USAGE-UI-022**: When the user selects the "All" tab in the usage table while another tab is selected, the system shall remove the `group` search parameter from the home page URL.
-- [ ] **USAGE-UI-023**: When the user selects a usage table tab other than the selected tab, the system shall add a browser history entry for the new URL.
-- [ ] **USAGE-UI-024**: When the user selects the usage table tab that is already selected, the system shall leave the home page URL unchanged.
+- [x] **USAGE-UI-021**: When the user selects a group tab other than the selected tab in the usage table, the system shall set the home page URL's `group` search parameter to that group's name.
+- [x] **USAGE-UI-022**: When the user selects the "All" tab in the usage table while another tab is selected, the system shall remove the `group` search parameter from the home page URL.
+- [x] **USAGE-UI-023**: When the user selects a usage table tab other than the selected tab, the system shall add a browser history entry for the new URL.
+- [x] **USAGE-UI-024**: When the user selects the usage table tab that is already selected, the system shall leave the home page URL unchanged.
 
 ## Logging
 
