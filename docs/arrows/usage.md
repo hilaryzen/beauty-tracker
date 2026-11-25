@@ -15,7 +15,7 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 - docs/intent/usage/usage-design.md
 
 ### EARS
-- docs/intent/usage/usage-specs.md (69 specs)
+- docs/intent/usage/usage-specs.md (74 specs)
 
 ### Tests
 - src/app/routes/api.usage.test.ts
@@ -32,12 +32,12 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 
 ## Architecture
 
-**Purpose:** Own every change to a product's counts (monthly use history, current-month count), leaving every other field of the record as it was, display products in a table sorted by category with a tab per category group, showing each product's size, cost (its purchase price), rating, and purchase, opened, expiring, and removed dates, and let the user add or remove a use. Depends on the products segment for the record and categories, and on the purchases segment for the purchase date and price.
+**Purpose:** Own every change to a product's counts (monthly use history, current-month count), leaving every other field of the record as it was, display products in a table sorted by status and then category with a tab per category group, showing each product's status, size, cost (its purchase price), rating, and purchase, opened, expiring, and removed dates, and let the user add or remove a use. Depends on the products segment for the record and categories, and on the purchases segment for the purchase date and price.
 
 **Key Components:**
 1. `loadUsage` / `rollOver` — the only way other segments read counts from `usage.json`; applies month rollover and saves it through `modifyFile` (`usage.server.ts`)
 2. `useUsage` hook — POSTs `{ ids, delta }` with `fetch` per click, revalidates on success, shows an error toast on failure (`use-usage.ts`)
-3. `UsageTable` — "All" and per-group tabs, with the selected group kept in the URL's `group` parameter, over a table sorted by category position across all groups, with per-row +/- controls and Edit buttons, plus an Add product button; both open the products segment's dialog (`usage-table.tsx`)
+3. `UsageTable` — "All" and per-group tabs, with the selected group kept in the URL's `group` parameter, over a table with Status as its first column, sorted by status position and then category position across all groups, with per-row +/- controls and Edit buttons, plus an Add product button; both open the products segment's dialog (`usage-table.tsx`)
 4. `/api/usage` route — GET with rollover; POST validates the body, then applies the change by id with a floor at 0 inside the `usage.json` queue (`api.usage.ts`)
 
 ## Spec Coverage
@@ -45,11 +45,11 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
 | Rollover | USAGE-ROLL-001 to USAGE-ROLL-008 | 8 | 0 | 0 |
-| UI | USAGE-UI-001 to USAGE-UI-037 | 37 | 0 | 0 |
+| UI | USAGE-UI-001 to USAGE-UI-042 | 42 | 0 | 0 |
 | Logging | USAGE-LOG-001 to USAGE-LOG-012 | 12 | 0 | 0 |
 | API | USAGE-API-001 to USAGE-API-012 | 12 | 0 | 0 |
 
-**Summary:** 69 specs, all `[x]`.
+**Summary:** 74 specs, all `[x]`.
 
 ## Key Findings
 
