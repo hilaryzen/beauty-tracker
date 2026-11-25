@@ -48,11 +48,11 @@ What each product cost: a product's purchase (date, store, price), the purchase 
 |----------|----------|-------------|----------|------|
 | Field | PURCH-001 | 1 | 0 | 0 |
 | List | PURCH-LIST-001 to PURCH-LIST-011 | 11 | 0 | 0 |
-| Dialog | PURCH-DLG-001 to PURCH-DLG-028 | 27 | 0 | 1 |
+| Dialog | PURCH-DLG-001 to PURCH-DLG-028 | 28 | 0 | 0 |
 | Saving | PURCH-SAVE-001 to PURCH-SAVE-009 | 9 | 0 | 0 |
 | API | PURCH-API-001 to PURCH-API-021 | 21 | 0 | 0 |
 
-**Summary:** 70 specs, 69 `[x]`, 1 `[ ]` (PURCH-DLG-028).
+**Summary:** 70 specs, all `[x]`.
 
 ## Key Findings
 
