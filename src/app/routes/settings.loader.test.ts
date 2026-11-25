@@ -43,10 +43,14 @@ describe("settings page", () => {
   });
 
   // @spec SHELL-SET-002
-  it("loads the product records and the categories", async () => {
+  it("loads the product records, the categories, and the routines", async () => {
     await writeData("usage.json", [lastMonth]);
     await writeData("configs.json", sampleConfigs);
-    expect(await loader()).toEqual({ usage: [lastMonth], categories: sampleConfigs.categories });
+    expect(await loader()).toEqual({
+      usage: [lastMonth],
+      categories: sampleConfigs.categories,
+      routines: sampleConfigs.routines,
+    });
   });
 
   // @spec SHELL-SET-004
