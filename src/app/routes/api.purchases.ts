@@ -2,6 +2,7 @@ import type { Route } from "./+types/api.purchases";
 import { isCleanName } from "@/features/products/category-rules";
 import type { Product } from "@/features/products/types";
 import type { ProductPurchase } from "@/features/purchases/types";
+import { isCalendarDate } from "@/utils/calendar-date";
 import { modifyFile } from "@/utils/files.server";
 import { today } from "@/utils/today";
 
@@ -16,14 +17,6 @@ type NewPurchase = { date: string; store?: string; items: PurchaseItem[] };
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/** Whether `value` is a real calendar date written as `YYYY-MM-DD`. */
-function isCalendarDate(value: unknown): value is string {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 /** Returns a message describing the first problem with the body, or undefined if its shape is valid. */
