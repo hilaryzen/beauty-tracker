@@ -7,4 +7,5 @@ export default [
   route("api/products", "routes/api.products.ts"),
   route("api/purchases", "routes/api.purchases.ts"),
   route("api/configs", "routes/api.configs.ts"),
+  route("api/categories", "routes/api.categories.ts"),
 ] satisfies RouteConfig;
