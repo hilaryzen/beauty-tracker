@@ -54,6 +54,16 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-029**: While a product record has no `purchase`, the usage table shall leave that row's Purchased cell empty.
 - [x] **USAGE-UI-030**: While a product record has no `opened`, `expires`, or `removed` date, the usage table shall leave that row's Opened, Expires, or Removed cell respectively empty.
 
+## Usage Table Size, Cost, and Rating
+
+- [ ] **USAGE-UI-031**: The usage table shall show Size, Cost, and Rating columns, in that order, after the Brand column and before the Overall Uses column.
+- [ ] **USAGE-UI-032**: While a product record has a `size` that satisfies the products record rules, the usage table shall show in that row's Size column the size's `amount` written in its shortest decimal form, without trailing zeros, followed by a space and its `unit` (`1.7 fl oz`).
+- [ ] **USAGE-UI-033**: While a product record has no `size`, or a `size` that does not satisfy the products record rules, the usage table shall leave that row's Size cell empty.
+- [ ] **USAGE-UI-034**: While a product record has a `purchase`, the usage table shall show in that row's Cost column the purchase's `price` in the same format as the purchase list shows amounts (PURCH-LIST-009), such as `$32.00`.
+- [ ] **USAGE-UI-035**: While a product record has no `purchase`, the usage table shall leave that row's Cost cell empty.
+- [ ] **USAGE-UI-036**: While a product record has a `rating` that is an integer from 1 to 5, the usage table shall show that rating as a number in that row's Rating column.
+- [ ] **USAGE-UI-037**: While a product record has no `rating`, or a `rating` that is not an integer from 1 to 5, the usage table shall leave that row's Rating cell empty.
+
 ## Logging
 
 - [x] **USAGE-LOG-001**: When the user activates a product row's + control in the usage table, the system shall increase that product's current-month use count by 1.
