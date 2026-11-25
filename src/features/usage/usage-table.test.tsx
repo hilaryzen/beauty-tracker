@@ -398,6 +398,23 @@ describe("usage table group tabs", () => {
     expect(await selectedTab()).toEqual(["skincare"]);
   });
 
+  // @spec USAGE-UI-025
+  it("moves focus without selecting a tab when the arrow keys are used", async () => {
+    renderTable();
+    const all = await screen.findByRole("tab", { name: "All" });
+    all.focus();
+    // Two presses: in jsdom, a tab selected by an arrow key is the one focused
+    // before that press, so a single press from "All" would not reveal it.
+    fireEvent.keyDown(all, { key: "ArrowRight" });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("tab", { name: "skincare" })));
+    fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("tab", { name: "makeup" })));
+    // Give any navigation a chance to happen before checking it did not.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(await selectedTab()).toEqual(["All"]);
+    expect(currentSearch()).toBe("");
+  });
+
   // @spec USAGE-UI-024
   it("leaves the URL unchanged when the selected tab is clicked", async () => {
     renderTable(undefined, "/?group=hair");

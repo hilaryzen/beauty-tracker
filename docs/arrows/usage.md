@@ -15,7 +15,7 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 - docs/intent/usage/usage-design.md
 
 ### EARS
-- docs/intent/usage/usage-specs.md (56 specs)
+- docs/intent/usage/usage-specs.md (57 specs)
 
 ### Tests
 - src/app/routes/api.usage.test.ts
@@ -45,11 +45,11 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
 | Rollover | USAGE-ROLL-001 to USAGE-ROLL-008 | 8 | 0 | 0 |
-| UI | USAGE-UI-001 to USAGE-UI-024 | 24 | 0 | 0 |
+| UI | USAGE-UI-001 to USAGE-UI-025 | 25 | 0 | 0 |
 | Logging | USAGE-LOG-001 to USAGE-LOG-012 | 12 | 0 | 0 |
 | API | USAGE-API-001 to USAGE-API-012 | 12 | 0 | 0 |
 
-**Summary:** 56 specs, all `[x]`.
+**Summary:** 57 specs, all `[x]`.
 
 ## Key Findings
 
