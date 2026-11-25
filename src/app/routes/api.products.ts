@@ -1,6 +1,7 @@
 import type { Route } from "./+types/api.products";
 import { isCleanName } from "@/features/products/category-rules";
 import { isProductSize, isRating, SIZE_UNITS } from "@/features/products/product-details";
+import { isStatus, STATUSES } from "@/features/products/product-status";
 import type { Product } from "@/features/products/types";
 import { isCalendarDate } from "@/utils/calendar-date";
 import { modifyFiles } from "@/utils/files.server";
@@ -19,11 +20,11 @@ const DATE_KEYS = ["opened", "expires", "removed"] as const;
 /** Dates that must not be after today. */
 const PAST_DATE_KEYS = ["opened", "removed"] as const;
 
-type ProductFields = Pick<Product, "name" | "brand" | "category" | (typeof OPTIONAL_KEYS)[number]>;
+type ProductFields = Pick<Product, "name" | "brand" | "category" | "status" | (typeof OPTIONAL_KEYS)[number]>;
 type ProductChange = ProductFields & Pick<Product, "id">;
 
 /** Returns a message describing the first problem with the body's shape, or undefined if it is valid. */
-// @spec PROD-API-007, PROD-API-008, PROD-API-009, PROD-API-012, PROD-API-023, PROD-API-029, PROD-API-030, PROD-API-035, PROD-API-036, PROD-API-037, PROD-API-038, PROD-API-039
+// @spec PROD-API-007, PROD-API-008, PROD-API-009, PROD-API-012, PROD-API-023, PROD-API-029, PROD-API-030, PROD-API-035, PROD-API-036, PROD-API-037, PROD-API-038, PROD-API-039, PROD-API-044
 function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "The request body must be an object";
@@ -37,6 +38,7 @@ function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   if (missing) return `${missing} is required`;
   if (!isCleanName(fields.name)) return "name must not be blank or start or end with spaces";
   if (!isCleanName(fields.brand)) return "brand must not be blank or start or end with spaces";
+  if (!isStatus(fields.status)) return `status must be one of ${STATUSES.join(", ")}`;
   if ("shade" in fields && !isCleanName(fields.shade)) return "shade must not be blank or start or end with spaces";
   for (const key of DATE_KEYS) {
     if (key in fields && !isCalendarDate(fields[key])) return `${key} must be a real date written as YYYY-MM-DD`;
@@ -61,13 +63,13 @@ function nextId(usage: Product[]) {
 }
 
 /** Appends a new record, with an id one higher than any existing one, the body's optional fields if any, and no purchase. */
-// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021, PROD-API-024, PROD-API-025, PROD-API-031, PROD-API-032, PROD-API-040, PROD-API-041
+// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021, PROD-API-024, PROD-API-025, PROD-API-031, PROD-API-032, PROD-API-040, PROD-API-041, PROD-API-045
 function addProduct(usage: Product[], fields: ProductFields): Product[] {
-  const { name, brand, category } = fields;
+  const { name, brand, category, status } = fields;
   const id = nextId(usage);
   return [
     ...usage,
-    { id, name, brand, category, ...optionalFields(fields), uses: {}, currentMonth: thisMonth(), usesThisMonth: 0 },
+    { id, name, brand, category, status, ...optionalFields(fields), uses: {}, currentMonth: thisMonth(), usesThisMonth: 0 },
   ];
 }
 
@@ -75,15 +77,15 @@ function addProduct(usage: Product[], fields: ProductFields): Product[] {
  * Replaces the fields the products segment owns, leaving the id, counts, and purchase alone.
  * A body without one of the optional fields removes that field from the record.
  */
-// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022, PROD-API-026, PROD-API-027, PROD-API-033, PROD-API-034, PROD-API-042, PROD-API-043
+// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022, PROD-API-026, PROD-API-027, PROD-API-033, PROD-API-034, PROD-API-042, PROD-API-043, PROD-API-046
 function editProduct(usage: Product[], change: ProductChange): Product[] {
-  const { id, name, brand, category } = change;
+  const { id, name, brand, category, status } = change;
   if (!usage.some((record) => record.id === id)) throw new ValidationError(`No product has id ${id}`);
   return usage.map((record) => {
     if (record.id !== id) return record;
     const rest: Product = { ...record };
     for (const key of OPTIONAL_KEYS) delete rest[key];
-    return { ...rest, name, brand, category, ...optionalFields(change) };
+    return { ...rest, name, brand, category, status, ...optionalFields(change) };
   });
 }
 
@@ -98,7 +100,7 @@ export async function action({ request }: Route.ActionArgs) {
   } catch {
     return errorResponse("The request body must be JSON", 400);
   }
-  const shapeError = checkShape(body, isEdit ? ["id", "name", "brand", "category"] : ["name", "brand", "category"]);
+  const shapeError = checkShape(body, isEdit ? ["id", "name", "brand", "category", "status"] : ["name", "brand", "category", "status"]);
   if (shapeError) return errorResponse(shapeError, 400);
 
   try {
