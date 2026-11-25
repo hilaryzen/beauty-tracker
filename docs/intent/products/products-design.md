@@ -9,7 +9,7 @@ prefix: PROD
 
 The products segment owns what a product is: its record, the categories that organize products, and adding and editing products in the app (HLD Goal 4). Other segments build on this: usage counts how often a product is used, and routines group products by `id`.
 
-Products does not depend on usage. It defines every field of the record and the values a new record starts with, but it never changes a count on an existing record. Changing counts, including month rollover, belongs to the usage segment. Editing a product touches only the fields products owns, so it needs neither rollover nor the current counts.
+Products does not depend on usage or purchases. It defines every field of the record and the values a new record starts with, but it never changes a count or a purchase on an existing record. Changing counts, including month rollover, belongs to the usage segment; recording a product's purchase belongs to the purchases segment. Editing a product touches only the fields products owns, so it needs neither rollover nor the current counts.
 
 ## Product Record
 
@@ -24,6 +24,7 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 | `uses` | `Record<"YYYY-MM", integer>` | Use counts for closed months, keyed by month | Usage |
 | `currentMonth` | `"YYYY-MM"` | The month `usesThisMonth` counts | Usage |
 | `usesThisMonth` | integer | Use count for `currentMonth` | Usage |
+| `purchase` | object, optional | The product's purchase: date, optional store, and price in cents (purchases design, *Purchase Field*). Absent until a purchase is recorded | Purchases |
 
 **Record rules.** Every record in `usage.json` satisfies:
 - `id` is an integer, unique across all records.
@@ -31,8 +32,9 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 - `category` names a category present in `configs.json → categories`.
 - `usesThisMonth` and every value in `uses` are integers ≥ 0.
 - Every key of `uses`, and `currentMonth`, has the form `YYYY-MM`.
+- `purchase`, when present, satisfies the purchases design's field rules.
 
-The `/api/products` route validates each product it saves against these rules. Logging and month rollover preserve them by construction.
+The `/api/products` route validates each product it saves against these rules. Logging and month rollover preserve them by construction, and the `/api/purchases` route validates each purchase it records.
 
 ## Product Dialog
 
@@ -60,7 +62,7 @@ The category is saved first so that a failure between the two steps leaves at wo
 
 A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling and step 1 is skipped. While the name matches, the group dropdown shows that category's group and is disabled, and the new group name input is hidden, so the form shows where the product is going and does not offer a choice it would ignore. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
 
-**After saving.** On success the dialog closes and the page's loaders revalidate. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
+**After saving.** On success the dialog closes and the page's loaders revalidate. When it has added a product, the dialog then reports the new product's `id`, once the loaders have revalidated, to the component that opened it (`onSaved`), so the purchase form can choose the product it just created. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
 
 **Closing.** Cancel, Esc, and the close control close the dialog and discard its contents. A click outside the dialog does nothing, so a stray click cannot lose what was typed. While a save is in flight the dialog cannot be closed, so the result of the save, including a failure, is seen in context.
 
@@ -72,7 +74,7 @@ Routines refer to products by `id`, so renaming a product updates its routine ca
 
 Inside the `usage.json` update queue (data-store design, *Serialized updates*), the `/api/products` route validates the body and writes the file once:
 
-- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, and appends the record.
+- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
 - **Edit** — replaces `name`, `brand`, and `category`, and leaves every other field unchanged.
 
 The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queue, overlapping adds each see the previous one's record and get different ids.
@@ -93,7 +95,7 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 
 | Endpoint | Method | Request | Response |
 |---|---|---|---|
-| `/api/products` | POST | `{ "name", "brand", "category" }` | `null`; product added |
+| `/api/products` | POST | `{ "name", "brand", "category" }` | `{ "id": <new id> }`; product added |
 | `/api/products` | PUT | `{ "id", "name", "brand", "category" }` | `null`; product changed |
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
@@ -109,6 +111,7 @@ A body is valid when it is a JSON object with exactly the keys listed for its me
 | Starting values for counts | Products sets `uses`, `currentMonth`, and `usesThisMonth` on a new record | Usage fills them in on first load; store counts in a separate file | Keeps products independent of usage and needs no data migration. The cost is that products knows the names of the count fields |
 | No rollover on product writes | The route applies none | Call usage's rollover first | Calling it would make products depend on usage. Product writes never touch counts, so a record that has not rolled over is still correct |
 | Product dialog placement | Modal dialog opened from the usage table | Inline row editing; separate products page | Keeps one place to manage products, without crowding the table's logging controls or adding the app's first navigation |
+| Add response | The new product's `id` | `null`, leaving the caller to find the new record | A caller such as the purchase form needs to know which product it created; matching by name fails for duplicate products |
 | Product write route | New `/api/products` route | Extend `/api/usage` | `/api/usage` carries small logging changes with a strict body; keeping them apart leaves its validation unchanged |
 | One dialog for add and edit | One form, one save flow, one route | Separate adder and editor | They differ only in their starting values, their HTTP method, and how `id` is set; everything else would be written twice |
 | New category write path | Browser POSTs to `/api/configs`, then saves the product | One `/api/products` request that writes both files | `/api/configs` stays the only write path for categories and reuses their rules. The cost is that the browser coordinates the steps and a failure between them leaves an unused category, which is harmless (*Simplicity over robustness*) |
@@ -140,6 +143,8 @@ A body is valid when it is a JSON object with exactly the keys listed for its me
 - src/features/products/product-dialog.tsx
 - src/features/products/use-product-editor.ts
 - src/app/routes/api.products.ts
+- src/utils/send-json.ts
+- docs/intent/purchases/purchases-design.md
 - src/utils/this-month.ts
 - docs/high-level-design.md
 - docs/intent/usage/usage-design.md

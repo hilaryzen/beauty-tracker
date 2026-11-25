@@ -87,6 +87,15 @@ describe("/api/usage", () => {
     expect(await usesThisMonth(2)).toBe(2);
   });
 
+  // @spec USAGE-LOG-012
+  it("keeps every field other than the current-month count when logging a use", async () => {
+    const purchased = { ...sampleUsage[0], purchase: { date: "2026-10-02", store: "Sephora", price: 3200 } };
+    await writeData("usage.json", [purchased, ...sampleUsage.slice(1)]);
+    await post({ ids: [0], delta: 1 });
+    const [saved] = await readData("usage.json");
+    expect(saved).toEqual({ ...purchased, usesThisMonth: purchased.usesThisMonth + 1 });
+  });
+
   // @spec USAGE-LOG-003
   it("applies a -1 to every product in the set", async () => {
     await writeData("usage.json", sampleUsage);

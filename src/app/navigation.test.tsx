@@ -9,12 +9,20 @@ import Home from "./routes/home";
 import Purchases from "./routes/purchases";
 
 type HomeProps = Parameters<typeof Home>[0];
+type PurchasesProps = Parameters<typeof Purchases>[0];
 type ErrorProps = Parameters<typeof ErrorBoundary>[0];
 
 function HomePage() {
   const loaderData = useLoaderData();
   return <Home {...({ loaderData } as HomeProps)} />;
 }
+
+function PurchasesPage() {
+  const loaderData = useLoaderData();
+  return <Purchases {...({ loaderData } as PurchasesProps)} />;
+}
+
+const purchasesData = () => ({ usage: sampleUsage, categories: sampleConfigs.categories });
 
 const homeData = () => ({
   usage: sampleUsage,
@@ -42,7 +50,7 @@ function renderApp(path: string, homeLoader: () => unknown = homeData) {
       HydrateFallback: () => null,
       children: [
         { index: true, Component: HomePage, loader: homeLoader },
-        { path: "purchases", Component: Purchases },
+        { path: "purchases", Component: PurchasesPage, loader: purchasesData },
       ],
     },
   ]);
@@ -166,9 +174,13 @@ describe("purchases page", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Purchases" })).toBeInTheDocument();
   });
 
-  // @spec SHELL-PURCH-002
-  it("shows placeholder text", async () => {
+  // @spec SHELL-PURCH-003
+  it("shows the purchase list below the heading", async () => {
     renderApp("/purchases");
-    expect(await screen.findByText("Purchase tracking is coming soon.")).toBeInTheDocument();
+    const heading = await screen.findByRole("heading", { level: 1, name: "Purchases" });
+    const addPurchase = await screen.findByRole("button", { name: "Add purchase" });
+    expect(follows(heading, addPurchase)).toBe(true);
+    expect(screen.getByText("No purchases yet.")).toBeInTheDocument();
+    expect(screen.queryByText("Purchase tracking is coming soon.")).toBeNull();
   });
 });

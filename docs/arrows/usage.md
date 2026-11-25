@@ -15,7 +15,7 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 - docs/intent/usage/usage-design.md
 
 ### EARS
-- docs/intent/usage/usage-specs.md (40 specs)
+- docs/intent/usage/usage-specs.md (42 specs)
 
 ### Tests
 - src/app/routes/api.usage.test.ts
@@ -32,7 +32,7 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 
 ## Architecture
 
-**Purpose:** Own every change to a product's counts (monthly use history, current-month count), display products in a table sorted by category, and let the user add or remove a use. Depends on the products segment for the record and categories.
+**Purpose:** Own every change to a product's counts (monthly use history, current-month count), leaving every other field of the record as it was, display products in a table sorted by category, and let the user add or remove a use. Depends on the products segment for the record and categories.
 
 **Key Components:**
 1. `loadUsage` / `rollOver` — the only way other segments read counts from `usage.json`; applies month rollover and saves it through `modifyFile` (`usage.server.ts`)
@@ -44,12 +44,12 @@ Monthly use counts for each product — viewing, logging, and category-sorted di
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Rollover | USAGE-ROLL-001 to USAGE-ROLL-007 | 7 | 0 | 0 |
+| Rollover | USAGE-ROLL-001 to USAGE-ROLL-008 | 8 | 0 | 0 |
 | UI | USAGE-UI-001 to USAGE-UI-010 | 10 | 0 | 0 |
-| Logging | USAGE-LOG-001 to USAGE-LOG-011 | 11 | 0 | 0 |
+| Logging | USAGE-LOG-001 to USAGE-LOG-012 | 12 | 0 | 0 |
 | API | USAGE-API-001 to USAGE-API-012 | 12 | 0 | 0 |
 
-**Summary:** 40 specs, all `[x]`.
+**Summary:** 42 specs, all `[x]`.
 
 ## Key Findings
 

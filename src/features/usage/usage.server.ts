@@ -15,7 +15,7 @@ function needsRollover(record: Product, month: string) {
 }
 
 /** Moves each earlier month's count into its history and starts the current month at 0. */
-// @spec USAGE-ROLL-001, USAGE-ROLL-002, USAGE-ROLL-004
+// @spec USAGE-ROLL-001, USAGE-ROLL-002, USAGE-ROLL-004, USAGE-ROLL-008
 export function rollOver(usage: Product[], month = thisMonth()): Product[] {
   return usage.map((record) => {
     if (!needsRollover(record, month)) return record;

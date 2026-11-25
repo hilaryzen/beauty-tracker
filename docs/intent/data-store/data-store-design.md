@@ -9,13 +9,13 @@ prefix: STORE
 
 beauty-tracker is a single-user app running locally with a small amount of data, so it stores everything as JSON files on disk rather than in a database. The app is the only writer of these files (HLD tenet *The app is the only writer*): every change arrives through an API route that validates it before the data store writes it.
 
-The data store owns where the files live, how they are read and written, and the HTTP endpoint for configuration. The shape and meaning of each file — and the rules for validating it — belong to the segments that use it: products owns `usage.json`'s records and `configs.json → categories`; usage owns changes to the records' count fields; routines owns `configs.json → routines`.
+The data store owns where the files live, how they are read and written, and the HTTP endpoint for configuration. The shape and meaning of each file — and the rules for validating it — belong to the segments that use it: products owns `usage.json`'s records and `configs.json → categories`; usage owns changes to the records' count fields; purchases owns changes to their `purchase` field; routines owns `configs.json → routines`.
 
 ## Data Files
 
 | File | Contents | Owning segment for contents and validation rules |
 |---|---|---|
-| `usage.json` | Array of product records | products (records), usage (changes to count fields) |
+| `usage.json` | Array of product records | products (records), usage (changes to count fields), purchases (changes to the `purchase` field) |
 | `configs.json` | `{ categories: { skincare, makeup, lips }, routines: { name: [ids] } }` | products (`categories`), routines (`routines`) |
 
 ## Environment Folders
@@ -63,7 +63,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 
 No UI calls the route yet.
 
-The `/api/usage` endpoint, including its validation, is specified by the usage segment, and `/api/products` by the products segment.
+The `/api/usage` endpoint, including its validation, is specified by the usage segment, `/api/products` by the products segment, and `/api/purchases` by the purchases segment.
 
 ## Decisions & Alternatives
 

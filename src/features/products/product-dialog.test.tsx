@@ -16,10 +16,12 @@ function renderDialog({
   product,
   categories = sampleConfigs.categories,
   loader = vi.fn(() => ({ categories })),
+  onSaved,
 }: {
   product?: typeof primer;
   categories?: Categories;
   loader?: () => { categories?: Categories };
+  onSaved?: (id: number) => void;
 } = {}) {
   function Page() {
     const { categories: loaded } = useLoaderData() as { categories?: Categories };
@@ -28,7 +30,13 @@ function renderDialog({
     return (
       <>
         <button onClick={() => revalidate()}>Refresh</button>
-        <ProductDialog open={open} product={product} categories={loaded} onClose={() => setOpen(false)} />
+        <ProductDialog
+          open={open}
+          product={product}
+          categories={loaded}
+          onClose={() => setOpen(false)}
+          onSaved={onSaved}
+        />
       </>
     );
   }
@@ -513,6 +521,32 @@ describe("saving a product", () => {
     await fillValidNewProduct();
     fireEvent.click(button("Save"));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  // @spec PROD-SAVE-015
+  it("reports a new product's id after reloading the page data", async () => {
+    respond({ products: () => Promise.resolve(Response.json({ id: 7 })) });
+    const loader = vi.fn(() => ({ categories: sampleConfigs.categories }));
+    const loadsWhenReported: number[] = [];
+    const onSaved = vi.fn(() => {
+      loadsWhenReported.push(loader.mock.calls.length);
+    });
+    renderDialog({ loader, onSaved });
+    await fillValidNewProduct();
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(7));
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(loadsWhenReported).toEqual([2]);
+  });
+
+  // @spec PROD-SAVE-015
+  it("reports no id after editing a product", async () => {
+    const onSaved = vi.fn();
+    renderDialog({ product: primer, onSaved });
+    await dialogReady();
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(onSaved).not.toHaveBeenCalled();
   });
 
   // @spec PROD-SAVE-009

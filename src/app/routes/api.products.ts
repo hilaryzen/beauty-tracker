@@ -29,21 +29,25 @@ function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   if (!isCleanName(fields.brand)) return "brand must not be blank or start or end with spaces";
 }
 
-/** Appends a new record, with an id one higher than any existing one. */
-// @spec PROD-API-001, PROD-API-002, PROD-API-003
+function nextId(usage: Product[]) {
+  return Math.max(-1, ...usage.map((record) => record.id)) + 1;
+}
+
+/** Appends a new record, with an id one higher than any existing one and no purchase. */
+// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021
 function addProduct(usage: Product[], { name, brand, category }: ProductFields): Product[] {
-  const id = Math.max(-1, ...usage.map((record) => record.id)) + 1;
+  const id = nextId(usage);
   return [...usage, { id, name, brand, category, uses: {}, currentMonth: thisMonth(), usesThisMonth: 0 }];
 }
 
-/** Replaces the fields the products segment owns, leaving the id and counts alone. */
-// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011
+/** Replaces the fields the products segment owns, leaving the id, counts, and purchase alone. */
+// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022
 function editProduct(usage: Product[], { id, name, brand, category }: ProductChange): Product[] {
   if (!usage.some((record) => record.id === id)) throw new ValidationError(`No product has id ${id}`);
   return usage.map((record) => (record.id === id ? { ...record, name, brand, category } : record));
 }
 
-// @spec PROD-API-006, PROD-API-010, PROD-API-013, PROD-API-014, PROD-API-015, PROD-API-016, PROD-API-017, PROD-API-018, PROD-API-019
+// @spec PROD-API-006, PROD-API-010, PROD-API-013, PROD-API-014, PROD-API-015, PROD-API-016, PROD-API-017, PROD-API-018, PROD-API-019, PROD-API-020
 export async function action({ request }: Route.ActionArgs) {
   const isEdit = request.method === "PUT";
   if (!isEdit && request.method !== "POST") return errorResponse("Method not allowed", 405);
@@ -65,9 +69,13 @@ export async function action({ request }: Route.ActionArgs) {
       return errorResponse(`Category "${category}" is not configured`, 400);
     }
 
-    await modifyFile<Product[]>("usage.json", (usage) =>
-      isEdit ? editProduct(usage, body as ProductChange) : addProduct(usage, body as ProductFields),
-    );
+    let addedId: number | undefined;
+    await modifyFile<Product[]>("usage.json", (usage) => {
+      if (isEdit) return editProduct(usage, body as ProductChange);
+      addedId = nextId(usage);
+      return addProduct(usage, body as ProductFields);
+    });
+    if (addedId !== undefined) return Response.json({ id: addedId });
   } catch (error) {
     if (error instanceof ValidationError) return errorResponse(error.message, 400);
     console.error("Error saving usage.json:", error instanceof Error ? error.message : String(error));

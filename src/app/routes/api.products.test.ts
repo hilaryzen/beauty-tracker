@@ -52,7 +52,7 @@ describe("/api/products", () => {
   describe("adding a product", () => {
     // @spec PROD-API-001
     it("appends a record with the body's name, brand, and category", async () => {
-      expect(await post(newProduct)).toBeNull();
+      await post(newProduct);
       const usage = await readData("usage.json");
       expect(usage).toHaveLength(sampleUsage.length + 1);
       expect(usage.slice(0, sampleUsage.length)).toEqual(sampleUsage);
@@ -87,6 +87,21 @@ describe("/api/products", () => {
       });
     });
 
+    // @spec PROD-API-020
+    it("responds with the new record's id", async () => {
+      const result = await post(newProduct);
+      expect(result).toBeInstanceOf(Response);
+      expect((result as Response).status).toBe(200);
+      expect(await (result as Response).json()).toEqual({ id: 3 });
+      expect((await readData("usage.json")).at(-1).id).toBe(3);
+    });
+
+    // @spec PROD-API-021
+    it("gives the new record no purchase", async () => {
+      await post(newProduct);
+      expect((await readData("usage.json")).at(-1)).not.toHaveProperty("purchase");
+    });
+
     // @spec PROD-API-017
     it("gives overlapping adds different ids", async () => {
       await Promise.all([post(newProduct), post(newProduct), post(newProduct)]);
@@ -102,6 +117,17 @@ describe("/api/products", () => {
       const usage = await readData("usage.json");
       expect(usage[0]).toMatchObject({ name: "Renamed Primer", brand: "New Brand", category: "Foundation" });
       expect(usage.slice(1)).toEqual(sampleUsage.slice(1));
+    });
+
+    // @spec PROD-003, PROD-API-022
+    it("leaves the record's purchase, or its absence, unchanged", async () => {
+      const purchase = { date: "2026-10-02", store: "Sephora", price: 3200 };
+      await writeData("usage.json", [{ ...sampleUsage[0], purchase }, ...sampleUsage.slice(1)]);
+      expect(await put(changes)).toBeNull();
+      expect(await put({ ...changes, id: 1 })).toBeNull();
+      const usage = await readData("usage.json");
+      expect(usage[0].purchase).toEqual(purchase);
+      expect(usage[1]).not.toHaveProperty("purchase");
     });
 
     // @spec PROD-002, PROD-API-004
