@@ -46,6 +46,14 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-024**: When the user selects the usage table tab that is already selected, the system shall leave the home page URL unchanged.
 - [x] **USAGE-UI-025**: When the user moves keyboard focus between usage table tabs with the arrow keys, the usage table shall leave the selected tab unchanged.
 
+## Usage Table Dates
+
+- [ ] **USAGE-UI-026**: The usage table shall show Purchased, Opened, Expires, and Removed columns, in that order, after the This Month's Uses column and before the + and − controls.
+- [ ] **USAGE-UI-027**: While a product record has a `purchase`, the usage table shall show the purchase's `date`, as stored in `YYYY-MM-DD` form, in that row's Purchased column.
+- [ ] **USAGE-UI-028**: While a product record has an `opened`, `expires`, or `removed` date, the usage table shall show that date, as stored in `YYYY-MM-DD` form, in that row's Opened, Expires, or Removed column respectively.
+- [ ] **USAGE-UI-029**: While a product record has no `purchase`, the usage table shall leave that row's Purchased cell empty.
+- [ ] **USAGE-UI-030**: While a product record has no `opened`, `expires`, or `removed` date, the usage table shall leave that row's Opened, Expires, or Removed cell respectively empty.
+
 ## Logging
 
 - [x] **USAGE-LOG-001**: When the user activates a product row's + control in the usage table, the system shall increase that product's current-month use count by 1.
