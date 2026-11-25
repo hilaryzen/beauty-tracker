@@ -47,7 +47,7 @@ A React Router app rendered on the server, storing all data as JSON files on the
 
 | Segment | Purpose | Design | Spec prefix |
 |---|---|---|---|
-| products | Product records, categories, adding and editing products | [products-design.md](intent/products/products-design.md) | `PROD` |
+| products | Product records, categories, adding and editing products, the category editor | [products-design.md](intent/products/products-design.md) | `PROD` |
 | usage | Monthly use counts, logging a use, the usage table | [usage-design.md](intent/usage/usage-design.md) | `USAGE` |
 | routines | Named product groups logged together in one click | [routines-design.md](intent/routines/routines-design.md) | `ROUT` |
 | purchases | A product's purchase, adding purchases, the purchase list | [purchases-design.md](intent/purchases/purchases-design.md) | `PURCH` |
@@ -59,6 +59,7 @@ Inventory (Goal 3) is not yet designed and has no segment.
 ```mermaid
 flowchart TD
   shell[app-shell: pages] --> routines
+  shell -->|settings page shows the category editor| products
   shell --> usage
   shell --> purchases
   purchases -->|opens the product dialog, finds products by id| products
@@ -67,7 +68,7 @@ flowchart TD
   routines -->|finds products by id| products
   usage -->|opens the product dialog| products
   usage -->|/api/usage| store[data-store: JSON files]
-  products -->|/api/products, /api/configs| store
+  products -->|/api/products, /api/configs, /api/categories| store
   shell -->|page loaders read| store
 ```
 
@@ -83,6 +84,7 @@ flowchart TD
 | Purchase model | Each product record carries at most one purchase (date, optional store, price) in `usage.json`; products with the same date and store show as one purchase | Purchase records in their own `purchases.json`, each with line items naming products by `id` | With one purchase per product, a field on the record enforces that rule by its shape, and adding a purchase is one write to one file. The cost is that two trips to the same store on the same day show as one purchase, and allowing several purchases per product would need a data migration |
 | Purchases per product | At most one purchase per product record; a repurchase is a new product record | Several purchases per product, with cost per use as total spent divided by total uses | Each bottle keeps its own price and uses, so cost per use describes one bottle. A product already tracked can be given its purchase afterward, so past purchases can be recorded |
 | New products during a purchase | The purchase form opens the product dialog, which saves the product before the purchase | One purchase request that also creates products; the browser chaining product and purchase requests in one save | Products keep one validated write path (*The app is the only writer*), and a failed or abandoned purchase never duplicates a product. The cost is one dialog per new product |
+| Cross-file writes | A write that changes several data files holds every one of those files' update queues, and orders its steps so that data left by a failure partway through still satisfies every segment's rules | Hold both queues but write once per file, accepting invalid data if the second write fails; write each file through its own queue only | Renaming a category in use changes both `configs.json` and `usage.json`. Ordered steps mean a failure leaves at worst an unused category, which the app already accepts, so no hand edit is ever needed (*The app is the only writer* outranks *Simplicity over robustness*). Holding every queue keeps another write from slipping between the steps or between a check and the write it guards |
 | Bulk logging | Routines that log every product in them at once | Per-product logging only | Daily routines would otherwise take a click per product, against *Low friction over precision* |
 
 ## Success Metrics

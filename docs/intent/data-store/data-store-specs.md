@@ -21,6 +21,12 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **STORE-009**: If writing a data file fails at any point, then the data store shall leave the target file with its previous contents.
 - [x] **STORE-010**: When two or more read-change-write updates target the same data file, the data store shall run them one at a time in arrival order, each starting from the contents the previous one wrote.
 - [x] **STORE-012**: When a data file is written without reading it first while a read-change-write update to the same file is pending or running, the data store shall perform the write after that update, in arrival order.
+- [x] **STORE-013**: When a multi-file update is requested, the data store shall start its task only after every update to each named file that arrived before it has finished.
+- [x] **STORE-014**: While a multi-file update's task is running, the data store shall start no other update to any of the files it names.
+- [x] **STORE-015**: When a multi-file update is requested, the data store shall join the named files' update queues in alphabetical order of file name.
+- [x] **STORE-016**: If a multi-file update's task throws or rejects, then the data store shall reject the update and leave each named file with the contents the task last wrote to it, or its previous contents if the task wrote none.
+- [x] **STORE-017**: If a multi-file update's task reads or writes a file it did not name, then the data store shall reject that read or write.
+- [x] **STORE-018**: If a multi-file update's task reads a named file that cannot be read or parsed as JSON, then the data store shall reject that read.
 
 ## Configuration API
 
@@ -34,3 +40,5 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **STORE-API-010**: If a POST body to `/api/configs` is not valid JSON or is not a JSON object, then the system shall treat the body as failing validation.
 - [x] **STORE-API-008**: If a POST to `/api/configs` cannot complete because `configs.json` or `usage.json` cannot be read, or `configs.json` cannot be written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
 - [x] **STORE-API-009**: If a POST to `/api/configs` cannot complete because `configs.json` or `usage.json` cannot be read, or `configs.json` cannot be written, then the system shall leave `configs.json` unchanged.
+- [x] **STORE-API-011**: When `/api/configs` receives a POST request, the system shall read `usage.json` for validation and write `configs.json` within one multi-file update holding both `configs.json` and `usage.json`.
+- [x] **STORE-API-012**: If a POST to `/api/configs` validates `categories` or `routines` and a record in `usage.json` has a `currentMonth` that is missing or not of the form `YYYY-MM`, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }` and leave `configs.json` unchanged.

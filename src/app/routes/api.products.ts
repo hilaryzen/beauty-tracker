@@ -1,7 +1,7 @@
 import type { Route } from "./+types/api.products";
 import { isCleanName } from "@/features/products/category-rules";
 import type { Product } from "@/features/products/types";
-import { getFile, modifyFile } from "@/utils/files.server";
+import { modifyFiles } from "@/utils/files.server";
 import { thisMonth } from "@/utils/this-month";
 
 class ValidationError extends Error {}
@@ -58,7 +58,7 @@ function editProduct(usage: Product[], { id, name, brand, category, shade }: Pro
   });
 }
 
-// @spec PROD-API-006, PROD-API-010, PROD-API-013, PROD-API-014, PROD-API-015, PROD-API-016, PROD-API-017, PROD-API-018, PROD-API-019, PROD-API-020
+// @spec PROD-API-006, PROD-API-010, PROD-API-013, PROD-API-014, PROD-API-015, PROD-API-016, PROD-API-017, PROD-API-018, PROD-API-019, PROD-API-020, PROD-API-028
 export async function action({ request }: Route.ActionArgs) {
   const isEdit = request.method === "PUT";
   if (!isEdit && request.method !== "POST") return errorResponse("Method not allowed", 405);
@@ -73,18 +73,21 @@ export async function action({ request }: Route.ActionArgs) {
   if (shapeError) return errorResponse(shapeError, 400);
 
   try {
-    const configs = await getFile("configs.json");
-    if (configs === undefined) throw new Error("configs.json could not be read");
-    const { category } = body as ProductFields;
-    if (!Object.values<string[]>(configs.categories ?? {}).flat().includes(category)) {
-      return errorResponse(`Category "${category}" is not configured`, 400);
-    }
-
     let addedId: number | undefined;
-    await modifyFile<Product[]>("usage.json", (usage) => {
-      if (isEdit) return editProduct(usage, body as ProductChange);
-      addedId = nextId(usage);
-      return addProduct(usage, body as ProductFields);
+    // Holding configs.json too keeps a category edit from landing between the category check and the write.
+    await modifyFiles(["configs.json", "usage.json"], async ({ read, write }) => {
+      const configs = await read<{ categories?: Record<string, string[]> }>("configs.json");
+      const { category } = body as ProductFields;
+      if (!Object.values(configs.categories ?? {}).flat().includes(category)) {
+        throw new ValidationError(`Category "${category}" is not configured`);
+      }
+      const usage = await read<Product[]>("usage.json");
+      if (isEdit) {
+        await write("usage.json", editProduct(usage, body as ProductChange));
+      } else {
+        addedId = nextId(usage);
+        await write("usage.json", addProduct(usage, body as ProductFields));
+      }
     });
     if (addedId !== undefined) return Response.json({ id: addedId });
   } catch (error) {

@@ -4,10 +4,11 @@ import { NavLink } from "react-router";
 const pages = [
   { label: "Usage", to: "/" },
   { label: "Purchases", to: "/purchases" },
+  { label: "Settings", to: "/settings" },
 ];
 
 /** The header shown above every page, with a link to each page. */
-// @spec SHELL-NAV-001, SHELL-NAV-002, SHELL-NAV-003, SHELL-NAV-004, SHELL-NAV-005, SHELL-NAV-006, SHELL-NAV-007, SHELL-NAV-008
+// @spec SHELL-NAV-001, SHELL-NAV-002, SHELL-NAV-003, SHELL-NAV-004, SHELL-NAV-005, SHELL-NAV-006, SHELL-NAV-007, SHELL-NAV-008, SHELL-NAV-009
 export function AppHeader() {
   return (
     <Flex as="header" align="center" gap="8" px="6" py="3" borderBottomWidth="1px">

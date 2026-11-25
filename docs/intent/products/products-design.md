@@ -7,7 +7,7 @@ prefix: PROD
 
 ## Context and Design Philosophy
 
-The products segment owns what a product is: its record, the categories that organize products, and adding and editing products in the app (HLD Goal 4). Other segments build on this: usage counts how often a product is used, and routines group products by `id`.
+The products segment owns what a product is: its record, the categories that organize products, adding and editing products, and editing categories and their groups in the app (HLD Goal 4). Other segments build on this: usage counts how often a product is used, and routines group products by `id`.
 
 Products does not depend on usage or purchases. It defines every field of the record and the values a new record starts with, but it never changes a count or a purchase on an existing record. Changing counts, including month rollover, belongs to the usage segment; recording a product's purchase belongs to the purchases segment. Editing a product touches only the fields products owns, so it needs neither rollover nor the current counts.
 
@@ -79,12 +79,12 @@ Routines refer to products by `id`, so renaming a product updates its routine ca
 
 ## Saving on the Server
 
-Inside the `usage.json` update queue (data-store design, *Serialized updates*), the `/api/products` route validates the body and writes the file once:
+Inside one multi-file update holding `configs.json` and `usage.json` (data-store design, *Multi-file updates*), the `/api/products` route validates the body, including that its category is configured, and writes `usage.json` once:
 
 - **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, and `shade` when the body has one, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
 - **Edit** — replaces `name`, `brand`, and `category`; sets `shade` to the body's shade, or removes it when the body has none; and leaves every other field unchanged.
 
-The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queue, overlapping adds each see the previous one's record and get different ids.
+The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queues, overlapping adds each see the previous one's record and get different ids, and a category edit cannot remove the product's category between the check and the write.
 
 ## Categories
 
@@ -96,7 +96,66 @@ The route reads and writes records through the data store, not through usage's l
 - No category name appears more than once across all groups.
 - Every category used by a product in `usage.json` is still present.
 
-The data-store segment's `/api/configs` route applies these rules (data-store design, *Configuration API*).
+The data-store segment's `/api/configs` route applies these rules (data-store design, *Configuration API*). Because they require every used category to stay present, a `categories` value sent there can add, remove, reorder, or move categories, or add, rename, or remove groups, but cannot rename a category that a product uses. Renaming a category is done through `/api/categories` (*Renaming a Category*).
+
+Two names *match* when they are equal after trimming and ignoring capitalization, as in the product dialog.
+
+## Category Editor
+
+`CategoryEditor` (`src/features/products/category-editor.tsx`) edits `configs.json → categories` from the settings page (app-shell design, *Settings Page*). The page passes it the configured categories and the product records, which it uses only to count the products in each category.
+
+```
+Categories
+┌ skincare ──────────────── [Rename] [↑] [↓] [Delete] ┐
+│ Cleanser      2 products  [Rename] [↑] [↓] [Move to ▾] [Delete] │
+│ Moisturizer   0 products  [Rename] [↑] [↓] [Move to ▾] [Delete] │
+│ [New category name______] [Add]                       │
+└──────────────────────────────────────────────────────┘
+┌ makeup ... ┐
+[New group name______] [Add group]
+```
+
+**Layout.** One section per group, in configured order. Each section is headed by the group name and lists its categories in configured order, each with the number of products using it (`1 product`, `2 products`, `0 products`). Every group and category has Rename, move-up and move-down, and Delete controls; every category also has a "Move to" dropdown of the other groups. Each section ends with a new category input and Add button, and the list ends with a new group input and Add group button. Pressing Enter in either input does what its button does, when the button is enabled. With no groups configured, only the new group input and button show.
+
+**Edits.** Each edit saves as soon as it is made. Except for renaming a category, each edit builds the full new `categories` value from the configured categories and sends it as a POST to `/api/configs`:
+
+| Edit | New `categories` value |
+|---|---|
+| Add category | The trimmed name appended to the end of its group |
+| Add group | A new empty group with the trimmed name, after the existing groups |
+| Rename group | The group's key replaced by the trimmed name, keeping its position and categories |
+| Move a category up or down | The category swapped with its neighbor in the same group |
+| Move a group up or down | The group swapped with its neighbor |
+| Move a category to another group | The category removed from its group and appended to the end of the chosen group |
+| Delete category | The category removed from its group |
+| Delete group | The group removed |
+
+Renaming a category sends a POST to `/api/categories` with `{ "from": <current name>, "to": <trimmed new name> }`.
+
+**Controls that would break a rule are disabled.** The editor disables:
+- Delete on a category that any product uses. Deleting it would orphan those products, and `/api/configs` would reject it.
+- Delete on a group that has categories, so a deletion never takes categories with it.
+- Move up on the first item of its list, and move down on the last.
+- "Move to" while there is no other group.
+- Add and Add group while their input is blank after trimming, or while the name matches an existing category or group.
+
+**Renaming.** Rename turns the name into a text input holding the current name, with Save and Cancel. Enter saves and Esc cancels. Save is disabled while the trimmed name is blank, unchanged, or matches a different category (for a category) or a different group (for a group). A rename that changes only capitalization is allowed. Only one rename input is open at a time, and opening another closes the first without saving. The input and its Cancel stay usable while its save is in flight; cancelling then only closes the input, and the request still completes.
+
+**While saving.** While an edit is being saved, every edit control in the editor is disabled, so each edit starts from the categories the previous one saved. When the request finishes, successful or not, the page's loaders revalidate, so the editor shows what was actually saved, including the result of a rename that failed partway. On success the add or rename input that was used is cleared and closed. On failure the typed text stays in the add input, or in the rename input if it is still open, and an error notification shows the server's message, or says the change was not saved if there was no response or the response has no message. No edit asks for confirmation: deleting removes only an unused category or an empty group, and both can be added again.
+
+## Renaming a Category
+
+`/api/categories` renames a category everywhere it appears. Holding the update queues of both `configs.json` and `usage.json` (data-store design, *Multi-file updates*), it reads both files, validates the body, and writes in three steps:
+
+1. Write `configs.json` with the new name inserted directly after the old one, so both are configured.
+2. Write `usage.json` with every product that used the old name using the new name. Skipped when no product uses it.
+3. Write `configs.json` with the old name removed.
+
+Every step leaves both files satisfying the record and category rules. If a step fails, the route responds 500 and the files keep what the steps before it wrote: at worst the new name is configured alongside the old one and some products already use it. Both names stay valid, and the editor shows them both with their product counts. At least one of them is unused, so its Delete is enabled. If the old name is the unused one, deleting it finishes the rename. If the new name is the unused one, deleting it and renaming again does.
+
+A case-only rename (`cleanser` to `Cleanser`) cannot hold both names at once, because they are duplicates. It writes `configs.json` with the name replaced in place, then `usage.json`. A failure between the two leaves products using a name no longer configured; this is accepted because a capitalization change is rare and the write failures that cause it are rarer (*Simplicity over robustness*).
+
+**Validation.** A body is valid when it is a JSON object with exactly the keys `from` and `to`; `from` is a configured category; `to` satisfies the category name rule; and `to` matches no configured category other than `from`. A `to` equal to `from` is valid and writes nothing. The error message describes the first failure found.
 
 ## API
 
@@ -107,8 +166,12 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | PATCH or DELETE | Any | 405 with `{ "error": "<message>" }`; file unchanged |
+| `/api/categories` | POST | `{ "from", "to" }` | `null`; category renamed in `configs.json` and every product using it |
+| `/api/categories` | POST (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; files unchanged |
+| `/api/categories` | POST (storage failure) | Any | 500 with `{ "error": "<message>" }`; files keep the steps completed before the failure |
+| `/api/categories` | GET, PUT, PATCH, or DELETE | Any | 405 with `{ "error": "<message>" }`; files unchanged |
 
-A body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade` may be left out; `name`, `brand`, and `shade` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
+An `/api/products` body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade` may be left out; `name`, `brand`, and `shade` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
 
 ## Decisions & Alternatives
 
@@ -116,6 +179,7 @@ A body is valid when it is a JSON object with the keys listed for its method and
 |----------|--------|------------------------|-----------|
 | Item addressing | Find records by `id` | Array index with `id` = position | Products can be removed or reordered without renumbering routines |
 | Starting values for counts | Products sets `uses`, `currentMonth`, and `usesThisMonth` on a new record | Usage fills them in on first load; store counts in a separate file | Keeps products independent of usage and needs no data migration. The cost is that products knows the names of the count fields |
+| Queues held by `/api/products` | `configs.json` and `usage.json` | `usage.json` only | The category check reads `configs.json`; without holding it, a category removed or renamed between the check and the write would leave the product in a category that is not configured (HLD *Cross-file writes*) |
 | No rollover on product writes | The route applies none | Call usage's rollover first | Calling it would make products depend on usage. Product writes never touch counts, so a record that has not rolled over is still correct |
 | Product dialog placement | Modal dialog opened from the usage table | Inline row editing; separate products page | Keeps one place to manage products, without crowding the table's logging controls or adding the app's first navigation |
 | Add response | The new product's `id` | `null`, leaving the caller to find the new record | A caller such as the purchase form needs to know which product it created; matching by name fails for duplicate products |
@@ -136,17 +200,26 @@ A body is valid when it is a JSON object with the keys listed for its method and
 | Closing during a save | Not allowed | Let the save continue with the dialog gone | A failure is only useful if the form is still there to correct and retry |
 | Ids already listed in routines | Not checked when assigning an id | Skip ids that routines list | A routine can list an unknown id only in data that predates the routine rules. A new product could then join that routine; rare, and not worth a check (*Simplicity over robustness*) |
 | Malformed months on product writes | Not checked | Reject the write as usage's loader does | The write leaves the bad record as it was, and the home page still reports it, so nothing is hidden |
-| Number-only group names | Allowed; they sort before other groups | Reject them | JavaScript orders integer-like object keys first. Such names are unlikely, as in the routines design |
+| Number-only group names | Allowed; they sort before other groups, and the editor's move-up and move-down cannot change their position | Reject them | JavaScript orders integer-like object keys first. Such names are unlikely, as in the routines design |
 | Saving a new category from two open tabs | Accepted; the later save can drop the earlier tab's unused category | Merge on the server | `/api/configs` replaces `categories` as a whole, and this needs two tabs open at once for one user (*Simplicity over robustness*) |
 | Category groups | Any number of groups, sorted in configured order | Fixed `skincare`, `makeup`, `lips` | New groups (such as hair or body) need no code change |
 | Category membership | Product categories must be configured; deleting a category in use is rejected | Free-text categories; allow deleting used categories | Every product stays sortable and groupable for the inventory view |
+| Renaming a used category | A dedicated `/api/categories` route renames it in `configs.json` and every product, in one request | Allow renaming only unused categories; the browser chains `/api/configs` and `/api/products` writes | Renaming never needs products moved out first or a hand edit; one server request can hold both files' queues, which the browser cannot |
+| Rename write order | Add the new name, move products, remove the old name | Replace the name in `configs.json`, then update products | Every step leaves valid data, so a failure needs no hand edit (HLD *Cross-file writes*) |
+| Case-only renames | Replaced in place in two writes, accepting a rare invalid state on failure | Reject case-only renames; rename through a temporary name | Fixing capitalization should be possible in the app; a temporary name adds two writes for a case that almost never fails |
+| Editor save model | Each edit saves at once | Edit locally, then Save all | Matches how logging and the product dialog save, and each change gets its own error message |
+| Editor write path | Every edit except a category rename sends the full `categories` value to `/api/configs` | A route per edit kind | `/api/configs` already applies the category rules to the whole value; only a rename needs to change products too |
+| Reordering control | Move-up and move-down buttons | Drag and drop | Works from the keyboard and needs no drag-and-drop dependency; category lists are short |
+| Deleting a group with categories | Disabled until the group is empty | Delete the group and its unused categories together | A deletion never removes more than the one item it names |
+| Delete confirmation | None | A confirmation dialog | Only unused categories and empty groups can be deleted, and either can be added again (*Low friction over precision*) |
+| Names matching ignoring capitalization | Blocked when adding or renaming to a name that matches another category or group | Allow them | `cleanser` and `Cleanser` would split one category in two, as in the product dialog |
+| Merging categories | Not supported; renaming to another category's name is blocked | Renaming into an existing category merges them | Out of scope; a product can be moved to another category one at a time in the product dialog |
 
 ## Open Questions & Future Decisions
 
 ### Deferred
 1. **Deleting products** — HLD Goal 4 requires deleting products in the app. Not yet designed. It must settle what happens to routines that list the product (routines design, deferred question 2), and whether the highest-id-plus-1 rule can reuse a deleted product's id.
-2. **Category editor** — HLD Goal 4 requires editing categories in the app. Not yet designed. The product dialog can add categories and groups but not rename or remove them, so removing an unused category needs a hand edit until this exists.
-3. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
+2. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
 
 ## References
 
@@ -156,6 +229,8 @@ A body is valid when it is a JSON object with the keys listed for its method and
 - src/features/products/use-product-editor.ts
 - src/features/products/product-name.ts
 - src/app/routes/api.products.ts
+- src/features/products/category-editor.tsx
+- src/app/routes/api.categories.ts
 - src/utils/send-json.ts
 - docs/intent/purchases/purchases-design.md
 - src/utils/this-month.ts

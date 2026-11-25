@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readData, readRaw, dataDir, writeData } from "@/test/data-dir";
-import { getDataDir, getFile, modifyFile, updateFile } from "./files.server";
+import { getDataDir, getFile, modifyFile, modifyFiles, updateFile } from "./files.server";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
@@ -169,5 +169,114 @@ describe("file access", () => {
     ]);
 
     expect(await readData("counter.json")).toEqual({ n: 100 });
+  });
+});
+
+describe("multi-file updates", () => {
+  const pause = (ms = 15) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // @spec STORE-013
+  it("starts its task only after earlier updates to every named file have finished", async () => {
+    await writeData("a.json", { n: 0 });
+    await writeData("b.json", { n: 0 });
+    const slowIncrement = async (current: { n: number }) => {
+      await pause();
+      return { n: current.n + 1 };
+    };
+
+    const earlierA = modifyFile("a.json", slowIncrement);
+    const earlierB = modifyFile("b.json", slowIncrement);
+    const seen = await modifyFiles(["a.json", "b.json"], async ({ read }) => [
+      await read<{ n: number }>("a.json"),
+      await read<{ n: number }>("b.json"),
+    ]);
+    await Promise.all([earlierA, earlierB]);
+
+    expect(seen).toEqual([{ n: 1 }, { n: 1 }]);
+  });
+
+  // @spec STORE-014
+  it("starts no other update to a named file while its task runs", async () => {
+    await writeData("a.json", { n: 0 });
+    await writeData("b.json", { n: 0 });
+
+    const multi = modifyFiles(["a.json", "b.json"], async ({ read, write }) => {
+      const b = await read<{ n: number }>("b.json");
+      await pause();
+      await write("b.json", { n: b.n + 10 });
+      const a = await read<{ n: number }>("a.json");
+      await pause();
+      await write("a.json", { n: a.n + 10 });
+    });
+    const laterA = modifyFile("a.json", (current: { n: number }) => ({ n: current.n + 1 }));
+    const laterB = updateFile("b.json", { n: 100 });
+    await Promise.all([multi, laterA, laterB]);
+
+    expect(await readData("a.json")).toEqual({ n: 11 });
+    expect(await readData("b.json")).toEqual({ n: 100 });
+  });
+
+  // @spec STORE-015
+  it("completes overlapping multi-file updates that name the same files in different orders", async () => {
+    await writeData("a.json", { log: [] });
+    await writeData("b.json", { log: [] });
+    const append = (label: string) => async ({ read, write }: Parameters<Parameters<typeof modifyFiles>[1]>[0]) => {
+      for (const name of ["b.json", "a.json"]) {
+        const current = await read<{ log: string[] }>(name);
+        await pause(5);
+        await write(name, { log: [...current.log, label] });
+      }
+    };
+
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("updates never finished")), 1000));
+    await Promise.race([
+      Promise.all([
+        modifyFiles(["b.json", "a.json"], append("first")),
+        modifyFiles(["a.json", "b.json"], append("second")),
+      ]),
+      timeout,
+    ]);
+
+    expect(await readData("a.json")).toEqual({ log: ["first", "second"] });
+    expect(await readData("b.json")).toEqual({ log: ["first", "second"] });
+  });
+
+  // @spec STORE-016
+  it("rejects when the task fails and keeps what the task already wrote", async () => {
+    await writeData("a.json", { n: 0 });
+    await writeData("b.json", { n: 0 });
+
+    const update = modifyFiles(["a.json", "b.json"], async ({ write }) => {
+      await write("a.json", { n: 1 });
+      throw new Error("stopped partway");
+    });
+
+    await expect(update).rejects.toThrow("stopped partway");
+    expect(await readData("a.json")).toEqual({ n: 1 });
+    expect(await readData("b.json")).toEqual({ n: 0 });
+  });
+
+  // @spec STORE-017
+  it("rejects reading or writing a file the update did not name", async () => {
+    await writeData("a.json", { n: 0 });
+    await writeData("c.json", { n: 0 });
+
+    await modifyFiles(["a.json"], async ({ read, write }) => {
+      await expect(read("c.json")).rejects.toThrow();
+      await expect(write("c.json", { n: 1 })).rejects.toThrow();
+    });
+
+    expect(await readData("c.json")).toEqual({ n: 0 });
+  });
+
+  // @spec STORE-018
+  it("rejects reading a named file that is missing or not JSON", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await fsPromises.writeFile(path.join(dataDir(), "bad.json"), "{ not json", "utf8");
+
+    await modifyFiles(["bad.json", "missing.json"], async ({ read }) => {
+      await expect(read("missing.json")).rejects.toThrow();
+      await expect(read("bad.json")).rejects.toThrow();
+    });
   });
 });

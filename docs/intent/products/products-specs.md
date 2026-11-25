@@ -83,6 +83,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-025**: When `/api/products` receives a POST whose body passes validation and has no `shade`, the system shall give the new product record no `shade` field.
 - [x] **PROD-API-026**: When `/api/products` receives a PUT whose body passes validation and contains `shade`, the system shall set the matching product record's `shade` to the body's `shade`.
 - [x] **PROD-API-027**: When `/api/products` receives a PUT whose body passes validation and has no `shade`, the system shall remove the `shade` field from the matching product record.
+- [x] **PROD-API-028**: When `/api/products` receives a POST or PUT, the system shall check the body's category against `configs.json` and write `usage.json` within one multi-file update holding both files.
 
 ## Categories
 
@@ -90,3 +91,78 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-CAT-002**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any category name appears more than once across all groups.
 - [x] **PROD-CAT-003**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if it omits a category that any product record in `usage.json` uses.
 - [x] **PROD-CAT-004**: When a `categories` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any group name or category name contains no non-whitespace character or has leading or trailing whitespace.
+
+## Category Editor
+
+- [x] **PROD-CATEDIT-001**: The category editor shall show one section per configured group, in configured order, headed by the group name.
+- [x] **PROD-CATEDIT-002**: The category editor shall list each group's categories within its section in configured order.
+- [x] **PROD-CATEDIT-003**: The category editor shall show, beside each category, the number of product records whose `category` is that category, as `1 product` for one and `<n> products` otherwise.
+- [x] **PROD-CATEDIT-004**: The category editor shall show Rename, Move up, Move down, and Delete controls for each group.
+- [x] **PROD-CATEDIT-005**: The category editor shall show Rename, Move up, Move down, "Move to", and Delete controls for each category.
+- [x] **PROD-CATEDIT-006**: The category editor's "Move to" dropdown for a category shall list every group other than the category's own, in configured order.
+- [x] **PROD-CATEDIT-007**: The category editor shall end each group's section with a new category name input and an Add button.
+- [x] **PROD-CATEDIT-008**: The category editor shall end with a new group name input and an Add group button, after every group's section.
+- [x] **PROD-CATEDIT-009**: When the user activates Add in a group's section, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories plus the trimmed new category name at the end of that group.
+- [x] **PROD-CATEDIT-010**: When the user activates Add group, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories plus an empty group with the trimmed new group name after the existing groups.
+- [x] **PROD-CATEDIT-011**: When the user saves a group rename, the category editor shall send a POST to `/api/configs` with a `categories` value in which that group's name is replaced by the trimmed new name, keeping the group's position and categories.
+- [x] **PROD-CATEDIT-012**: When the user activates Move up or Move down on a category, the category editor shall send a POST to `/api/configs` with a `categories` value in which that category has swapped places with the category before or after it in the same group.
+- [x] **PROD-CATEDIT-013**: When the user activates Move up or Move down on a group, the category editor shall send a POST to `/api/configs` with a `categories` value in which that group has swapped places with the group before or after it.
+- [x] **PROD-CATEDIT-014**: When the user chooses a group in a category's "Move to" dropdown, the category editor shall send a POST to `/api/configs` with a `categories` value in which that category is removed from its group and appended to the end of the chosen group.
+- [x] **PROD-CATEDIT-015**: When the user activates Delete on a category, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories without that category.
+- [x] **PROD-CATEDIT-016**: When the user activates Delete on a group, the category editor shall send a POST to `/api/configs` with a `categories` value equal to the configured categories without that group.
+- [x] **PROD-CATEDIT-017**: When the user saves a category rename, the category editor shall send a POST to `/api/categories` with a body of the form `{ "from": <current name>, "to": <trimmed new name> }`.
+- [x] **PROD-CATEDIT-018**: While any product record uses a category, the category editor shall disable that category's Delete control.
+- [x] **PROD-CATEDIT-019**: While a group contains at least one category, the category editor shall disable that group's Delete control.
+- [x] **PROD-CATEDIT-020**: The category editor shall disable Move up on the first category of each group and on the first group.
+- [x] **PROD-CATEDIT-021**: The category editor shall disable Move down on the last category of each group and on the last group.
+- [x] **PROD-CATEDIT-022**: While only one group is configured, the category editor shall disable every category's "Move to" dropdown.
+- [x] **PROD-CATEDIT-023**: While a group's new category name input is blank after trimming, the category editor shall disable that section's Add button.
+- [x] **PROD-CATEDIT-024**: While a group's new category name input matches a configured category ignoring capitalization and surrounding whitespace, the category editor shall disable that section's Add button.
+- [x] **PROD-CATEDIT-025**: While the new group name input is blank after trimming, the category editor shall disable Add group.
+- [x] **PROD-CATEDIT-026**: While the new group name input matches an existing group name ignoring capitalization and surrounding whitespace, the category editor shall disable Add group.
+- [x] **PROD-CATEDIT-027**: When the user activates Rename on a group or category, the category editor shall replace that name with a text input holding the current name, followed by Save and Cancel buttons.
+- [x] **PROD-CATEDIT-028**: While a rename input is blank after trimming, the category editor shall disable its Save button.
+- [x] **PROD-CATEDIT-029**: While a rename input's trimmed text equals the current name exactly, the category editor shall disable its Save button.
+- [x] **PROD-CATEDIT-030**: While a category rename input matches a configured category other than the one being renamed, ignoring capitalization and surrounding whitespace, the category editor shall disable its Save button.
+- [x] **PROD-CATEDIT-031**: While a group rename input matches a group other than the one being renamed, ignoring capitalization and surrounding whitespace, the category editor shall disable its Save button.
+- [x] **PROD-CATEDIT-032**: When the user presses Enter in a rename input while its Save button is enabled, the category editor shall save the rename.
+- [x] **PROD-CATEDIT-033**: When the user activates Cancel or presses Esc in a rename input, the category editor shall close the input without sending any request.
+- [x] **PROD-CATEDIT-034**: When the user activates Rename while another rename input is open, the category editor shall close the other input without sending any request.
+- [x] **PROD-CATEDIT-035**: While a request from the category editor is in flight, the category editor shall disable every Rename, Move up, Move down, "Move to", Delete, Add, Add group, and rename Save control.
+- [x] **PROD-CATEDIT-036**: When a request from the category editor finishes, whether it succeeded or failed, the page shall revalidate its loaders.
+- [x] **PROD-CATEDIT-037**: When an Add or Add group request from the category editor succeeds, the category editor shall clear the input it used.
+- [x] **PROD-CATEDIT-038**: When a rename request from the category editor succeeds, the category editor shall close the rename input.
+- [x] **PROD-CATEDIT-039**: If a request from the category editor fails, then the category editor shall keep the text in the add input that was used, or in the rename input if it is still open.
+- [x] **PROD-CATEDIT-040**: If a request from the category editor responds with an error status and a JSON body with a non-empty string `error`, then the page shall show an error notification containing that message.
+- [x] **PROD-CATEDIT-041**: If a request from the category editor responds with an error status and no JSON body with a non-empty string `error`, then the page shall show an error notification stating that the change was not saved.
+- [x] **PROD-CATEDIT-042**: If a request from the category editor gets no response, then the page shall show an error notification stating that the change was not saved.
+- [x] **PROD-CATEDIT-043**: While no groups are configured, the category editor shall show only the new group name input and the Add group button.
+- [x] **PROD-CATEDIT-044**: When the user presses Enter in a group's new category name input while that section's Add button is enabled, the category editor shall add the category as Add does.
+- [x] **PROD-CATEDIT-045**: When the user presses Enter in the new group name input while Add group is enabled, the category editor shall add the group as Add group does.
+- [x] **PROD-CATEDIT-046**: While a rename request from the category editor is in flight, the category editor shall keep that rename input's text field and Cancel button enabled.
+
+## Renaming a Category
+
+- [x] **PROD-CATAPI-001**: When `/api/categories` receives a POST whose body passes validation, the system shall replace `from` with `to` in `configs.json → categories`, at the same position in the same group.
+- [x] **PROD-CATAPI-002**: When `/api/categories` receives a POST whose body passes validation, the system shall set the `category` of every product record whose category is `from` to `to`.
+- [x] **PROD-CATAPI-003**: When `/api/categories` renames a category, the system shall leave every other field of every product record, and every product record using another category, unchanged.
+- [x] **PROD-CATAPI-004**: When `/api/categories` renames a category, the system shall leave `configs.json → routines` unchanged.
+- [x] **PROD-CATAPI-005**: When `/api/categories` completes a rename, the system shall respond with status 200 and the JSON body `null`.
+- [x] **PROD-CATAPI-006**: When `/api/categories` renames a category to a name that does not match `from` ignoring capitalization, the system shall first write `configs.json` with `to` inserted directly after `from` and `from` still present.
+- [x] **PROD-CATAPI-007**: When `/api/categories` renames a category to a name that does not match `from` ignoring capitalization, the system shall write `usage.json` only after the write that configures both names has succeeded.
+- [x] **PROD-CATAPI-008**: When `/api/categories` renames a category to a name that does not match `from` ignoring capitalization, the system shall write `configs.json` without `from` only after the write to `usage.json` has succeeded, or after the first write when no product uses `from`.
+- [x] **PROD-CATAPI-009**: When `/api/categories` renames a category that no product record uses, the system shall not write `usage.json`.
+- [x] **PROD-CATAPI-010**: When `/api/categories` renames a category to a name that differs from `from` only in capitalization, the system shall write `configs.json` with `from` replaced by `to` before writing `usage.json`.
+- [x] **PROD-CATAPI-011**: When `/api/categories` receives a POST whose body passes validation and whose `to` equals `from`, the system shall write neither `configs.json` nor `usage.json`.
+- [x] **PROD-CATAPI-012**: When `/api/categories` receives a POST, the system shall read, validate, and write `configs.json` and `usage.json` within one multi-file update holding both files.
+- [x] **PROD-CATAPI-013**: If a body to `/api/categories` is not valid JSON or is not a JSON object, then the system shall treat the body as failing validation.
+- [x] **PROD-CATAPI-014**: If a body to `/api/categories` lacks `from` or `to`, or contains any other top-level key, then the system shall treat the body as failing validation.
+- [x] **PROD-CATAPI-015**: If `from` in a body to `/api/categories` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
+- [x] **PROD-CATAPI-016**: If `to` in a body to `/api/categories` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
+- [x] **PROD-CATAPI-017**: If `to` in a body to `/api/categories` matches a configured category other than `from`, ignoring capitalization, then the system shall treat the body as failing validation.
+- [x] **PROD-CATAPI-018**: If a body to `/api/categories` fails validation, then the system shall respond with 400 and a JSON body of the form `{ "error": "<message>" }` describing the first failure found.
+- [x] **PROD-CATAPI-019**: If a body to `/api/categories` fails validation, then the system shall leave `configs.json` and `usage.json` unchanged.
+- [x] **PROD-CATAPI-020**: If a POST to `/api/categories` cannot complete because `configs.json` or `usage.json` cannot be read or written, then the system shall respond with 500 and a JSON body of the form `{ "error": "<message>" }`.
+- [x] **PROD-CATAPI-021**: If a write made by `/api/categories` fails, then the system shall make none of the rename's later writes.
+- [x] **PROD-CATAPI-022**: If `/api/categories` receives a GET, PUT, PATCH, or DELETE request, then the system shall respond with 405 and a JSON body of the form `{ "error": "<message>" }`.
+- [x] **PROD-CATAPI-023**: If `/api/categories` receives a GET, PUT, PATCH, or DELETE request, then the system shall leave `configs.json` and `usage.json` unchanged.

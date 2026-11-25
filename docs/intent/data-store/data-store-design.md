@@ -37,8 +37,11 @@ The `src/assets/...` folders are relative to the folder the server is started fr
 | `getFile(name)` | Reads `<folder>/<name>` as UTF-8 and returns the parsed JSON | Logs the error message and returns `undefined` |
 | `updateFile(name, data)` | Writes `data` as 2-space-indented JSON to a temporary file in `<folder>`, then renames it over `<folder>/<name>` | Logs the error message and rethrows it to the caller; `<folder>/<name>` keeps its previous contents |
 | `modifyFile(name, change)` | In the file's update queue, reads `<folder>/<name>`, passes the parsed contents to `change`, and writes what `change` returns the same way `updateFile` does | Rejects if the file cannot be read or written, or if `change` throws; `<folder>/<name>` keeps its previous contents |
+| `modifyFiles(names, task)` | Holds the update queues of every named file, then runs `task` with a `read(name)` and a `write(name, data)` limited to those files; `write` replaces the file the same way `updateFile` does | Rejects if `read` cannot read a file or if `task` throws or rejects; each file keeps whatever `task` last wrote to it |
 
 **Serialized updates.** Most writes are read-change-write: load the file, change part of it, write it back. Two such updates to the same file that overlap would each start from the same contents, and the later write would erase the earlier change. The data store therefore runs read-change-write updates to a given file one at a time, in the order they arrive, through an in-process queue per file. Every API route and server function that changes a data file goes through this queue. A plain write that replaces a file without reading it first waits in the same queue, so it cannot land in the middle of a read-change-write update and be overwritten by it. Updates to different files do not wait for each other.
+
+**Multi-file updates.** An update that changes more than one file, such as renaming a category in both `configs.json` and `usage.json` (products design, *Renaming a Category*), runs through `modifyFiles`. It waits its turn in every named file's queue and holds them all until `task` finishes, so no other update to any of those files runs in between, and a check made against one file still holds when another is written. An update joins all of its files' queues in one synchronous step when it is requested, before it waits for any of them. No other update can join a queue in between, so whichever of two updates arrives first is ahead of the other in every queue they share, and neither can hold a queue the other is waiting for. The queues are joined in alphabetical order of file name, which would keep that guarantee if joining ever stopped being one synchronous step. Because the update's own reads and writes bypass the queues it holds, a task must not call a queued function (`modifyFile`, `updateFile`, or anything that calls them) on one of its own files, or it would wait behind itself forever. The data store does not undo writes: if `task` fails partway, the files keep what it already wrote. The caller orders its writes so that every point it could stop at leaves valid data (HLD *Cross-file writes*).
 
 These functions are server-only (`.server.ts`), so file access never reaches the browser. They do not validate content; validation happens in the API route, before the file is written.
 
@@ -53,15 +56,15 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 | `/api/configs` | POST (invalid) | Body failing validation | 400 with JSON body `{ "error": "<message>" }`; file unchanged |
 | `/api/configs` | POST (storage failure) | Any | 500 with JSON body `{ "error": "<message>" }`; file unchanged |
 
-`/api/configs` is the write path for in-app editing of routines and categories (HLD Goal 4). A POST carries only the parts being changed: `categories`, `routines`, or both. Through the `configs.json` update queue, the route reads the current `configs.json`, replaces each key present in the body, keeps the rest, and writes the result.
+`/api/configs` is the write path for in-app editing of routines and categories (HLD Goal 4). A POST carries only the parts being changed: `categories`, `routines`, or both. Through a multi-file update holding `configs.json` and `usage.json`, the route reads the current `configs.json`, replaces each key present in the body, keeps the rest, and writes the result. Holding `usage.json` means no product can change between validation against it and the write, so removing a category can never orphan a product saved at the same moment.
 
 **Validation.** Before writing, the route validates each key present in the body: `categories` against the products segment's rules, `routines` against the routines segment's rules. Routine validation checks product ids against `usage.json`. A body with any top-level key other than `categories` and `routines` is invalid. The error message describes the first failure found.
 
 **Malformed requests.** A POST body that is not valid JSON, or is JSON but not an object, fails validation like any other bad input: 400 with an error message, file unchanged.
 
-**All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was.
+**All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was. A `usage.json` with a record whose `currentMonth` is missing or not `YYYY-MM` counts as unreadable here, as it does for every page that loads usage (usage design, *Month Rollover*). The route reads `usage.json` without applying rollover, because a rollover write would wait behind the `usage.json` queue the route holds.
 
-No UI calls the route yet.
+The category editor calls the route (products design, *Category Editor*).
 
 The `/api/usage` endpoint, including its validation, is specified by the usage segment, `/api/products` by the products segment, and `/api/purchases` by the purchases segment.
 
@@ -83,12 +86,14 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 | Unknown config keys | Reject the write | Ignore and drop them | Catches stale shapes (such as an old `makeupCategories` key) instead of silently discarding data |
 | Error reporting in validation | First failure found | Every failure | One message is enough to fix and resubmit; simpler (*Simplicity over robustness*) |
 | Write failures | `updateFile` rethrows; routes respond 500 | Log and report success | A silently lost write leaves the UI showing data that was never saved, undermining counts that cost per use depends on |
+| Multi-file updates | Hold every named file's queue for the whole update; the caller orders its writes | Write each file through its own queue; roll back earlier writes on failure | Another write landing between steps could invalidate a check or be overwritten. Rollback is itself a write that can fail, while ordered writes leave valid data at every step (HLD *Cross-file writes*) |
+| Joining queues | Join every named file's queue in one synchronous step, in alphabetical order of file name | Join each queue only after the previous one is acquired; join in the order the caller gives | Joining all at once means the update that arrives first is ahead in every shared queue, so two updates can never each wait on a queue the other holds. The fixed order keeps that true if joining ever becomes step by step, where two updates joining the same files in opposite orders could otherwise wait on each other |
+| Queues held by `/api/configs` | `configs.json` and `usage.json` | `configs.json` only | Validation reads `usage.json`; without holding it, a product saved mid-validation could be left with a category that was just removed |
 | Read failures | `getFile` logs and returns `undefined`; callers respond 500 | Throw to caller; respond 404 | Each caller words the failure for its audience; a 404 would claim the resource does not exist when the data behind it failed to load |
 
 ## Open Questions & Future Decisions
 
-### Deferred
-1. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless while nothing in the app removes a category; revisit when a category editor can.
+None.
 
 ## References
 

@@ -1,6 +1,6 @@
 # Arrow: products
 
-What a product is: the product record, categories, and adding and editing products in the app.
+What a product is: the product record, categories, adding and editing products, and the category editor.
 
 ## Status
 
@@ -15,21 +15,25 @@ What a product is: the product record, categories, and adding and editing produc
 - docs/intent/products/products-design.md
 
 ### EARS
-- docs/intent/products/products-specs.md (72 specs)
+- docs/intent/products/products-specs.md (142 specs)
 
 ### Tests
 - src/app/routes/api.products.test.ts
+- src/app/routes/api.categories.test.ts
 - src/app/routes/api.usage.test.ts (record specs)
 - src/features/products/category-rules.test.ts
 - src/features/products/product-dialog.test.tsx
+- src/features/products/category-editor.test.tsx
 
 ### Code
 - src/features/products/types.ts
 - src/features/products/category-rules.ts
 - src/features/products/product-dialog.tsx
+- src/features/products/category-editor.tsx
 - src/features/products/use-product-editor.ts
 - src/features/products/product-name.ts
 - src/app/routes/api.products.ts
+- src/app/routes/api.categories.ts
 - src/utils/send-json.ts
 - src/utils/this-month.ts
 - src/assets/data/configs.json (`categories` key)
@@ -42,8 +46,10 @@ What a product is: the product record, categories, and adding and editing produc
 1. `Product` type — product record shape, including the optional `shade` and the optional `purchase` field set only by purchases (`types.ts`)
 2. `checkCategories` — category rules applied by `/api/configs` (`category-rules.ts`)
 3. `ProductDialog` and `useProductEditor` — one modal form for add and edit; saves a new category through `/api/configs`, then the product through `/api/products`, and reports an added product's id through `onSaved` (`product-dialog.tsx`, `use-product-editor.ts`)
-4. `/api/products` route — POST adds (responding with the new id) and PUT edits, validated inside the `usage.json` queue, with no rollover (`api.products.ts`)
-5. `productName` — a product's name with its shade, used by the usage table, routine cards, and purchases page (`product-name.ts`)
+4. `/api/products` route — POST adds (responding with the new id) and PUT edits, validated inside a multi-file update holding `configs.json` and `usage.json`, with no rollover (`api.products.ts`)
+5. `/api/categories` route — renames a category in `configs.json` and every product using it, in ordered writes inside one multi-file update (`api.categories.ts`)
+6. `CategoryEditor` — adds, renames, reorders, moves, and deletes categories and groups on the settings page, saving each edit at once (`category-editor.tsx`)
+7. `productName` — a product's name with its shade, used by the usage table, routine cards, and purchases page (`product-name.ts`)
 
 ## Spec Coverage
 
@@ -52,17 +58,19 @@ What a product is: the product record, categories, and adding and editing produc
 | Record | PROD-001 to PROD-004 | 4 | 0 | 0 |
 | Dialog | PROD-EDIT-001 to PROD-EDIT-020 | 20 | 0 | 0 |
 | Saving | PROD-SAVE-001 to PROD-SAVE-017 | 17 | 0 | 0 |
-| API | PROD-API-001 to PROD-API-027 | 27 | 0 | 0 |
+| API | PROD-API-001 to PROD-API-028 | 28 | 0 | 0 |
 | Categories | PROD-CAT-001 to PROD-CAT-004 | 4 | 0 | 0 |
+| Category rename | PROD-CATAPI-001 to PROD-CATAPI-023 | 23 | 0 | 0 |
+| Category editor | PROD-CATEDIT-001 to PROD-CATEDIT-046 | 46 | 0 | 0 |
 
-**Summary:** 72 specs, all `[x]`.
+**Summary:** 142 specs, all `[x]`.
 
 ## Key Findings
 
-1. **Deleting products and a category editor are not designed** — both are needed for HLD Goal 4 (LLD deferred questions 1 and 2).
+1. **Deleting products is not designed** — needed for HLD Goal 4 (LLD deferred question 1).
 
 ## Work Required
 
 ### Nice to Have
-1. Design deleting products and the category editor (HLD Goal 4).
+1. Design deleting products (HLD Goal 4).
 2. Decide whether categories should split into their own segment once inventory or purchases arrive.
