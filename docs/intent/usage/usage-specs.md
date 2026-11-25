@@ -37,6 +37,13 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [ ] **USAGE-UI-015**: While a group tab is selected in the usage table, the usage table shall show one row per product record whose category is in that group, and no other product rows.
 - [ ] **USAGE-UI-016**: While a group tab is selected in the usage table and no product record's category is in that group, the usage table shall show the message "No products in this group." in place of product rows.
 - [ ] **USAGE-UI-017**: If `configs.json` has no `categories` key, then the usage table shall show only the "All" tab.
+- [ ] **USAGE-UI-018**: While the home page URL's `group` search parameter equals the name of a configured category group, the usage table shall select that group's tab.
+- [ ] **USAGE-UI-019**: While the home page URL has no `group` search parameter, the usage table shall select the "All" tab.
+- [ ] **USAGE-UI-020**: If the home page URL's `group` search parameter matches no configured category group name, then the usage table shall select the "All" tab.
+- [ ] **USAGE-UI-021**: When the user selects a group tab other than the selected tab in the usage table, the system shall set the home page URL's `group` search parameter to that group's name.
+- [ ] **USAGE-UI-022**: When the user selects the "All" tab in the usage table while another tab is selected, the system shall remove the `group` search parameter from the home page URL.
+- [ ] **USAGE-UI-023**: When the user selects a usage table tab other than the selected tab, the system shall add a browser history entry for the new URL.
+- [ ] **USAGE-UI-024**: When the user selects the usage table tab that is already selected, the system shall leave the home page URL unchanged.
 
 ## Logging
 
