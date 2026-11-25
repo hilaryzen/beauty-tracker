@@ -10,16 +10,16 @@ function errorResponse(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
-type ProductFields = Pick<Product, "name" | "brand" | "category">;
+type ProductFields = Pick<Product, "name" | "brand" | "category" | "shade">;
 type ProductChange = ProductFields & Pick<Product, "id">;
 
 /** Returns a message describing the first problem with the body's shape, or undefined if it is valid. */
-// @spec PROD-API-007, PROD-API-008, PROD-API-009, PROD-API-012
+// @spec PROD-API-007, PROD-API-008, PROD-API-009, PROD-API-012, PROD-API-023
 function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "The request body must be an object";
   }
-  const unknownKey = Object.keys(body).find((key) => !requiredKeys.includes(key));
+  const unknownKey = Object.keys(body).find((key) => key !== "shade" && !requiredKeys.includes(key));
   if (unknownKey) return `Unknown field "${unknownKey}"`;
 
   const fields = body as Record<string, unknown>;
@@ -27,24 +27,35 @@ function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   if (missing) return `${missing} is required`;
   if (!isCleanName(fields.name)) return "name must not be blank or start or end with spaces";
   if (!isCleanName(fields.brand)) return "brand must not be blank or start or end with spaces";
+  if ("shade" in fields && !isCleanName(fields.shade)) return "shade must not be blank or start or end with spaces";
 }
 
 function nextId(usage: Product[]) {
   return Math.max(-1, ...usage.map((record) => record.id)) + 1;
 }
 
-/** Appends a new record, with an id one higher than any existing one and no purchase. */
-// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021
-function addProduct(usage: Product[], { name, brand, category }: ProductFields): Product[] {
+/** Appends a new record, with an id one higher than any existing one, the body's shade if any, and no purchase. */
+// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021, PROD-API-024, PROD-API-025
+function addProduct(usage: Product[], { name, brand, category, shade }: ProductFields): Product[] {
   const id = nextId(usage);
-  return [...usage, { id, name, brand, category, uses: {}, currentMonth: thisMonth(), usesThisMonth: 0 }];
+  return [
+    ...usage,
+    { id, name, brand, category, ...(shade === undefined ? {} : { shade }), uses: {}, currentMonth: thisMonth(), usesThisMonth: 0 },
+  ];
 }
 
-/** Replaces the fields the products segment owns, leaving the id, counts, and purchase alone. */
-// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022
-function editProduct(usage: Product[], { id, name, brand, category }: ProductChange): Product[] {
+/**
+ * Replaces the fields the products segment owns, leaving the id, counts, and purchase alone.
+ * A body without a shade removes the record's shade.
+ */
+// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022, PROD-API-026, PROD-API-027
+function editProduct(usage: Product[], { id, name, brand, category, shade }: ProductChange): Product[] {
   if (!usage.some((record) => record.id === id)) throw new ValidationError(`No product has id ${id}`);
-  return usage.map((record) => (record.id === id ? { ...record, name, brand, category } : record));
+  return usage.map((record) => {
+    if (record.id !== id) return record;
+    const { shade: _previous, ...rest } = record;
+    return { ...rest, name, brand, category, ...(shade === undefined ? {} : { shade }) };
+  });
 }
 
 // @spec PROD-API-006, PROD-API-010, PROD-API-013, PROD-API-014, PROD-API-015, PROD-API-016, PROD-API-017, PROD-API-018, PROD-API-019, PROD-API-020

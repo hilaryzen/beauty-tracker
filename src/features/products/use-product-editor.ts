@@ -8,6 +8,8 @@ export type ProductDraft = {
   id?: number;
   name: string;
   brand: string;
+  /** Blank means the product has no shade. */
+  shade?: string;
   /** An existing category's name, or a typed name. */
   category: string;
   /** The group for a typed category name that matches no existing category. */
@@ -40,7 +42,7 @@ async function send(url: string, method: "POST" | "PUT", body: unknown) {
   return result.ok ? undefined : result.message;
 }
 
-// @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013
+// @spec PROD-EDIT-011, PROD-SAVE-004, PROD-SAVE-005, PROD-SAVE-006, PROD-SAVE-007, PROD-SAVE-009, PROD-SAVE-013, PROD-SAVE-016, PROD-SAVE-017
 export function useProductEditor(categories: Categories | undefined) {
   const { revalidate } = useRevalidator();
 
@@ -48,7 +50,7 @@ export function useProductEditor(categories: Categories | undefined) {
    * Saves a new category if there is one, then the product, then reloads the page's data.
    * Returns undefined if anything failed; otherwise the added product's id (none for an edit).
    */
-  async function saveProduct({ id, name, brand, category, group }: ProductDraft) {
+  async function saveProduct({ id, name, brand, shade, category, group }: ProductDraft) {
     const existing = findCategory(categories, category);
     const categoryName = existing?.category ?? category.trim();
 
@@ -62,7 +64,14 @@ export function useProductEditor(categories: Categories | undefined) {
       }
     }
 
-    const fields = { name: name.trim(), brand: brand.trim(), category: categoryName };
+    const trimmedShade = (shade ?? "").trim();
+    const fields = {
+      name: name.trim(),
+      brand: brand.trim(),
+      category: categoryName,
+      // A blank shade is left out, which removes any shade the product had.
+      ...(trimmedShade === "" ? {} : { shade: trimmedShade }),
+    };
     const result = await (id === undefined
       ? sendJson("/api/products", "POST", fields)
       : sendJson("/api/products", "PUT", { id, ...fields }));

@@ -28,10 +28,11 @@ function isConfigured(categories: Categories | undefined, category: string) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
+// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
 function ProductForm({ product, categories, saving, onSavingChange, onClose, onSaved }: ProductFormProps) {
   const { saveProduct } = useProductEditor(categories);
   const [name, setName] = useState(product?.name ?? "");
+  const [shade, setShade] = useState(product?.shade ?? "");
   const [brand, setBrand] = useState(product?.brand ?? "");
   const [category, setCategory] = useState(
     product && isConfigured(categories, product.category) ? product.category : "",
@@ -59,6 +60,7 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
     const saved = await saveProduct({
       id: product?.id,
       name,
+      shade,
       brand,
       category: isNewCategory ? newCategory : category,
       group: isNewGroup ? newGroup : group,
@@ -76,6 +78,10 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
           <Field.Root>
             <Field.Label>Name</Field.Label>
             <Input value={name} onChange={(event) => setName(event.target.value)} />
+          </Field.Root>
+          <Field.Root>
+            <Field.Label>Shade</Field.Label>
+            <Input value={shade} onChange={(event) => setShade(event.target.value)} />
           </Field.Root>
           <Field.Root>
             <Field.Label>Brand</Field.Label>
