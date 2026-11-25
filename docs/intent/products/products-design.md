@@ -21,6 +21,7 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 | `name` | string | Product name | Products |
 | `brand` | string | Brand name | Products |
 | `category` | string | A category name listed in `configs.json → categories` | Products |
+| `shade` | string, optional | The product's shade or color variant, such as `Berry`. Absent when the product has none | Products |
 | `uses` | `Record<"YYYY-MM", integer>` | Use counts for closed months, keyed by month | Usage |
 | `currentMonth` | `"YYYY-MM"` | The month `usesThisMonth` counts | Usage |
 | `usesThisMonth` | integer | Use count for `currentMonth` | Usage |
@@ -30,6 +31,7 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 - `id` is an integer, unique across all records.
 - `name` and `brand` each contain at least one non-whitespace character and neither starts nor ends with whitespace.
 - `category` names a category present in `configs.json → categories`.
+- `shade`, when present, contains at least one non-whitespace character and neither starts nor ends with whitespace.
 - `usesThisMonth` and every value in `uses` are integers ≥ 0.
 - Every key of `uses`, and `currentMonth`, has the form `YYYY-MM`.
 - `purchase`, when present, satisfies the purchases design's field rules.
@@ -43,20 +45,21 @@ The `/api/products` route validates each product it saves against these rules. L
 ```
 ┌─ Edit product ──────────────────┐
 │ Name              [___________] │
+│ Shade             [___________] │
 │ Brand             [___________] │
 │ Category          [Foundation ▾]│
 │              [Cancel]  [Save]   │
 └─────────────────────────────────┘
 ```
 
-**Fields.** Name, brand, and category are required. Category is a dropdown of the configured categories, listed under their groups in configured order, ending with a "New category" option. Two products may have the same name and brand, so a repurchase can be tracked separately.
+**Fields.** Name, brand, and category are required. Shade is optional: when editing, it starts with the product's shade, or blank if it has none, and saving with it blank leaves the product with no shade. Category is a dropdown of the configured categories, listed under their groups in configured order, ending with a "New category" option. Two products may have the same name and brand, so a repurchase can be tracked separately.
 
 **New categories.** Choosing "New category" reveals a new category name input and a group dropdown of the existing groups, ending with a "New group" option that reveals a new group name input. A new category goes at the end of its group, and a new group goes after the existing groups, which together set where the category sorts in the usage table. With no categories configured, the category dropdown offers only "New category" and the group dropdown offers only "New group".
 
 **Saving.** `useProductEditor()` (`src/features/products/use-product-editor.ts`) trims the text fields and saves in up to two requests, one at a time:
 
 1. If the category name is new, POST the current categories plus the new one to `/api/configs`, which applies the category rules. If this fails, nothing is saved and step 2 does not run.
-2. POST (add) or PUT (edit) the product to `/api/products`.
+2. POST (add) or PUT (edit) the product to `/api/products`. The request carries `shade` only when the trimmed shade is not blank.
 
 The category is saved first so that a failure between the two steps leaves at worst an unused category, never a product whose category is not configured. An unused category is valid and appears in the dropdown.
 
@@ -74,8 +77,8 @@ Routines refer to products by `id`, so renaming a product updates its routine ca
 
 Inside the `usage.json` update queue (data-store design, *Serialized updates*), the `/api/products` route validates the body and writes the file once:
 
-- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
-- **Edit** — replaces `name`, `brand`, and `category`, and leaves every other field unchanged.
+- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, and `shade` when the body has one, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
+- **Edit** — replaces `name`, `brand`, and `category`; sets `shade` to the body's shade, or removes it when the body has none; and leaves every other field unchanged.
 
 The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queue, overlapping adds each see the previous one's record and get different ids.
 
@@ -95,13 +98,13 @@ The data-store segment's `/api/configs` route applies these rules (data-store de
 
 | Endpoint | Method | Request | Response |
 |---|---|---|---|
-| `/api/products` | POST | `{ "name", "brand", "category" }` | `{ "id": <new id> }`; product added |
-| `/api/products` | PUT | `{ "id", "name", "brand", "category" }` | `null`; product changed |
+| `/api/products` | POST | `{ "name", "brand", "category", "shade"? }` | `{ "id": <new id> }`; product added |
+| `/api/products` | PUT | `{ "id", "name", "brand", "category", "shade"? }` | `null`; product changed |
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | PATCH or DELETE | Any | 405 with `{ "error": "<message>" }`; file unchanged |
 
-A body is valid when it is a JSON object with exactly the keys listed for its method, `name` and `brand` satisfy the record rules, and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
+A body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade` may be left out; `name`, `brand`, and `shade` when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
 
 ## Decisions & Alternatives
 
@@ -118,6 +121,9 @@ A body is valid when it is a JSON object with exactly the keys listed for its me
 | New categories and groups in the form | Add and edit can both create a category or group | Dropdown of existing categories only; add form only | Adding or correcting a product never requires a hand edit (HLD *The app is the only writer*) |
 | Product ids | Highest existing id plus 1 | Random id; stored counter | Small readable ids; products cannot be deleted, so an id is never reused |
 | Capitalization of typed categories and groups | A name differing only by capitalization reuses the existing one | Treat as a new name | `cleanser` and `Cleanser` would otherwise split one category in two, and nothing in the app can merge them |
+| Shade | An optional field of its own | Part of the name; a free-text notes field | Keeps the product name the same across shades of one product, so two shades of it read as the same product in different colors |
+| Clearing a shade | A blank Shade field removes `shade` from the record | Keep the stored shade when the field is blank | Otherwise a shade, once set, could never be removed in the app (HLD Goal 4) |
+| Shade in requests | Omitted when there is none; a PUT without `shade` removes it | Send `""` or `null` for no shade | A PUT already replaces every field products owns, and an absent key matches an absent field on the record. One rule — any `shade` sent must be a clean name — needs no special values |
 | Duplicate products | Allowed | Reject a repeated name and brand | A repurchase can be tracked separately |
 | Group for an existing category typed as new | Filled in and locked | Require a group and ignore it; hide the group dropdown | Shows where the product is going without offering a choice that would be ignored |
 | Clicking outside the dialog | Does nothing; Cancel, Esc, and the close control close it | Chakra's default of closing on an outside click | A stray click should not lose what was typed |
@@ -134,7 +140,8 @@ A body is valid when it is a JSON object with exactly the keys listed for its me
 ### Deferred
 1. **Deleting products** — HLD Goal 4 requires deleting products in the app. Not yet designed. It must settle what happens to routines that list the product (routines design, deferred question 2), and whether the highest-id-plus-1 rule can reuse a deleted product's id.
 2. **Category editor** — HLD Goal 4 requires editing categories in the app. Not yet designed. The product dialog can add categories and groups but not rename or remove them, so removing an unused category needs a hand edit until this exists.
-3. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
+3. **Shade outside the usage table** — routine cards, the purchase list, and the purchase dialog's product chooser show a product without its shade, so two shades of one product look the same there. Showing it belongs to the routines and purchases segments.
+4. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
 
 ## References
 
