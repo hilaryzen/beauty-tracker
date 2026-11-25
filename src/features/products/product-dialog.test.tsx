@@ -162,7 +162,7 @@ describe("product dialog fields", () => {
     renderDialog();
     await dialogReady();
     const labels = Array.from(screen.getByRole("dialog").querySelectorAll("label")).map((label) => label.textContent);
-    expect(labels).toEqual(["Name", "Shade", "Brand", "Category"]);
+    expect(labels.slice(0, 4)).toEqual(["Name", "Shade", "Brand", "Category"]);
   });
 
   // @spec PROD-EDIT-003
@@ -268,6 +268,143 @@ describe("product dialog fields", () => {
     expect(screen.getByLabelText("Name")).toHaveValue("Half typed");
     expect(screen.getByLabelText("Brand")).toHaveValue("Half brand");
     expect(selectedText("Category")).toBe("Foundation");
+  });
+});
+
+describe("product dialog dates", () => {
+  const dated = { ...primer, opened: "2026-10-01", expires: "2027-10-01", removed: "2026-11-02" };
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 7, 12)); // 7 November 2026, local time
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function bodySent() {
+    return bodyOf(requestsTo("/api/products")[0]);
+  }
+
+  // @spec PROD-EDIT-021
+  it("shows date opened, date expiring, and date removed pickers, in that order, after the category", async () => {
+    renderDialog();
+    await dialogReady();
+    const labels = Array.from(screen.getByRole("dialog").querySelectorAll("label")).map((label) => label.textContent);
+    expect(labels).toEqual(["Name", "Shade", "Brand", "Category", "Date opened", "Date expiring", "Date removed"]);
+    for (const label of ["Date opened", "Date expiring", "Date removed"]) {
+      expect(screen.getByLabelText(label)).toHaveAttribute("type", "date");
+    }
+  });
+
+  // @spec PROD-EDIT-022
+  it("opens with empty date pickers when adding a product", async () => {
+    renderDialog();
+    await dialogReady();
+    for (const label of ["Date opened", "Date expiring", "Date removed"]) {
+      expect(screen.getByLabelText(label)).toHaveValue("");
+    }
+  });
+
+  // @spec PROD-EDIT-023
+  it("shows the product's dates when editing", async () => {
+    renderDialog({ product: dated });
+    await dialogReady();
+    expect(screen.getByLabelText("Date opened")).toHaveValue("2026-10-01");
+    expect(screen.getByLabelText("Date expiring")).toHaveValue("2027-10-01");
+    expect(screen.getByLabelText("Date removed")).toHaveValue("2026-11-02");
+  });
+
+  // @spec PROD-EDIT-023
+  it("leaves a picker empty when the edited product has no such date", async () => {
+    renderDialog({ product: { ...primer, expires: "2027-10-01" } });
+    await dialogReady();
+    expect(screen.getByLabelText("Date opened")).toHaveValue("");
+    expect(screen.getByLabelText("Date expiring")).toHaveValue("2027-10-01");
+    expect(screen.getByLabelText("Date removed")).toHaveValue("");
+  });
+
+  // @spec PROD-EDIT-024
+  it("offers no opened or removed date after today, and any expiry date", async () => {
+    renderDialog();
+    await dialogReady();
+    expect(screen.getByLabelText("Date opened")).toHaveAttribute("max", "2026-11-07");
+    expect(screen.getByLabelText("Date removed")).toHaveAttribute("max", "2026-11-07");
+    expect(screen.getByLabelText("Date expiring")).not.toHaveAttribute("max");
+  });
+
+  // @spec PROD-EDIT-025
+  it("disables Save while the opened or removed date is after today", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    for (const label of ["Date opened", "Date removed"]) {
+      fill(label, "2026-11-08");
+      expect(button("Save")).toBeDisabled();
+      fill(label, "2026-11-07");
+      expect(button("Save")).toBeEnabled();
+    }
+    fill("Date expiring", "2030-01-01");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-EDIT-026
+  it("keeps Save enabled while the date pickers are empty", async () => {
+    renderDialog({ product: dated });
+    await dialogReady();
+    for (const label of ["Date opened", "Date expiring", "Date removed"]) fill(label, "");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-SAVE-018
+  it("sends each date a picker holds with a new product", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    fill("Date opened", "2026-11-01");
+    fill("Date expiring", "2027-05-01");
+    fill("Date removed", "2026-11-06");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodySent()).toEqual({
+      name: "Dew Serum", brand: "Saie", category: "Cleanser",
+      opened: "2026-11-01", expires: "2027-05-01", removed: "2026-11-06",
+    });
+  });
+
+  // @spec PROD-SAVE-018
+  it("sends each date a picker holds when editing a product", async () => {
+    renderDialog({ product: dated });
+    await dialogReady();
+    fill("Date removed", "2026-11-05");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodySent()).toEqual({
+      id: dated.id, name: dated.name, brand: dated.brand, category: dated.category,
+      opened: "2026-10-01", expires: "2027-10-01", removed: "2026-11-05",
+    });
+  });
+
+  // @spec PROD-SAVE-019
+  it("leaves out each date whose picker is empty", async () => {
+    renderDialog({ product: dated });
+    await dialogReady();
+    fill("Date opened", "");
+    fill("Date removed", "");
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    expect(bodySent()).toEqual({
+      id: dated.id, name: dated.name, brand: dated.brand, category: dated.category, expires: "2027-10-01",
+    });
+  });
+
+  // @spec PROD-SAVE-019
+  it("sends no dates for a new product with empty pickers", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+    const body = bodySent();
+    for (const key of ["opened", "expires", "removed"]) expect(body).not.toHaveProperty(key);
   });
 });
 
