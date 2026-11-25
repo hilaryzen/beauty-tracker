@@ -16,6 +16,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **ROUT-UI-004**: Each routine card shall show a + and a − control.
 - [x] **ROUT-UI-005**: If a routine lists a product id that matches no product record, then its routine card shall show "Unknown product (id N)", with N the id, in that product's place.
 - [x] **ROUT-UI-006**: While no routines are configured (the `routines` value is an empty object, or `configs.json` has no `routines` key), the home page shall show no routine cards.
+- [ ] **ROUT-UI-007**: While a product listed on a routine card has a `shade`, the routine card shall show ` – ` (space, en dash, space) and the shade immediately after that product's name, all in the same text style as the name.
 
 ## Logging
 
