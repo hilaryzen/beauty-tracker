@@ -1,5 +1,6 @@
 import { Box, Button, Flex, Heading, HStack, List, Stack, Text } from "@chakra-ui/react";
 import { useState } from "react";
+import { productName } from "@/features/products/product-name";
 import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
 import { formatDollars } from "./money";
@@ -42,7 +43,7 @@ function groupPurchases(usage: Product[]): Purchase[] {
   });
 }
 
-// @spec PURCH-LIST-001, PURCH-LIST-006, PURCH-LIST-007, PURCH-LIST-010, PURCH-DLG-001
+// @spec PURCH-LIST-001, PURCH-LIST-006, PURCH-LIST-007, PURCH-LIST-010, PURCH-LIST-011, PURCH-DLG-001
 export function PurchaseList({ usage, categories }: PurchaseListProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const purchases = groupPurchases(usage);
@@ -83,7 +84,7 @@ export function PurchaseList({ usage, categories }: PurchaseListProps) {
                     <List.Item key={product.id}>
                       <HStack justify="space-between" gap="4">
                         <Text>
-                          <Text as="span" color="fg.muted">{product.brand}</Text> {product.name}
+                          <Text as="span" color="fg.muted">{product.brand}</Text> {productName(product)}
                         </Text>
                         <Text>{formatDollars(product.purchase.price)}</Text>
                       </HStack>

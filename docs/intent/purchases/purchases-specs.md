@@ -20,6 +20,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PURCH-LIST-008**: The purchase list shall show each product in a purchase with its brand, name, and price, in product `id` order.
 - [x] **PURCH-LIST-009**: The purchase list shall show every amount as US dollars with two decimal places, such as `$32.00`.
 - [x] **PURCH-LIST-010**: While no product record has a purchase, the purchase list shall show "No purchases yet."
+- [x] **PURCH-LIST-011**: While a product in a purchase has a `shade`, the purchase list shall show ` – ` (space, en dash, space) and the shade immediately after that product's name, all in the same text style as the name.
 
 ## Purchase Dialog
 
@@ -34,6 +35,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PURCH-DLG-009**: Each item's product dropdown in the purchase dialog shall list products in sections labeled with their category name, ordered by group and then by category in configured order, with no section for a category that has no product to list.
 - [x] **PURCH-DLG-010**: Each item's product dropdown in the purchase dialog shall list products whose category is not configured after all configured categories, under "Other".
 - [x] **PURCH-DLG-011**: Each item's product dropdown in the purchase dialog shall label each product with its brand followed by its name.
+- [x] **PURCH-DLG-028**: While a product listed in an item's product dropdown in the purchase dialog has a `shade`, the dropdown shall label that product with its brand, its name, ` – ` (space, en dash, space), and the shade, in that order.
 - [x] **PURCH-DLG-012**: Each item's product dropdown in the purchase dialog shall end with a "New product" option.
 - [x] **PURCH-DLG-013**: When the user chooses "New product" on an item, the page shall open the product dialog to add a product over the purchase dialog.
 - [x] **PURCH-DLG-014**: When the product dialog opened from an item adds a product, the purchase dialog shall choose that product on that item.

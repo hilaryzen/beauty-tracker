@@ -70,7 +70,7 @@ Purchases
 - An "Add purchase" button opens the purchase dialog.
 - Products with a `purchase` are grouped into purchases: products whose purchase has the same `date` and the same `store` (or no store) form one purchase. Store names match exactly.
 - Purchases are listed newest first by date. Purchases on the same date are listed by store name in alphabetical order, ignoring capitalization, with the purchase that has no store last.
-- Each purchase shows its date as month abbreviation, day, and year (`Nov 7, 2026`), its store when it has one, its total (the sum of its products' prices), and each product's brand, name, and price, in product `id` order.
+- Each purchase shows its date as month abbreviation, day, and year (`Nov 7, 2026`), its store when it has one, its total (the sum of its products' prices), and each product's brand, name with its shade (products design, *Product Name with Shade*), and price, in product `id` order.
 - Amounts show as US dollars with two decimal places (`$32.00`).
 - With no product purchases recorded, the list shows "No purchases yet."
 
@@ -93,7 +93,7 @@ Purchases
 - **Date** — a date input, required, starting at today's local date. Dates after today cannot be chosen.
 - **Store** — optional text, suggesting the stores already used on purchases.
 - **Items** — the dialog opens with one empty item. "Add item" appends another empty item. Each item has a remove control, disabled while it is the only item.
-- **Product** (per item) — a dropdown of the products that can be bought: those with no `purchase` and not chosen on another item of this form. Products are listed in a section per category, labeled with the category name, ordered by group and then by category in configured order; a category with no product to list has no section. Each product is shown as brand then name. Products whose category is not configured are listed last, under "Other". A product chosen on this item stays listed for it. The dropdown ends with a "New product" option.
+- **Product** (per item) — a dropdown of the products that can be bought: those with no `purchase` and not chosen on another item of this form. Products are listed in a section per category, labeled with the category name, ordered by group and then by category in configured order; a category with no product to list has no section. Each product is shown as brand then name with its shade (products design, *Product Name with Shade*). Products whose category is not configured are listed last, under "Other". A product chosen on this item stays listed for it. The dropdown ends with a "New product" option.
 - **Price** (per item) — a text input for dollars, accepting digits with an optional decimal point and at most two decimal places (`32`, `32.`, `32.5`, `32.50`, `.99`). A leading `$` and surrounding whitespace are ignored. A price that does not match this form is marked invalid.
 - **Total** — the sum of the valid prices entered, updated as prices are typed.
 
@@ -144,12 +144,12 @@ The purchases page loader (app-shell design, *Purchases Page*) reads `usage.json
 | Store | Optional | Required | Not needed for cost per use |
 | Purchase date | Required, no later than today, starting at today | Optional; any date | Most purchases are entered the day they happen; a future purchase is a typo |
 | Products offered | Only products with no purchase, plus "New product" | Every product, rejecting repeats on save | The dropdown never offers a choice the save would reject |
-| Product dropdown | Native dropdown with a section per category, brand then name | Searchable combobox; sections labeled with group and category | Matches the product dialog's category dropdown and needs no new component. A native dropdown has one level of sections, and the category alone is what the user picks by |
+| Product dropdown | Native dropdown with a section per category, brand then name with shade | Searchable combobox; sections labeled with group and category | Matches the product dialog's category dropdown and needs no new component. A native dropdown has one level of sections, and the category alone is what the user picks by |
 | Opening a new product from an item | "New product" option in the item's product dropdown, choosing the saved product on that item | A separate "New product" button for the whole form | The product lands on the item it was created for, with no extra step to choose it |
 | Abandoned purchases | A product created from the purchase form stays when the purchase is not saved | Delete it; save it only with the purchase | The user owns the product either way; products cannot be deleted, and saving it only with the purchase would mean two write paths for products (HLD *New products during a purchase*) |
 | Product reads | `usage.json` through the data store, no rollover | Usage's loader | Keeps purchases independent of usage; nothing purchases reads depends on rollover |
 | List order | Date, newest first, then store | Order entered | Past purchases are often entered late; date order keeps the list chronological |
-| Identical product labels | Two products with the same brand and name show the same label | Add the category, id, or date added | Unbought products with the same brand and name are copies of one item, so either is the right choice |
+| Identical product labels | Two products with the same brand, name, and shade show the same label | Add the category, id, or date added | Unbought products with the same brand, name, and shade are copies of one item, so either is the right choice |
 | Products in unconfigured categories | Listed under "Other" at the end of the dropdown | Leave them out | Only data from before the category rules can hold one, and it can still be given its purchase |
 | Price ceiling | None | A maximum price | Any typed price is a real amount someone could pay; a typo is corrected by editing, once editing exists (*Simplicity over robustness*) |
 | Purchase fields written outside the app | Shown as they are | Report them on the page; fail the page | Only a hand edit can break the field rules, and the page still shows the data (as products treats malformed months) |

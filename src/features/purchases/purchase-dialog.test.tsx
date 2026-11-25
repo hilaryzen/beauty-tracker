@@ -252,6 +252,15 @@ describe("purchase dialog fields", () => {
     expect(options.at(-1)).toBe("New product");
   });
 
+  // @spec PURCH-DLG-028
+  it("labels a product that has a shade with its brand, name, an en dash, and the shade", async () => {
+    renderPurchases(vi.fn(() => ({ usage: [{ ...primer, shade: "Berry" }, ...usage.slice(1)], categories })));
+    await openPurchaseDialog();
+    const options = optionTexts(productSelects()[0]);
+    expect(options).toContain("Milk Makeup Hydro Grip Primer – Berry");
+    expect(options).toContain("fwee Cushion Glass Original");
+  });
+
   // @spec PURCH-DLG-016
   it("marks a price invalid unless it is dollars with at most two decimal places", async () => {
     renderPurchases();

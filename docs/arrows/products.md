@@ -28,6 +28,7 @@ What a product is: the product record, categories, and adding and editing produc
 - src/features/products/category-rules.ts
 - src/features/products/product-dialog.tsx
 - src/features/products/use-product-editor.ts
+- src/features/products/product-name.ts
 - src/app/routes/api.products.ts
 - src/utils/send-json.ts
 - src/utils/this-month.ts
@@ -42,6 +43,7 @@ What a product is: the product record, categories, and adding and editing produc
 2. `checkCategories` — category rules applied by `/api/configs` (`category-rules.ts`)
 3. `ProductDialog` and `useProductEditor` — one modal form for add and edit; saves a new category through `/api/configs`, then the product through `/api/products`, and reports an added product's id through `onSaved` (`product-dialog.tsx`, `use-product-editor.ts`)
 4. `/api/products` route — POST adds (responding with the new id) and PUT edits, validated inside the `usage.json` queue, with no rollover (`api.products.ts`)
+5. `productName` — a product's name with its shade, used by the usage table, routine cards, and purchases page (`product-name.ts`)
 
 ## Spec Coverage
 
@@ -58,7 +60,6 @@ What a product is: the product record, categories, and adding and editing produc
 ## Key Findings
 
 1. **Deleting products and a category editor are not designed** — both are needed for HLD Goal 4 (LLD deferred questions 1 and 2).
-2. **Shade shows only in the usage table and product dialog** — routine cards and the purchases page show products without it (LLD deferred question 3).
 
 ## Work Required
 

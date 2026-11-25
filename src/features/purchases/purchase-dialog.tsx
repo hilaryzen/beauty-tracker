@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { ProductDialog } from "@/features/products/product-dialog";
+import { productName } from "@/features/products/product-name";
 import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
 import { today } from "@/utils/today";
@@ -35,7 +36,8 @@ type PurchaseFormProps = Omit<PurchaseDialogProps, "open"> & {
   onSavingChange: (saving: boolean) => void;
 };
 
-const productLabel = (product: Product) => `${product.brand} ${product.name}`;
+// @spec PURCH-DLG-011, PURCH-DLG-028
+const productLabel = (product: Product) => `${product.brand} ${productName(product)}`;
 
 /** The products an item can offer, in a section per category: configured categories in order, then Other. */
 // @spec PURCH-DLG-008, PURCH-DLG-009, PURCH-DLG-010, PURCH-DLG-011
