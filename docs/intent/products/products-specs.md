@@ -11,6 +11,9 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-003**: The system shall allow a product record to carry an optional `purchase` field.
 - [x] **PROD-004**: The system shall allow a product record to carry an optional `shade` field.
 - [x] **PROD-005**: The system shall allow a product record to carry optional `opened`, `expires`, and `removed` fields, each a date in `YYYY-MM-DD` form.
+- [ ] **PROD-006**: The system shall allow a product record to carry an optional `size` field, an object holding a numeric `amount` and a `unit` of `oz`, `fl oz`, `g`, or `mL`.
+- [ ] **PROD-007**: The system shall allow a product record to carry an optional `rating` field, an integer from 1 to 5.
+- [ ] **PROD-008**: The system shall allow a product record to carry an optional `notes` field, a string.
 
 ## Product Dialog
 
@@ -40,6 +43,21 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-EDIT-024**: The product dialog's date opened and date removed pickers shall not offer dates after today's local date.
 - [x] **PROD-EDIT-025**: While the product dialog's date opened or date removed picker holds a date after today's local date, the dialog shall disable Save.
 - [x] **PROD-EDIT-026**: The product dialog shall not disable Save because the date opened, date expiring, or date removed picker is empty.
+- [ ] **PROD-EDIT-027**: The product dialog shall show a size amount text input, a size unit dropdown, a rating dropdown, and a multi-line notes input, in that order, after its date removed picker.
+- [ ] **PROD-EDIT-028**: The product dialog's size unit dropdown shall offer `oz`, `fl oz`, `g`, and `mL`, in that order, and no other option.
+- [ ] **PROD-EDIT-029**: The product dialog's rating dropdown shall offer a blank option followed by 1, 2, 3, 4, and 5.
+- [ ] **PROD-EDIT-030**: When the product dialog opens to add a product, the dialog shall show the size amount input empty, no size unit chosen, the rating dropdown blank, and the notes input empty.
+- [ ] **PROD-EDIT-031**: When the product dialog opens to edit a product whose `size` satisfies the record rules, the dialog shall show the size's `amount` written in its shortest decimal form, without trailing zeros, in the size amount input, and its `unit` chosen in the size unit dropdown.
+- [ ] **PROD-EDIT-032**: When the product dialog opens to edit a product that has no `size`, or a `size` that does not satisfy the record rules, the dialog shall show the size amount input empty and no size unit chosen.
+- [ ] **PROD-EDIT-033**: When the product dialog opens to edit a product whose `rating` is an integer from 1 to 5, the dialog shall show that rating chosen in the rating dropdown.
+- [ ] **PROD-EDIT-034**: When the product dialog opens to edit a product that has no `rating`, or a `rating` that is not an integer from 1 to 5, the dialog shall show the rating dropdown blank.
+- [ ] **PROD-EDIT-035**: When the product dialog opens to edit a product, the dialog shall show the product's `notes` in the notes input, or leave the notes input empty if the product has no `notes` string.
+- [ ] **PROD-EDIT-036**: While the product dialog's trimmed size amount is not blank and does not match one or more digits with an optional decimal point and at most two digits after it, or a decimal point followed by one or two digits (`2`, `1.7`, `32.`, `.5`, `7.50`), the dialog shall mark the size amount input invalid and disable Save.
+- [ ] **PROD-EDIT-037**: While the product dialog's trimmed size amount matches the size amount form and its value is 0, the dialog shall mark the size amount input invalid and disable Save.
+- [ ] **PROD-EDIT-038**: While the product dialog's trimmed size amount is not blank and no size unit is chosen, the dialog shall disable Save.
+- [ ] **PROD-EDIT-039**: The product dialog shall not disable Save because the size amount input is empty, whether or not a size unit is chosen.
+- [ ] **PROD-EDIT-040**: The product dialog shall not disable Save because the rating dropdown is blank or the notes input is empty.
+- [ ] **PROD-EDIT-041**: While no size unit is chosen, the product dialog's size unit dropdown shall show the placeholder `Unit`.
 
 ## Saving a Product
 
@@ -62,6 +80,12 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-SAVE-017**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed shade is blank, the page shall leave `shade` out of the request body.
 - [x] **PROD-SAVE-018**: When the product dialog sends a POST or PUT to `/api/products`, for each of the date opened, date expiring, and date removed pickers that holds a date, the page shall include that date in the request body as `opened`, `expires`, or `removed` respectively.
 - [x] **PROD-SAVE-019**: When the product dialog sends a POST or PUT to `/api/products`, for each of the date opened, date expiring, and date removed pickers that is empty, the page shall leave `opened`, `expires`, or `removed` respectively out of the request body.
+- [ ] **PROD-SAVE-020**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed size amount is not blank, the page shall include `size` in the request body as `{ "amount": <the amount as a number>, "unit": <the chosen unit> }`.
+- [ ] **PROD-SAVE-021**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed size amount is blank, the page shall leave `size` out of the request body.
+- [ ] **PROD-SAVE-022**: When the product dialog sends a POST or PUT to `/api/products` and a rating is chosen, the page shall include the rating as an integer `rating` in the request body.
+- [ ] **PROD-SAVE-023**: When the product dialog sends a POST or PUT to `/api/products` and the rating dropdown is blank, the page shall leave `rating` out of the request body.
+- [ ] **PROD-SAVE-024**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed notes are not blank, the page shall include the trimmed notes, with their inner line breaks, as `notes` in the request body.
+- [ ] **PROD-SAVE-025**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed notes are blank, the page shall leave `notes` out of the request body.
 
 ## Product API
 
@@ -71,8 +95,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-004**: When `/api/products` receives a PUT whose body passes validation, the system shall replace the name, brand, and category of the product record whose `id` matches the body's `id`.
 - [x] **PROD-API-005**: When `/api/products` receives a PUT whose body passes validation, the system shall leave that product record's id, closed-month use counts, current month, and current-month use count unchanged.
 - [x] **PROD-API-006**: When `/api/products` applies a POST or PUT that passes validation, the system shall write `usage.json` once.
-- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, and `removed`, then the system shall treat the body as failing validation.
-- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, and `removed`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-009**: If `name` or `brand` in a body to `/api/products` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
 - [x] **PROD-API-010**: If `category` in a body to `/api/products` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-011**: If `id` in a PUT body to `/api/products` is not an integer matching a product record's `id`, then the system shall treat the body as failing validation.
@@ -99,6 +123,15 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-032**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record no `opened`, `expires`, or `removed` field that the body does not contain.
 - [x] **PROD-API-033**: When `/api/products` receives a PUT whose body passes validation, the system shall set each of `opened`, `expires`, and `removed` that the body contains on the matching product record to the body's value.
 - [x] **PROD-API-034**: When `/api/products` receives a PUT whose body passes validation, the system shall remove from the matching product record each of `opened`, `expires`, and `removed` that the body does not contain.
+- [ ] **PROD-API-035**: If a body to `/api/products` contains `size` and it is not a JSON object with exactly the keys `amount` and `unit`, then the system shall treat the body as failing validation.
+- [ ] **PROD-API-036**: If a body to `/api/products` contains `size` and its `amount` is not a finite number greater than 0, then the system shall treat the body as failing validation.
+- [ ] **PROD-API-037**: If a body to `/api/products` contains `size` and its `unit` is not one of the strings `oz`, `fl oz`, `g`, and `mL`, then the system shall treat the body as failing validation.
+- [ ] **PROD-API-038**: If a body to `/api/products` contains `rating` and it is not an integer from 1 to 5, then the system shall treat the body as failing validation.
+- [ ] **PROD-API-039**: If a body to `/api/products` contains `notes` and it is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
+- [ ] **PROD-API-040**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record each of `size`, `rating`, and `notes` that the body contains, with the body's value.
+- [ ] **PROD-API-041**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record no `size`, `rating`, or `notes` field that the body does not contain.
+- [ ] **PROD-API-042**: When `/api/products` receives a PUT whose body passes validation, the system shall set each of `size`, `rating`, and `notes` that the body contains on the matching product record to the body's value.
+- [ ] **PROD-API-043**: When `/api/products` receives a PUT whose body passes validation, the system shall remove from the matching product record each of `size`, `rating`, and `notes` that the body does not contain.
 
 ## Categories
 
