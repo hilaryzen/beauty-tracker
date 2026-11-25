@@ -10,7 +10,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-002**: The system shall locate a product record by its `id` field, independent of the record's position in `usage.json`.
 - [x] **PROD-003**: The system shall allow a product record to carry an optional `purchase` field.
 - [x] **PROD-004**: The system shall allow a product record to carry an optional `shade` field.
-- [ ] **PROD-005**: The system shall allow a product record to carry optional `opened`, `expires`, and `removed` fields, each a date in `YYYY-MM-DD` form.
+- [x] **PROD-005**: The system shall allow a product record to carry optional `opened`, `expires`, and `removed` fields, each a date in `YYYY-MM-DD` form.
 
 ## Product Dialog
 
@@ -71,8 +71,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-004**: When `/api/products` receives a PUT whose body passes validation, the system shall replace the name, brand, and category of the product record whose `id` matches the body's `id`.
 - [x] **PROD-API-005**: When `/api/products` receives a PUT whose body passes validation, the system shall leave that product record's id, closed-month use counts, current month, and current-month use count unchanged.
 - [x] **PROD-API-006**: When `/api/products` applies a POST or PUT that passes validation, the system shall write `usage.json` once.
-- [ ] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, and `removed`, then the system shall treat the body as failing validation.
-- [ ] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, and `removed`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, and `removed`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, and `removed`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-009**: If `name` or `brand` in a body to `/api/products` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
 - [x] **PROD-API-010**: If `category` in a body to `/api/products` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-011**: If `id` in a PUT body to `/api/products` is not an integer matching a product record's `id`, then the system shall treat the body as failing validation.
@@ -93,12 +93,12 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-026**: When `/api/products` receives a PUT whose body passes validation and contains `shade`, the system shall set the matching product record's `shade` to the body's `shade`.
 - [x] **PROD-API-027**: When `/api/products` receives a PUT whose body passes validation and has no `shade`, the system shall remove the `shade` field from the matching product record.
 - [x] **PROD-API-028**: When `/api/products` receives a POST or PUT, the system shall check the body's category against `configs.json` and write `usage.json` within one multi-file update holding both files.
-- [ ] **PROD-API-029**: If a body to `/api/products` contains `opened`, `expires`, or `removed` and its value is not a string holding a real calendar date in `YYYY-MM-DD` form, then the system shall treat the body as failing validation.
-- [ ] **PROD-API-030**: If a body to `/api/products` contains `opened` or `removed` and its value is a date after the server's current local date, then the system shall treat the body as failing validation.
-- [ ] **PROD-API-031**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record each of `opened`, `expires`, and `removed` that the body contains, with the body's value.
-- [ ] **PROD-API-032**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record no `opened`, `expires`, or `removed` field that the body does not contain.
-- [ ] **PROD-API-033**: When `/api/products` receives a PUT whose body passes validation, the system shall set each of `opened`, `expires`, and `removed` that the body contains on the matching product record to the body's value.
-- [ ] **PROD-API-034**: When `/api/products` receives a PUT whose body passes validation, the system shall remove from the matching product record each of `opened`, `expires`, and `removed` that the body does not contain.
+- [x] **PROD-API-029**: If a body to `/api/products` contains `opened`, `expires`, or `removed` and its value is not a string holding a real calendar date in `YYYY-MM-DD` form, then the system shall treat the body as failing validation.
+- [x] **PROD-API-030**: If a body to `/api/products` contains `opened` or `removed` and its value is a date after the server's current local date, then the system shall treat the body as failing validation.
+- [x] **PROD-API-031**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record each of `opened`, `expires`, and `removed` that the body contains, with the body's value.
+- [x] **PROD-API-032**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record no `opened`, `expires`, or `removed` field that the body does not contain.
+- [x] **PROD-API-033**: When `/api/products` receives a PUT whose body passes validation, the system shall set each of `opened`, `expires`, and `removed` that the body contains on the matching product record to the body's value.
+- [x] **PROD-API-034**: When `/api/products` receives a PUT whose body passes validation, the system shall remove from the matching product record each of `opened`, `expires`, and `removed` that the body does not contain.
 
 ## Categories
 
