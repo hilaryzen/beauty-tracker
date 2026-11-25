@@ -1,6 +1,7 @@
 import { Button, Flex, Table } from "@chakra-ui/react"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { ProductDialog } from "@/features/products/product-dialog";
+import { productName } from "@/features/products/product-name";
 import type { Product } from "@/features/products/types";
 import { useMemo, useState } from "react";
 import { useUsage } from "./use-usage";
@@ -8,11 +9,6 @@ import { useUsage } from "./use-usage";
 type UsageTableProps = {
   usage: Product[];
   categories?: Record<string, Array<string>>
-}
-
-/** The product's name, followed by its shade when it has one. */
-function productLabel(item: Product) {
-  return item.shade === undefined ? item.name : `${item.name} – ${item.shade}`;
 }
 
 function overallUses(item: Product) {
@@ -59,7 +55,7 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
         {sortedUsage.map((item) => (
           <Table.Row key={item.id}>
             <Table.Cell>{item.category}</Table.Cell>
-            <Table.Cell>{productLabel(item)}</Table.Cell>
+            <Table.Cell>{productName(item)}</Table.Cell>
             <Table.Cell>{item.brand}</Table.Cell>
             <Table.Cell>{overallUses(item)}</Table.Cell>
             <Table.Cell>{item.usesThisMonth}</Table.Cell>

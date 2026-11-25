@@ -154,6 +154,7 @@ A body is valid when it is a JSON object with the keys listed for its method and
 - src/features/products/category-rules.ts
 - src/features/products/product-dialog.tsx
 - src/features/products/use-product-editor.ts
+- src/features/products/product-name.ts
 - src/app/routes/api.products.ts
 - src/utils/send-json.ts
 - docs/intent/purchases/purchases-design.md
