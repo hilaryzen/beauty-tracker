@@ -9,7 +9,7 @@ import { renderPage } from "@/test/render";
 import { RoutineEditor, type Routines } from "./routine-editor";
 
 function product(id: number, name: string, category: string, extra: Partial<Product> = {}): Product {
-  return { id, name, brand: "Brand", category, uses: {}, currentMonth: "2026-11", usesThisMonth: 0, ...extra };
+  return { id, name, brand: "Brand", category, status: "Opened", uses: {}, currentMonth: "2026-11", usesThisMonth: 0, ...extra };
 }
 
 // Configured order (Cleanser, Primer, Foundation, Gloss) differs from usage.json order.

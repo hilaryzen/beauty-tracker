@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toaster } from "@/components/ui/toaster";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
 import { renderPage } from "@/test/render";
+import type { ProductStatus } from "@/features/products/product-status";
 import { UsageTable } from "./usage-table";
 
 type PageData = { usage: typeof sampleUsage; categories?: Record<string, string[]> };
@@ -61,7 +62,7 @@ async function productOrder() {
 }
 
 // Every product with the same status, so ordering tests isolate what comes after status.
-function sameStatus(usage: typeof sampleUsage, status = "Opened") {
+function sameStatus(usage: typeof sampleUsage, status: ProductStatus = "Opened") {
   return usage.map((product) => ({ ...product, status }));
 }
 
