@@ -21,7 +21,7 @@ arrows:
     blocks: [usage, routines, purchases]
     blockedBy: [data-store]
     detail: products.md
-    next: "Design deleting products and the category editor (HLD Goal 4)"
+    next: "Design deleting products (HLD Goal 4)"
     drift: null
 
   usage:
