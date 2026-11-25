@@ -50,8 +50,11 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 
 ## Usage Table
 
-`UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button above one row per product, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, +/- controls, and an edit button.
+`UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button, a row of group tabs, and one row per product shown on the selected tab, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, +/- controls, and an edit button.
 
+- **Group tabs** — an "All" tab comes first, followed by one tab per category group in `configs.json → categories`, in configured order and labeled with the group name. The "All" tab shows every product. A group's tab shows only the products whose `category` is in that group. A group whose tab has no products shows the message "No products in this group." in place of rows. If `configs.json` has no `categories` key, only the "All" tab is shown.
+- **Scope of the tabs** — the tabs filter only the usage table; the routine cards above it show every routine on every tab.
+- **Adding and editing on a group tab** — the Add product button and edit buttons behave the same on every tab: the product dialog opens as it does from "All", with no category chosen when adding. A product saved into a category outside the selected group is saved but no longer shown on that tab; the tab stays selected.
 - **Sort order** — rows are ordered by the position of their `category` in the concatenation of all category groups, taken in the groups' configured order. Rows with equal position keep file order (stable sort). If `configs.json` has no `categories` key, there are no groups: every row has the same position and the table shows file order.
 - **Product** — the product's name with its shade (products design, *Product Name with Shade*).
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
@@ -82,6 +85,8 @@ A POST body is valid when `ids` is a non-empty array of distinct integers that e
 | Duplicate ids in a logging request | Rejected as invalid | Count each occurrence; count once | No caller has a reason to send one — routines may not list a product twice — so a duplicate signals a bug |
 | Overall Uses | Past months plus current month | Closed months only | Matches the real total used so far, which is what cost per use divides by |
 | Save failure feedback | Error notification; page keeps last saved data | Silent failure; optimistic update with rollback | The user must know a use wasn't recorded; showing saved data needs no rollback logic |
+| Usage table filter | Tabs: "All", then one per category group | One tab per category; a category dropdown filter; no filter | Groups match how products are browsed (skincare, makeup, lips) and stay few enough for one row of tabs. A tab per category would make about 20 tabs. The Category column still tells categories apart within a group |
+| Groups with no products | Shown as a tab with an empty-group message | Hidden | The tab row follows `configs.json` exactly, so a new group appears as soon as it is created |
 | Typed count corrections | None; the +/- controls are the only way to change a count | A typed count in the usage table or product dialog | One write path for counts keeps them trustworthy. The cost is that a large miscount takes many clicks. Closed months stay as recorded, so cost per use cannot change by accident |
 
 ## References
