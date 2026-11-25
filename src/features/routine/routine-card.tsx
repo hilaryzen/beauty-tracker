@@ -1,4 +1,5 @@
 import { Flex, Card, HStack, List } from "@chakra-ui/react"
+import { productName } from "@/features/products/product-name";
 import type { Product } from "@/features/products/types";
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { useUsage } from "../usage/use-usage";
@@ -8,11 +9,12 @@ type RoutineCardProps = {
   routines?: Record<string, Array<number>>
 }
 
-function productName(usage: Product[], id: number) {
-  return usage.find((item) => item.id === id)?.name ?? `Unknown product (id ${id})`;
+function productLabel(usage: Product[], id: number) {
+  const product = usage.find((item) => item.id === id);
+  return product ? productName(product) : `Unknown product (id ${id})`;
 }
 
-// @spec ROUT-UI-001, ROUT-UI-002, ROUT-UI-003, ROUT-UI-004, ROUT-UI-005, ROUT-UI-006, ROUT-LOG-001, ROUT-LOG-002
+// @spec ROUT-UI-001, ROUT-UI-002, ROUT-UI-003, ROUT-UI-004, ROUT-UI-005, ROUT-UI-006, ROUT-UI-007, ROUT-LOG-001, ROUT-LOG-002
 export const RoutineCard = ({ usage, routines }: RoutineCardProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
 
@@ -28,7 +30,7 @@ export const RoutineCard = ({ usage, routines }: RoutineCardProps) => {
               </HStack>
               <List.Root as="ol">
                 {products.map((id: number) => (
-                  <List.Item key={id}>{productName(usage, id)}</List.Item>
+                  <List.Item key={id}>{productLabel(usage, id)}</List.Item>
                 ))}
               </List.Root>
             </Card.Body>

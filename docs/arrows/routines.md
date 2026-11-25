@@ -15,7 +15,7 @@ Named groups of products the user logs together in one click.
 - docs/intent/routines/routines-design.md
 
 ### EARS
-- docs/intent/routines/routines-specs.md (15 specs)
+- docs/intent/routines/routines-specs.md (16 specs)
 
 ### Tests
 - src/features/routine/routine-card.test.tsx
@@ -41,11 +41,11 @@ Named groups of products the user logs together in one click.
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
 | Definition | ROUT-001 | 1 | 0 | 0 |
-| UI | ROUT-UI-001 to ROUT-UI-006 | 6 | 0 | 0 |
+| UI | ROUT-UI-001 to ROUT-UI-007 | 7 | 0 | 0 |
 | Logging | ROUT-LOG-001 to ROUT-LOG-002 | 2 | 0 | 0 |
 | Validation | ROUT-VAL-001 to ROUT-VAL-006 | 6 | 0 | 0 |
 
-**Summary:** 15 specs, all `[x]`.
+**Summary:** 16 specs, all `[x]`.
 
 ## Key Findings
 
