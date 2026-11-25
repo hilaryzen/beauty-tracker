@@ -182,4 +182,15 @@ describe("/api/configs", () => {
     const usage = await readData("usage.json");
     for (const product of usage) expect(configured).toContain(product.category);
   });
+
+  // @spec STORE-API-012
+  it("responds 500 and leaves configs.json unchanged when a usage record has no valid month", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await writeData("configs.json", sampleConfigs);
+    const { currentMonth: _missing, ...noMonth } = sampleUsage[0];
+    await writeData("usage.json", [noMonth, ...sampleUsage.slice(1)]);
+    await expectError(await post({ routines: { A: [0] } }), 500);
+    await expectError(await post({ categories: sampleConfigs.categories }), 500);
+    expect(await readData("configs.json")).toEqual(sampleConfigs);
+  });
 });

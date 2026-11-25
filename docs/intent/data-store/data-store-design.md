@@ -62,7 +62,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 
 **Malformed requests.** A POST body that is not valid JSON, or is JSON but not an object, fails validation like any other bad input: 400 with an error message, file unchanged.
 
-**All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was.
+**All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was. A `usage.json` with a record whose `currentMonth` is missing or not `YYYY-MM` counts as unreadable here, as it does for every page that loads usage (usage design, *Month Rollover*). The route reads `usage.json` without applying rollover, because a rollover write would wait behind the `usage.json` queue the route holds.
 
 The category editor calls the route (products design, *Category Editor*).
 

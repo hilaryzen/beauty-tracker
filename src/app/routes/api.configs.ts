@@ -2,6 +2,7 @@ import type { Route } from "./+types/api.configs";
 import { checkRoutines } from "@/features/routine/routine-rules";
 import { checkCategories } from "@/features/products/category-rules";
 import type { Product } from "@/features/products/types";
+import { hasValidMonths } from "@/features/usage/usage.server";
 import { getFile, modifyFiles, type FileAccess } from "@/utils/files.server";
 
 const configKeys = ["categories", "routines"];
@@ -20,7 +21,7 @@ export async function loader() {
 }
 
 /** Returns a message describing the first validation failure in `body`, or undefined if it is valid. */
-// @spec STORE-API-004, STORE-API-007
+// @spec STORE-API-004, STORE-API-007, STORE-API-012
 async function validate(body: unknown, files: FileAccess): Promise<string | undefined> {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "The request body must be an object";
@@ -34,6 +35,7 @@ async function validate(body: unknown, files: FileAccess): Promise<string | unde
   // Read without rollover: validation needs only ids and categories, and a rollover write
   // would wait behind the usage.json queue this update holds.
   const usage = await files.read<Product[]>("usage.json");
+  if (!hasValidMonths(usage)) throw new Error("usage.json has a record with no valid currentMonth");
 
   if ("categories" in changes) {
     const error = checkCategories(changes.categories, usage);
