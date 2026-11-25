@@ -15,7 +15,7 @@ What a product is: the product record, categories, adding and editing products, 
 - docs/intent/products/products-design.md
 
 ### EARS
-- docs/intent/products/products-specs.md (142 specs)
+- docs/intent/products/products-specs.md (157 specs)
 
 ### Tests
 - src/app/routes/api.products.test.ts
@@ -36,6 +36,8 @@ What a product is: the product record, categories, adding and editing products, 
 - src/app/routes/api.categories.ts
 - src/utils/send-json.ts
 - src/utils/this-month.ts
+- src/utils/today.ts
+- src/utils/calendar-date.ts
 - src/assets/data/configs.json (`categories` key)
 
 ## Architecture
@@ -55,15 +57,15 @@ What a product is: the product record, categories, adding and editing products, 
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Record | PROD-001 to PROD-004 | 4 | 0 | 0 |
-| Dialog | PROD-EDIT-001 to PROD-EDIT-020 | 20 | 0 | 0 |
-| Saving | PROD-SAVE-001 to PROD-SAVE-017 | 17 | 0 | 0 |
-| API | PROD-API-001 to PROD-API-028 | 28 | 0 | 0 |
+| Record | PROD-001 to PROD-005 | 5 | 0 | 0 |
+| Dialog | PROD-EDIT-001 to PROD-EDIT-026 | 26 | 0 | 0 |
+| Saving | PROD-SAVE-001 to PROD-SAVE-019 | 19 | 0 | 0 |
+| API | PROD-API-001 to PROD-API-034 | 34 | 0 | 0 |
 | Categories | PROD-CAT-001 to PROD-CAT-004 | 4 | 0 | 0 |
 | Category rename | PROD-CATAPI-001 to PROD-CATAPI-023 | 23 | 0 | 0 |
 | Category editor | PROD-CATEDIT-001 to PROD-CATEDIT-046 | 46 | 0 | 0 |
 
-**Summary:** 142 specs, all `[x]`.
+**Summary:** 157 specs, all `[x]`.
 
 ## Key Findings
 
