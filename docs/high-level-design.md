@@ -49,7 +49,7 @@ A React Router app rendered on the server, storing all data as JSON files on the
 |---|---|---|---|
 | products | Product records, categories, adding and editing products, the category editor | [products-design.md](intent/products/products-design.md) | `PROD` |
 | usage | Monthly use counts, logging a use, the usage table | [usage-design.md](intent/usage/usage-design.md) | `USAGE` |
-| routines | Named product groups logged together in one click | [routines-design.md](intent/routines/routines-design.md) | `ROUT` |
+| routines | Named product groups logged together in one click, the routine editor | [routines-design.md](intent/routines/routines-design.md) | `ROUT` |
 | purchases | A product's purchase, adding purchases, the purchase list | [purchases-design.md](intent/purchases/purchases-design.md) | `PURCH` |
 | data-store | JSON file storage, dev/prod data folders, configuration API | [data-store-design.md](intent/data-store/data-store-design.md) | `STORE` |
 | app-shell | Root layout, theme, error page, routes, navigation, page composition, shared controls | [app-shell-design.md](intent/app-shell/app-shell-design.md) | `SHELL` |
@@ -60,12 +60,14 @@ Inventory (Goal 3) is not yet designed and has no segment.
 flowchart TD
   shell[app-shell: pages] --> routines
   shell -->|settings page shows the category editor| products
+  shell -->|settings page shows the routine editor| routines
   shell --> usage
   shell --> purchases
   purchases -->|opens the product dialog, finds products by id| products
   purchases -->|/api/purchases| store
   routines -->|logs via useUsage| usage
   routines -->|finds products by id| products
+  routines -->|shows purchase dates in the routine editor| purchases
   usage -->|opens the product dialog| products
   usage -->|/api/usage| store[data-store: JSON files]
   products -->|/api/products, /api/configs, /api/categories| store

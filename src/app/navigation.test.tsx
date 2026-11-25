@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createRoutesStub, Outlet, useLoaderData } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
+import { responsiveStyles } from "@/test/css";
 import { stubMatchMedia } from "@/test/render";
 import { ErrorBoundary, Shell } from "./root";
 import Home from "./routes/home";
@@ -31,6 +32,12 @@ function SettingsPage() {
 
 const purchasesData = () => ({ usage: sampleUsage, categories: sampleConfigs.categories });
 
+const settingsData = () => ({
+  usage: sampleUsage,
+  categories: sampleConfigs.categories,
+  routines: sampleConfigs.routines,
+});
+
 const homeData = () => ({
   usage: sampleUsage,
   categories: sampleConfigs.categories,
@@ -58,7 +65,7 @@ function renderApp(path: string, homeLoader: () => unknown = homeData) {
       children: [
         { index: true, Component: HomePage, loader: homeLoader },
         { path: "purchases", Component: PurchasesPage, loader: purchasesData },
-        { path: "settings", Component: SettingsPage, loader: purchasesData },
+        { path: "settings", Component: SettingsPage, loader: settingsData },
       ],
     },
   ]);
@@ -210,11 +217,46 @@ describe("settings page", () => {
   });
 
   // @spec SHELL-SET-002
-  it("shows the category editor below the heading", async () => {
+  it("shows the category editor and the routine editor below the heading", async () => {
     renderApp("/settings");
     const heading = await screen.findByRole("heading", { level: 1, name: "Settings" });
     const addGroup = await screen.findByRole("button", { name: "Add group" });
+    const addRoutine = await screen.findByRole("button", { name: "Add routine" });
     expect(follows(heading, addGroup)).toBe(true);
+    expect(follows(heading, addRoutine)).toBe(true);
     expect(screen.getByRole("region", { name: "makeup" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Routine Morning Skincare" })).toBeInTheDocument();
+  });
+
+  // @spec SHELL-SET-005
+  it("shows the editors side by side in equal columns, categories on the left, in wide windows", async () => {
+    renderApp("/settings");
+    await screen.findByRole("button", { name: "Add routine" });
+    const { lg: grid } = responsiveStyles(screen.getByTestId("settings-editors"));
+    expect(grid.display).toBe("grid");
+    expect(grid["grid-template-columns"]).toBe("repeat(2, minmax(0, 1fr))");
+    const categories = responsiveStyles(screen.getByTestId("settings-categories")).lg;
+    const routines = responsiveStyles(screen.getByTestId("settings-routines")).lg;
+    expect(Number(categories.order ?? 0)).toBeLessThanOrEqual(Number(routines.order ?? 0));
+  });
+
+  // @spec SHELL-SET-006
+  it("stacks the editors with the routine editor first in narrow windows", async () => {
+    renderApp("/settings");
+    await screen.findByRole("button", { name: "Add routine" });
+    const { base: grid } = responsiveStyles(screen.getByTestId("settings-editors"));
+    expect(grid.display).toBe("grid");
+    expect(grid["grid-template-columns"]).toBe("minmax(0, 1fr)");
+    const categories = responsiveStyles(screen.getByTestId("settings-categories")).base;
+    const routines = responsiveStyles(screen.getByTestId("settings-routines")).base;
+    expect(Number(routines.order ?? 0)).toBeLessThan(Number(categories.order ?? 0));
+  });
+
+  // @spec SHELL-SET-007
+  it("places the category editor before the routine editor in document order", async () => {
+    renderApp("/settings");
+    const addGroup = await screen.findByRole("button", { name: "Add group" });
+    const routinesHeading = screen.getByRole("heading", { level: 2, name: "Routines" });
+    expect(follows(addGroup, routinesHeading)).toBe(true);
   });
 });

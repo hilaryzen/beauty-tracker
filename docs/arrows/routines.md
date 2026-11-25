@@ -4,7 +4,7 @@ Named groups of products the user logs together in one click.
 
 ## Status
 
-**MAPPED** — last audited 2026-10-25 (git SHA `8527123`). All specs implemented with tests.
+**MAPPED** — last audited 2026-10-25 (git SHA `8527123`); sampled 2026-11-25. All specs implemented with tests.
 
 ## References
 
@@ -15,26 +15,29 @@ Named groups of products the user logs together in one click.
 - docs/intent/routines/routines-design.md
 
 ### EARS
-- docs/intent/routines/routines-specs.md (16 specs)
+- docs/intent/routines/routines-specs.md (70 specs)
 
 ### Tests
 - src/features/routine/routine-card.test.tsx
 - src/features/routine/routine-rules.test.ts
+- src/features/routine/routine-editor.test.tsx
 
 ### Code
 - src/features/routine/routine-card.tsx
 - src/features/routine/routine-rules.ts
+- src/features/routine/routine-editor.tsx
 - src/assets/data/configs.json (`routines` key)
 
 ## Architecture
 
-**Purpose:** Let the user define routines (e.g. "Morning Skincare", "Makeup") as ordered lists of products, see each routine's products on a card, and log a use for every product in the routine at once.
+**Purpose:** Let the user define routines (e.g. "Morning Skincare", "Makeup") as ordered lists of products in the routine editor, see each routine's products on a card, and log a use for every product in the routine at once.
 
 **Key Components:**
 1. `configs.json → routines` — map of routine name to an ordered array of product ids
 2. `RoutineCard` — one card per routine with product names looked up by id ("Unknown product (id N)" when none matches) and +/- controls; no cards when routines are empty or missing (`routine-card.tsx`)
 3. `useUsage` (usage segment) — logs ±1 for all products in the routine as one `{ ids, delta }` request
 4. `checkRoutines` — routine rules applied by `/api/configs` (`routine-rules.ts`)
+5. `RoutineEditor` — settings page editor: add, rename, reorder, and delete routines; add, reorder, and remove their products through dropdowns grouped by category, with purchase dates on repurchased products; each edit POSTs the full `routines` value to `/api/configs` (`routine-editor.tsx`)
 
 ## Spec Coverage
 
@@ -44,14 +47,15 @@ Named groups of products the user logs together in one click.
 | UI | ROUT-UI-001 to ROUT-UI-007 | 7 | 0 | 0 |
 | Logging | ROUT-LOG-001 to ROUT-LOG-002 | 2 | 0 | 0 |
 | Validation | ROUT-VAL-001 to ROUT-VAL-006 | 6 | 0 | 0 |
+| Editor | ROUT-EDIT-001 to ROUT-EDIT-054 | 54 | 0 | 0 |
 
-**Summary:** 16 specs, all `[x]`.
+**Summary:** 70 specs, all `[x]`.
 
 ## Key Findings
 
-1. **No UI to create or edit routines** — routines are hand-edited in `configs.json`; `/api/configs` POST validates them but nothing in the UI calls it yet (LLD deferred question 1).
+None open.
 
 ## Work Required
 
 ### Nice to Have
-1. Design the routine editor (HLD Goal 4).
+1. Decide how deleting a product listed in a routine is handled, once products can be deleted (LLD deferred question 1).

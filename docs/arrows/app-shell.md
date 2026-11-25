@@ -4,7 +4,7 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 
 ## Status
 
-**MAPPED** — last audited 2026-10-25 (git SHA `8527123`); sampled 2026-11-07. All specs implemented with tests.
+**MAPPED** — last audited 2026-10-25 (git SHA `8527123`); sampled 2026-11-25. All specs implemented with tests.
 
 ## References
 
@@ -15,7 +15,7 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 - docs/intent/app-shell/app-shell-design.md
 
 ### EARS
-- docs/intent/app-shell/app-shell-specs.md (27 specs)
+- docs/intent/app-shell/app-shell-specs.md (30 specs)
 
 ### Tests
 - src/app/root.test.tsx
@@ -25,6 +25,7 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 - src/app/routes/home.loader.test.ts
 - src/app/routes/purchases.loader.test.ts
 - src/app/routes/settings.loader.test.ts
+- src/test/css.ts (test helper)
 
 ### Code
 - src/app/root.tsx
@@ -41,14 +42,14 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 
 ## Architecture
 
-**Purpose:** Frame every page (HTML document, fonts, theme provider, navigation header, error boundary), declare routes, compose the home page from the usage and routines segments, compose the purchases page from the purchases segment, and compose the settings page from the products segment's category editor.
+**Purpose:** Frame every page (HTML document, fonts, theme provider, navigation header, error boundary), declare routes, compose the home page from the usage and routines segments, compose the purchases page from the purchases segment, and compose the settings page from the products segment's category editor and the routines segment's routine editor.
 
 **Key Components:**
 1. `root.tsx` — HTML layout with the "Beauty Tracker" title, the app meta description, and Inter font links; `Shell` (Chakra `Provider` + `AppHeader` + `<Toaster />`) around every page including the error page; Chakra-styled `ErrorBoundary`
 2. `routes.ts` — index route, `/purchases`, `/settings`, plus `/api/usage`, `/api/products`, `/api/purchases`, `/api/configs`, and `/api/categories`
 3. `home.tsx` — server loader reads `configs.json` and usage through `loadUsage()`, 500 "Your data could not be loaded." when either is unreadable; renders `RoutineCard` above `UsageTable`
 3a. `purchases.tsx` — server loader reads `usage.json` and `configs.json` through the data store without rollover, 500 "Your data could not be loaded." when either is unreadable; renders the heading "Purchases" above `PurchaseList`
-3c. `settings.tsx` — server loader reads `usage.json` and `configs.json` through the data store without rollover, 500 "Your data could not be loaded." when either is unreadable; renders the heading "Settings" above `CategoryEditor`
+3c. `settings.tsx` — server loader reads `usage.json` and `configs.json` through the data store without rollover, 500 "Your data could not be loaded." when either is unreadable; renders the heading "Settings" above `CategoryEditor` and `RoutineEditor`, side by side from the `lg` breakpoint and stacked with routines first below it
 3b. `AppHeader` — "Beauty Tracker" plus Usage, Purchases, and Settings `NavLink`s; the current path's link gets `aria-current="page"` and a bolder style (`app-header/main.tsx`)
 4. `AddMinusButtons` — shared + / − button pair used by the usage table and routine cards (`add-minus-buttons/main.tsx`)
 5. `components/ui/*` — Chakra snippets: `provider.tsx` (app system with Inter), `color-mode.tsx` (`ColorModeProvider` only), `toaster.tsx`
@@ -61,10 +62,10 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 | Navigation | SHELL-NAV-001 to SHELL-NAV-009 | 9 | 0 | 0 |
 | Home | SHELL-HOME-001, SHELL-HOME-002 | 2 | 0 | 0 |
 | Purchases page | SHELL-PURCH-001, SHELL-PURCH-003, SHELL-PURCH-004 | 3 | 0 | 0 |
-| Settings page | SHELL-SET-001 to SHELL-SET-004 | 4 | 0 | 0 |
+| Settings page | SHELL-SET-001 to SHELL-SET-007 | 7 | 0 | 0 |
 | Error page | SHELL-ERR-001 to SHELL-ERR-004 | 4 | 0 | 0 |
 
-**Summary:** 27 specs, all `[x]`.
+**Summary:** 30 specs, all `[x]`.
 
 ## Key Findings
 

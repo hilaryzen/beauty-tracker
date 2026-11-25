@@ -49,7 +49,7 @@ What a product is: the product record, categories, adding and editing products, 
 4. `/api/products` route — POST adds (responding with the new id) and PUT edits, validated inside a multi-file update holding `configs.json` and `usage.json`, with no rollover (`api.products.ts`)
 5. `/api/categories` route — renames a category in `configs.json` and every product using it, in ordered writes inside one multi-file update (`api.categories.ts`)
 6. `CategoryEditor` — adds, renames, reorders, moves, and deletes categories and groups on the settings page, saving each edit at once (`category-editor.tsx`)
-7. `productName` — a product's name with its shade, used by the usage table, routine cards, and purchases page (`product-name.ts`)
+7. `productName` — a product's name with its shade, used by the usage table, routine cards, routine editor, and purchases page (`product-name.ts`)
 
 ## Spec Coverage
 

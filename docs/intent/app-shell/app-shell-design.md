@@ -83,8 +83,8 @@ The link for the page being shown is highlighted and marked as the current page 
 
 `src/app/routes/settings.tsx`:
 
-- **Loader** (server) — reads `usage.json` and `configs.json` through the data store, without month rollover; the page uses no counts, only which category each product has. If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". Returns `{ usage, categories }`.
-- **Component** — shows the top-level heading "Settings", then `CategoryEditor` (products segment) under it, passing it the loader data.
+- **Loader** (server) — reads `usage.json` and `configs.json` through the data store, without month rollover; the page uses no counts, only each product's id, name, shade, and category. If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". Returns `{ usage, categories, routines }`.
+- **Component** — shows the top-level heading "Settings", then `CategoryEditor` (products segment) and `RoutineEditor` (routines segment) under it, passing them the loader data. In windows at least Chakra's `lg` breakpoint wide, the two sit side by side in equal-width columns, the category editor on the left and the routine editor on the right. In narrower windows they stack, the routine editor first. The category editor comes first in the page's source, so keyboard focus moves from the category editor to the routine editor at every width; only the narrow layout reorders them visually.
 
 ## Shared Controls
 
@@ -105,7 +105,9 @@ The link for the page being shown is highlighted and marked as the current page 
 | Meta description | One description, set in the root layout for every page | Per-route descriptions | The description names the whole app, so it fits every page; root placement keeps it on the error page |
 | App name in the header | Plain text | A link to `/` | The Usage link already goes to `/`; one way there is enough |
 | Page structure | One page per tracked area (usage, purchases) plus a settings page, linked from a header | Everything on one page; usage at `/usage` with `/` redirecting | Each area's content grows independently. Usage stays at `/` because it is the page used every day |
-| Category editing placement | A settings page at `/settings` | A `/categories` page; on the usage page | A settings page can later hold other configuration, such as a routine editor, without another header link |
+| Category and routine editing placement | Both on a settings page at `/settings` | A `/categories` page; routine editing on the home page beside the routine cards | One page for how the data is organized, reached from one header link |
+| Settings page layout | Category editor left and routine editor right in wide windows; stacked with the routine editor first in narrow ones | One column; tabs | Both editors stay in view without switching. Routines are changed more often than categories, so they come first when only one fits |
+| Settings page source order | Category editor first, with the narrow layout moving the routine editor up | Routine editor first, with the wide layout moving the category editor left | Keyboard focus follows the wide layout's left-to-right reading order |
 | Routines placement | On the usage page, above the usage table | Their own page | Routines are a way of logging usage |
 | Navigation | A header on every page, including the error page | Sidebar; header on normal pages only | Few pages fit in a header; on the error page it gives a way back |
 | Shared +/− control | One `AddMinusButtons` component | Per-feature buttons | [inferred] Identical control in both features |
@@ -118,11 +120,12 @@ The link for the page being shown is highlighted and marked as the current page 
 
 ## References
 
-- src/app/root.tsx, src/app/routes.ts, src/app/routes/home.tsx, src/app/routes/purchases.tsx
+- src/app/root.tsx, src/app/routes.ts, src/app/routes/home.tsx, src/app/routes/purchases.tsx, src/app/routes/settings.tsx
 - src/components/app-header/main.tsx
 - src/components/add-minus-buttons/main.tsx
 - src/components/ui/
 - react-router.config.ts, vite.config.ts, tsconfig.json
 - docs/intent/usage/usage-design.md
 - docs/intent/purchases/purchases-design.md
+- docs/intent/routines/routines-design.md
 - docs/arrows/app-shell.md
