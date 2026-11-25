@@ -408,6 +408,248 @@ describe("product dialog dates", () => {
   });
 });
 
+describe("product dialog size, rating, and notes", () => {
+  const detailed = { ...primer, size: { amount: 1.7, unit: "fl oz" }, rating: 4, notes: "Pills under sunscreen.\n\nGreat alone." };
+
+  function bodySent() {
+    return bodyOf(requestsTo("/api/products")[0]);
+  }
+
+  function allOptions(label: string) {
+    return Array.from((screen.getByLabelText(label) as HTMLSelectElement).options);
+  }
+
+  async function save() {
+    fireEvent.click(button("Save"));
+    await waitFor(() => expect(requestsTo("/api/products")).toHaveLength(1));
+  }
+
+  // @spec PROD-EDIT-027
+  it("shows the size amount, size unit, rating, and multi-line notes inputs, in that order, after date removed", async () => {
+    renderDialog();
+    await dialogReady();
+    const fields = ["Date removed", "Size", "Size unit", "Rating", "Notes"].map((label) => screen.getByLabelText(label));
+    for (let i = 1; i < fields.length; i++) {
+      expect(fields[i - 1].compareDocumentPosition(fields[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    expect(screen.getByLabelText("Size")).toHaveProperty("tagName", "INPUT");
+    expect(screen.getByLabelText("Size unit")).toHaveProperty("tagName", "SELECT");
+    expect(screen.getByLabelText("Rating")).toHaveProperty("tagName", "SELECT");
+    expect(screen.getByLabelText("Notes")).toHaveProperty("tagName", "TEXTAREA");
+  });
+
+  // @spec PROD-EDIT-028
+  it("offers oz, fl oz, g, and mL as size units, in that order, and no other option", async () => {
+    renderDialog();
+    await dialogReady();
+    const choosable = allOptions("Size unit").filter((option) => !option.disabled);
+    expect(choosable.map((option) => option.textContent)).toEqual(["oz", "fl oz", "g", "mL"]);
+    expect(choosable.map((option) => option.value)).toEqual(["oz", "fl oz", "g", "mL"]);
+  });
+
+  // @spec PROD-EDIT-041
+  it("shows the Unit placeholder while no size unit is chosen", async () => {
+    renderDialog();
+    await dialogReady();
+    expect(selectedText("Size unit")).toBe("Unit");
+    expect((screen.getByLabelText("Size unit") as HTMLSelectElement).value).toBe("");
+  });
+
+  // @spec PROD-EDIT-029
+  it("offers a blank rating followed by 1 to 5", async () => {
+    renderDialog();
+    await dialogReady();
+    const options = allOptions("Rating");
+    expect(options.map((option) => option.textContent?.trim())).toEqual(["", "1", "2", "3", "4", "5"]);
+    expect(options.every((option) => !option.disabled)).toBe(true);
+  });
+
+  // @spec PROD-EDIT-030
+  it("opens with empty size, rating, and notes when adding a product", async () => {
+    renderDialog();
+    await dialogReady();
+    expect(screen.getByLabelText("Size")).toHaveValue("");
+    expect((screen.getByLabelText("Size unit") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Rating") as HTMLSelectElement).value).toBe("");
+    expect(screen.getByLabelText("Notes")).toHaveValue("");
+  });
+
+  // @spec PROD-EDIT-031, PROD-EDIT-033, PROD-EDIT-035
+  it("shows the product's size, rating, and notes when editing", async () => {
+    renderDialog({ product: detailed });
+    await dialogReady();
+    expect(screen.getByLabelText("Size")).toHaveValue("1.7");
+    expect(selectedText("Size unit")).toBe("fl oz");
+    expect(selectedText("Rating")).toBe("4");
+    expect(screen.getByLabelText("Notes")).toHaveValue(detailed.notes);
+  });
+
+  // @spec PROD-EDIT-031
+  it("writes a stored size amount without trailing zeros", async () => {
+    renderDialog({ product: { ...primer, size: { amount: 50, unit: "mL" } } });
+    await dialogReady();
+    expect(screen.getByLabelText("Size")).toHaveValue("50");
+    expect(selectedText("Size unit")).toBe("mL");
+  });
+
+  // @spec PROD-EDIT-032, PROD-EDIT-034, PROD-EDIT-035
+  it("leaves size, rating, and notes empty when editing a product without them", async () => {
+    renderDialog({ product: primer });
+    await dialogReady();
+    expect(screen.getByLabelText("Size")).toHaveValue("");
+    expect((screen.getByLabelText("Size unit") as HTMLSelectElement).value).toBe("");
+    expect((screen.getByLabelText("Rating") as HTMLSelectElement).value).toBe("");
+    expect(screen.getByLabelText("Notes")).toHaveValue("");
+  });
+
+  // @spec PROD-EDIT-032
+  it.each([
+    ["a string", "1.7 fl oz"],
+    ["an unknown unit", { amount: 30, unit: "ml" }],
+    ["a zero amount", { amount: 0, unit: "g" }],
+    ["a text amount", { amount: "30", unit: "g" }],
+    ["an extra key", { amount: 30, unit: "g", note: "x" }],
+  ])("leaves size empty when editing a product whose size is %s", async (_, size) => {
+    renderDialog({ product: { ...primer, size } as typeof primer });
+    await dialogReady();
+    expect(screen.getByLabelText("Size")).toHaveValue("");
+    expect((screen.getByLabelText("Size unit") as HTMLSelectElement).value).toBe("");
+  });
+
+  // @spec PROD-EDIT-034
+  it.each([0, 6, 3.5, "4"])("leaves the rating blank when editing a product whose rating is %s", async (rating) => {
+    renderDialog({ product: { ...primer, rating } as typeof primer });
+    await dialogReady();
+    expect((screen.getByLabelText("Rating") as HTMLSelectElement).value).toBe("");
+  });
+
+  // @spec PROD-EDIT-036
+  it("marks a size amount not in the size form invalid and disables Save", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    choose("Size unit", "g");
+    for (const bad of ["abc", "1.234", "1..5", "-2", ".", "1,5", "$3"]) {
+      fill("Size", bad);
+      expect(button("Save")).toBeDisabled();
+      expect(screen.getByLabelText("Size")).toHaveAttribute("aria-invalid", "true");
+    }
+    for (const good of ["2", "1.7", "32.", ".5", "7.50", " 3 "]) {
+      fill("Size", good);
+      expect(button("Save")).toBeEnabled();
+      expect(screen.getByLabelText("Size")).not.toHaveAttribute("aria-invalid", "true");
+    }
+  });
+
+  // @spec PROD-EDIT-036
+  it("marks a stored amount with more than two decimals invalid until corrected", async () => {
+    renderDialog({ product: { ...primer, size: { amount: 0.333, unit: "g" } } });
+    await dialogReady();
+    expect(screen.getByLabelText("Size")).toHaveValue("0.333");
+    expect(button("Save")).toBeDisabled();
+    fill("Size", "0.33");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-EDIT-037
+  it("marks a zero size amount invalid and disables Save", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    choose("Size unit", "oz");
+    for (const zero of ["0", "0.00", ".0", "00"]) {
+      fill("Size", zero);
+      expect(button("Save")).toBeDisabled();
+      expect(screen.getByLabelText("Size")).toHaveAttribute("aria-invalid", "true");
+    }
+  });
+
+  // @spec PROD-EDIT-038
+  it("disables Save while a size amount has no unit", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    fill("Size", "30");
+    expect(button("Save")).toBeDisabled();
+    choose("Size unit", "mL");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-EDIT-039
+  it("keeps Save enabled while the size amount is empty, with or without a unit", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    expect(button("Save")).toBeEnabled();
+    choose("Size unit", "g");
+    fill("Size", "   ");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-EDIT-040
+  it("keeps Save enabled while the rating is blank and the notes are empty", async () => {
+    renderDialog({ product: detailed });
+    await dialogReady();
+    choose("Rating", "");
+    fill("Notes", "  ");
+    expect(button("Save")).toBeEnabled();
+  });
+
+  // @spec PROD-SAVE-020, PROD-SAVE-022, PROD-SAVE-024
+  it("sends the size, rating, and trimmed notes with a new product", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    fill("Size", " 7.50 ");
+    choose("Size unit", "mL");
+    choose("Rating", "5");
+    fill("Notes", "  Line one\n\nLine two \n");
+    await save();
+    expect(bodySent()).toEqual({
+      name: "Dew Serum", brand: "Saie", category: "Cleanser",
+      size: { amount: 7.5, unit: "mL" }, rating: 5, notes: "Line one\n\nLine two",
+    });
+  });
+
+  // @spec PROD-SAVE-020, PROD-SAVE-022, PROD-SAVE-024
+  it("sends the size, rating, and notes when editing a product", async () => {
+    renderDialog({ product: detailed });
+    await dialogReady();
+    fill("Size", "32.");
+    choose("Size unit", "oz");
+    await save();
+    expect(bodySent()).toEqual({
+      id: detailed.id, name: detailed.name, brand: detailed.brand, category: detailed.category,
+      size: { amount: 32, unit: "oz" }, rating: 4, notes: detailed.notes,
+    });
+  });
+
+  // @spec PROD-SAVE-021, PROD-SAVE-023, PROD-SAVE-025
+  it("leaves out the size, rating, and notes when they are cleared", async () => {
+    renderDialog({ product: detailed });
+    await dialogReady();
+    fill("Size", "");
+    choose("Rating", "");
+    fill("Notes", " \n ");
+    await save();
+    expect(bodySent()).toEqual({
+      id: detailed.id, name: detailed.name, brand: detailed.brand, category: detailed.category,
+    });
+  });
+
+  // @spec PROD-SAVE-021
+  it("sends no size when only a unit is chosen", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    choose("Size unit", "g");
+    await save();
+    expect(bodySent()).not.toHaveProperty("size");
+  });
+
+  // @spec PROD-SAVE-021, PROD-SAVE-023, PROD-SAVE-025
+  it("sends no size, rating, or notes for a new product with them empty", async () => {
+    renderDialog();
+    await fillValidNewProduct();
+    await save();
+    for (const key of ["size", "rating", "notes"]) expect(bodySent()).not.toHaveProperty(key);
+  });
+});
+
 describe("when Save is disabled", () => {
   // @spec PROD-EDIT-020
   it("keeps Save enabled while the shade is blank", async () => {
