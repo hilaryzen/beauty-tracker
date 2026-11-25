@@ -120,6 +120,25 @@ describe("purchase list", () => {
     expect(items[1]).toHaveTextContent(/fwee.*Cushion Glass Original.*\$0\.00/);
   });
 
+  // @spec PURCH-LIST-011
+  it("shows a product's shade after its name, in the same style as the name", async () => {
+    renderList([
+      { ...product(0, "Milk Makeup", "Hydro Grip Primer", { date: "2026-11-07", store: "Sephora", price: 3200 }), shade: "Berry" },
+      product(1, "fwee", "Cushion Glass Original", { date: "2026-11-07", store: "Sephora", price: 0 }),
+    ]);
+    const [sephora] = await purchases();
+    const [shaded, plain] = itemsOf(sephora);
+    expect(shaded).toHaveTextContent(/^Milk Makeup Hydro Grip Primer – Berry\s*\$32\.00$/);
+    // The name and shade are one text node beside the muted brand, so they share the name's style.
+    const nameAndShade = within(shaded).getByText("Milk Makeup").parentElement as HTMLElement;
+    const textNodes = Array.from(nameAndShade.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent?.trim())
+      .filter(Boolean);
+    expect(textNodes).toEqual(["Hydro Grip Primer – Berry"]);
+    expect(plain).toHaveTextContent(/^fwee Cushion Glass Original\s*\$0\.00$/);
+  });
+
   // @spec PURCH-LIST-010
   it("says there are no purchases yet when no product has one", async () => {
     renderList([product(6, "jane iredale", "Lash Fixation Mascara")]);
