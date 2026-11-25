@@ -76,6 +76,7 @@ export function CategoryEditor({ categories, usage }: CategoryEditorProps) {
     return !saving && typed !== "" && !allCategories.some((name) => matches(name, typed));
   }
 
+  // @spec PROD-CATEDIT-037
   function addCategory(group: string) {
     const typed = (newCategories[group] ?? "").trim();
     const names = categories?.[group] ?? [];
@@ -87,6 +88,7 @@ export function CategoryEditor({ categories, usage }: CategoryEditorProps) {
   // @spec PROD-CATEDIT-025, PROD-CATEDIT-026
   const canAddGroup = !saving && newGroup.trim() !== "" && !groupNames.some((name) => matches(name, newGroup));
 
+  // @spec PROD-CATEDIT-037
   function addGroup() {
     return saveCategories({ ...(categories ?? {}), [newGroup.trim()]: [] }, () => setNewGroup(""));
   }
