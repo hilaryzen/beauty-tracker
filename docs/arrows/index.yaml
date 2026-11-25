@@ -75,7 +75,7 @@ arrows:
   app-shell:
     status: MAPPED
     parent: null
-    sampled: 2026-11-07
+    sampled: 2026-11-25
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: []

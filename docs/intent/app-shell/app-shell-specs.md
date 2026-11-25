@@ -38,10 +38,10 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 ## Settings Page
 
 - [x] **SHELL-SET-001**: The settings page (`/settings`) shall show the top-level heading "Settings".
-- [ ] **SHELL-SET-002**: The settings page (`/settings`) shall show the category editor and the routine editor below its heading.
-- [ ] **SHELL-SET-005**: While the window is at least as wide as Chakra's `lg` breakpoint, the settings page (`/settings`) shall show the category editor and the routine editor side by side in equal-width columns, with the category editor on the left.
-- [ ] **SHELL-SET-006**: While the window is narrower than Chakra's `lg` breakpoint, the settings page (`/settings`) shall show the routine editor above the category editor.
-- [ ] **SHELL-SET-007**: The settings page (`/settings`) shall place the category editor before the routine editor in the page's document order.
+- [x] **SHELL-SET-002**: The settings page (`/settings`) shall show the category editor and the routine editor below its heading.
+- [x] **SHELL-SET-005**: While the window is at least as wide as Chakra's `lg` breakpoint, the settings page (`/settings`) shall show the category editor and the routine editor side by side in equal-width columns, with the category editor on the left.
+- [x] **SHELL-SET-006**: While the window is narrower than Chakra's `lg` breakpoint, the settings page (`/settings`) shall show the routine editor above the category editor.
+- [x] **SHELL-SET-007**: The settings page (`/settings`) shall place the category editor before the routine editor in the page's document order.
 - [x] **SHELL-SET-003**: If `configs.json` or `usage.json` cannot be read when the settings page loads, then the system shall respond with status 500 and the status text "Your data could not be loaded."
 - [x] **SHELL-SET-004**: When the settings page loads, the system shall not write `usage.json`.
 
