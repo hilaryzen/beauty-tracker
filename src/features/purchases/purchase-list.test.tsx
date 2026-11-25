@@ -13,6 +13,7 @@ function product(id: number, brand: string, name: string, purchase?: Product["pu
     name,
     brand,
     category: "Primer",
+    status: "Opened",
     uses: {},
     currentMonth: "2026-11",
     usesThisMonth: 0,

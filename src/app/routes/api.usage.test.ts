@@ -42,12 +42,12 @@ describe("/api/usage", () => {
   });
 
   // @spec PROD-001
-  it("returns product records with id, name, brand, category, uses, current month, and current-month count", async () => {
+  it("returns product records with id, name, brand, category, status, uses, current month, and current-month count", async () => {
     await writeData("usage.json", sampleUsage);
     const result = await get();
     const records = result instanceof Response ? await result.json() : result;
     expect(Object.keys(records[0]).sort()).toEqual(
-      ["brand", "category", "currentMonth", "id", "name", "uses", "usesThisMonth"].sort(),
+      ["brand", "category", "currentMonth", "id", "name", "status", "uses", "usesThisMonth"].sort(),
     );
   });
 

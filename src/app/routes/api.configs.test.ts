@@ -174,7 +174,7 @@ describe("/api/configs", () => {
     const move = new Request("http://localhost/api/products", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: 0, name: sampleUsage[0].name, brand: sampleUsage[0].brand, category: "Toner" }),
+      body: JSON.stringify({ id: 0, name: sampleUsage[0].name, brand: sampleUsage[0].brand, category: "Toner", status: sampleUsage[0].status }),
     });
     await Promise.all([removal, settle(() => productsAction({ request: move } as Parameters<typeof productsAction>[0]))]);
 
