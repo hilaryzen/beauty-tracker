@@ -1,7 +1,9 @@
 import { Button, Flex, Table, Tabs, Text } from "@chakra-ui/react"
 import { AddMinusButtons } from "@/components/add-minus-buttons/main";
 import { ProductDialog } from "@/features/products/product-dialog";
+import { formatSize, isProductSize, isRating } from "@/features/products/product-details";
 import { productName } from "@/features/products/product-name";
+import { formatDollars } from "@/features/purchases/money";
 import type { Product } from "@/features/products/types";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -23,7 +25,7 @@ function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-UI-026, USAGE-UI-027, USAGE-UI-028, USAGE-UI-029, USAGE-UI-030, USAGE-LOG-001, USAGE-LOG-002
+// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-UI-026, USAGE-UI-027, USAGE-UI-028, USAGE-UI-029, USAGE-UI-030, USAGE-UI-031, USAGE-UI-032, USAGE-UI-033, USAGE-UI-034, USAGE-UI-035, USAGE-UI-036, USAGE-UI-037, USAGE-LOG-001, USAGE-LOG-002
 export const UsageTable = ({ usage, categories }: UsageTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,6 +95,9 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
                 <Table.ColumnHeader>Category</Table.ColumnHeader>
                 <Table.ColumnHeader>Product</Table.ColumnHeader>
                 <Table.ColumnHeader>Brand</Table.ColumnHeader>
+                <Table.ColumnHeader>Size</Table.ColumnHeader>
+                <Table.ColumnHeader>Cost</Table.ColumnHeader>
+                <Table.ColumnHeader>Rating</Table.ColumnHeader>
                 <Table.ColumnHeader>Overall Uses</Table.ColumnHeader>
                 <Table.ColumnHeader>This Month's Uses</Table.ColumnHeader>
                 <Table.ColumnHeader>Purchased</Table.ColumnHeader>
@@ -108,6 +113,10 @@ export const UsageTable = ({ usage, categories }: UsageTableProps) => {
                   <Table.Cell>{item.category}</Table.Cell>
                   <Table.Cell>{productName(item)}</Table.Cell>
                   <Table.Cell>{item.brand}</Table.Cell>
+                  {/* A size or rating that breaks the record rules can only come from a hand edit; its cell stays empty, as in the product dialog. */}
+                  <Table.Cell>{isProductSize(item.size) ? formatSize(item.size) : null}</Table.Cell>
+                  <Table.Cell>{item.purchase ? formatDollars(item.purchase.price) : null}</Table.Cell>
+                  <Table.Cell>{isRating(item.rating) ? item.rating : null}</Table.Cell>
                   <Table.Cell>{overallUses(item)}</Table.Cell>
                   <Table.Cell>{item.usesThisMonth}</Table.Cell>
                   {/* Dates show as stored, YYYY-MM-DD; a missing date leaves its cell empty. */}

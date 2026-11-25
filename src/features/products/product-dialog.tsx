@@ -1,6 +1,7 @@
-import { Button, CloseButton, Dialog, Field, Input, NativeSelect, Portal, Stack } from "@chakra-ui/react";
+import { Button, CloseButton, Dialog, Field, HStack, Input, NativeSelect, Portal, Stack, Textarea } from "@chakra-ui/react";
 import { type FormEvent, useState } from "react";
 import { today } from "@/utils/today";
+import { formatAmount, isProductSize, isRating, parseSizeAmount, SIZE_UNITS } from "./product-details";
 import type { Product } from "./types";
 import { type Categories, findCategory, useProductEditor } from "./use-product-editor";
 
@@ -29,7 +30,7 @@ function isConfigured(categories: Categories | undefined, category: string) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-EDIT-021, PROD-EDIT-022, PROD-EDIT-023, PROD-EDIT-024, PROD-EDIT-025, PROD-EDIT-026, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
+// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-EDIT-021, PROD-EDIT-022, PROD-EDIT-023, PROD-EDIT-024, PROD-EDIT-025, PROD-EDIT-026, PROD-EDIT-027, PROD-EDIT-028, PROD-EDIT-029, PROD-EDIT-030, PROD-EDIT-031, PROD-EDIT-032, PROD-EDIT-033, PROD-EDIT-034, PROD-EDIT-035, PROD-EDIT-036, PROD-EDIT-037, PROD-EDIT-038, PROD-EDIT-039, PROD-EDIT-040, PROD-EDIT-041, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
 function ProductForm({ product, categories, saving, onSavingChange, onClose, onSaved }: ProductFormProps) {
   const { saveProduct } = useProductEditor(categories);
   const [name, setName] = useState(product?.name ?? "");
@@ -38,6 +39,12 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
   const [opened, setOpened] = useState(product?.opened ?? "");
   const [expires, setExpires] = useState(product?.expires ?? "");
   const [removed, setRemoved] = useState(product?.removed ?? "");
+  // A stored size or rating that breaks the record rules can only come from a hand edit; it starts blank.
+  const storedSize = isProductSize(product?.size) ? product.size : undefined;
+  const [sizeAmount, setSizeAmount] = useState(storedSize ? formatAmount(storedSize.amount) : "");
+  const [sizeUnit, setSizeUnit] = useState<string>(storedSize?.unit ?? "");
+  const [rating, setRating] = useState(isRating(product?.rating) ? String(product.rating) : "");
+  const [notes, setNotes] = useState(typeof product?.notes === "string" ? product.notes : "");
   const [category, setCategory] = useState(
     product && isConfigured(categories, product.category) ? product.category : "",
   );
@@ -50,8 +57,12 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
   const isNewGroup = isNewCategory && !matched && group === NEW_GROUP;
 
   const maxDate = today();
+  const hasSizeAmount = sizeAmount.trim() !== "";
+  const invalidSizeAmount = hasSizeAmount && parseSizeAmount(sizeAmount) === undefined;
   const canSave =
     !saving &&
+    !invalidSizeAmount &&
+    (!hasSizeAmount || sizeUnit !== "") &&
     opened <= maxDate &&
     removed <= maxDate &&
     name.trim() !== "" &&
@@ -71,6 +82,10 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
       opened,
       expires,
       removed,
+      sizeAmount,
+      sizeUnit,
+      rating,
+      notes,
       brand,
       category: isNewCategory ? newCategory : category,
       group: isNewGroup ? newGroup : group,
@@ -157,6 +172,40 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
           <Field.Root>
             <Field.Label>Date removed</Field.Label>
             <Input type="date" max={maxDate} value={removed} onChange={(event) => setRemoved(event.target.value)} />
+          </Field.Root>
+          {/* The amount and unit are separate fields so each control gets its own id; the unit is named by aria-label. */}
+          <HStack align="end" width="full">
+            <Field.Root invalid={invalidSizeAmount}>
+              <Field.Label>Size</Field.Label>
+              <Input inputMode="decimal" value={sizeAmount} onChange={(event) => setSizeAmount(event.target.value)} />
+            </Field.Root>
+            <Field.Root width="10rem">
+              <NativeSelect.Root>
+                <NativeSelect.Field aria-label="Size unit" value={sizeUnit} onChange={(event) => setSizeUnit(event.target.value)}>
+                  <option value="" disabled>Unit</option>
+                  {SIZE_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>{unit}</option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
+          </HStack>
+          <Field.Root>
+            <Field.Label>Rating</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field value={rating} onChange={(event) => setRating(event.target.value)}>
+                <option value=""></option>
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <option key={value} value={String(value)}>{value}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
+          <Field.Root>
+            <Field.Label>Notes</Field.Label>
+            <Textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </Field.Root>
         </Stack>
       </Dialog.Body>

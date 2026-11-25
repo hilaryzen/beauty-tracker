@@ -1,5 +1,6 @@
 import type { Route } from "./+types/api.products";
 import { isCleanName } from "@/features/products/category-rules";
+import { isProductSize, isRating, SIZE_UNITS } from "@/features/products/product-details";
 import type { Product } from "@/features/products/types";
 import { isCalendarDate } from "@/utils/calendar-date";
 import { modifyFiles } from "@/utils/files.server";
@@ -13,7 +14,7 @@ function errorResponse(message: string, status: number) {
 }
 
 /** Fields a request may leave out; leaving one out means the product has none. */
-const OPTIONAL_KEYS = ["shade", "opened", "expires", "removed"] as const;
+const OPTIONAL_KEYS = ["shade", "opened", "expires", "removed", "size", "rating", "notes"] as const;
 const DATE_KEYS = ["opened", "expires", "removed"] as const;
 /** Dates that must not be after today. */
 const PAST_DATE_KEYS = ["opened", "removed"] as const;
@@ -22,7 +23,7 @@ type ProductFields = Pick<Product, "name" | "brand" | "category" | (typeof OPTIO
 type ProductChange = ProductFields & Pick<Product, "id">;
 
 /** Returns a message describing the first problem with the body's shape, or undefined if it is valid. */
-// @spec PROD-API-007, PROD-API-008, PROD-API-009, PROD-API-012, PROD-API-023, PROD-API-029, PROD-API-030
+// @spec PROD-API-007, PROD-API-008, PROD-API-009, PROD-API-012, PROD-API-023, PROD-API-029, PROD-API-030, PROD-API-035, PROD-API-036, PROD-API-037, PROD-API-038, PROD-API-039
 function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return "The request body must be an object";
@@ -43,6 +44,11 @@ function checkShape(body: unknown, requiredKeys: string[]): string | undefined {
   for (const key of PAST_DATE_KEYS) {
     if (key in fields && (fields[key] as string) > today()) return `${key} must not be after today`;
   }
+  if ("size" in fields && !isProductSize(fields.size)) {
+    return `size must be an amount greater than 0 and a unit of ${SIZE_UNITS.join(", ")}`;
+  }
+  if ("rating" in fields && !isRating(fields.rating)) return "rating must be a whole number from 1 to 5";
+  if ("notes" in fields && !isCleanName(fields.notes)) return "notes must not be blank or start or end with spaces";
 }
 
 /** The optional fields the body has, so a field the body leaves out is absent from the record. */
@@ -54,8 +60,8 @@ function nextId(usage: Product[]) {
   return Math.max(-1, ...usage.map((record) => record.id)) + 1;
 }
 
-/** Appends a new record, with an id one higher than any existing one, the body's shade and dates if any, and no purchase. */
-// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021, PROD-API-024, PROD-API-025, PROD-API-031, PROD-API-032
+/** Appends a new record, with an id one higher than any existing one, the body's optional fields if any, and no purchase. */
+// @spec PROD-API-001, PROD-API-002, PROD-API-003, PROD-API-021, PROD-API-024, PROD-API-025, PROD-API-031, PROD-API-032, PROD-API-040, PROD-API-041
 function addProduct(usage: Product[], fields: ProductFields): Product[] {
   const { name, brand, category } = fields;
   const id = nextId(usage);
@@ -67,9 +73,9 @@ function addProduct(usage: Product[], fields: ProductFields): Product[] {
 
 /**
  * Replaces the fields the products segment owns, leaving the id, counts, and purchase alone.
- * A body without a shade or a date removes that field from the record.
+ * A body without one of the optional fields removes that field from the record.
  */
-// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022, PROD-API-026, PROD-API-027, PROD-API-033, PROD-API-034
+// @spec PROD-002, PROD-API-004, PROD-API-005, PROD-API-011, PROD-API-022, PROD-API-026, PROD-API-027, PROD-API-033, PROD-API-034, PROD-API-042, PROD-API-043
 function editProduct(usage: Product[], change: ProductChange): Product[] {
   const { id, name, brand, category } = change;
   if (!usage.some((record) => record.id === id)) throw new ValidationError(`No product has id ${id}`);
