@@ -53,7 +53,7 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 `UsageTable` (`src/features/usage/usage-table.tsx`) renders an Add product button above one row per product, with columns: Category, Product, Brand, Overall Uses, This Month's Uses, +/- controls, and an edit button.
 
 - **Sort order** — rows are ordered by the position of their `category` in the concatenation of all category groups, taken in the groups' configured order. Rows with equal position keep file order (stable sort). If `configs.json` has no `categories` key, there are no groups: every row has the same position and the table shows file order.
-- **Product** — the product's name, followed by an en dash and its shade when it has one (`Lip Glow – Berry`).
+- **Product** — the product's name with its shade (products design, *Product Name with Shade*).
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
 - **This Month's Uses** — `usesThisMonth`.
 - **Add product and edit buttons** — open the products segment's `ProductDialog`, to add a product or to edit that row's product.
