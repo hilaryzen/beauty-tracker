@@ -56,7 +56,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 | `/api/configs` | POST (invalid) | Body failing validation | 400 with JSON body `{ "error": "<message>" }`; file unchanged |
 | `/api/configs` | POST (storage failure) | Any | 500 with JSON body `{ "error": "<message>" }`; file unchanged |
 
-`/api/configs` is the write path for in-app editing of routines and categories (HLD Goal 4). A POST carries only the parts being changed: `categories`, `routines`, or both. Through the `configs.json` update queue, the route reads the current `configs.json`, replaces each key present in the body, keeps the rest, and writes the result.
+`/api/configs` is the write path for in-app editing of routines and categories (HLD Goal 4). A POST carries only the parts being changed: `categories`, `routines`, or both. Through a multi-file update holding `configs.json` and `usage.json`, the route reads the current `configs.json`, replaces each key present in the body, keeps the rest, and writes the result. Holding `usage.json` means no product can change between validation against it and the write, so removing a category can never orphan a product saved at the same moment.
 
 **Validation.** Before writing, the route validates each key present in the body: `categories` against the products segment's rules, `routines` against the routines segment's rules. Routine validation checks product ids against `usage.json`. A body with any top-level key other than `categories` and `routines` is invalid. The error message describes the first failure found.
 
@@ -64,7 +64,7 @@ Reads and writes fail differently on purpose. A failed read is reported by the c
 
 **All-or-nothing.** If any part fails validation, the route responds 400 and writes nothing, so the file never holds a half-valid config. If the route cannot complete because a data file cannot be read or written — `configs.json` for the merge, `usage.json` for routine or category validation, or the final write — it responds 500 and the file is left as it was.
 
-No UI calls the route yet.
+The category editor calls the route (products design, *Category Editor*).
 
 The `/api/usage` endpoint, including its validation, is specified by the usage segment, `/api/products` by the products segment, and `/api/purchases` by the purchases segment.
 
@@ -88,12 +88,12 @@ The `/api/usage` endpoint, including its validation, is specified by the usage s
 | Write failures | `updateFile` rethrows; routes respond 500 | Log and report success | A silently lost write leaves the UI showing data that was never saved, undermining counts that cost per use depends on |
 | Multi-file updates | Hold every named file's queue for the whole update; the caller orders its writes | Write each file through its own queue; roll back earlier writes on failure | Another write landing between steps could invalidate a check or be overwritten. Rollback is itself a write that can fail, while ordered writes leave valid data at every step (HLD *Cross-file writes*) |
 | Queue order for multi-file updates | Alphabetical by file name | Order given by the caller | A fixed order means two updates can never each wait on a queue the other holds |
+| Queues held by `/api/configs` | `configs.json` and `usage.json` | `configs.json` only | Validation reads `usage.json`; without holding it, a product saved mid-validation could be left with a category that was just removed |
 | Read failures | `getFile` logs and returns `undefined`; callers respond 500 | Throw to caller; respond 404 | Each caller words the failure for its audience; a 404 would claim the resource does not exist when the data behind it failed to load |
 
 ## Open Questions & Future Decisions
 
-### Deferred
-1. **Cross-file consistency** — a config update validates against `usage.json` without holding `usage.json`'s queue, so a product change landing mid-validation could be missed. Harmless while nothing in the app removes a category; revisit when a category editor can.
+None.
 
 ## References
 
