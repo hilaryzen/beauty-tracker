@@ -3,6 +3,7 @@ import { useState } from "react";
 import { productName } from "@/features/products/product-name";
 import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
+import { formatDate } from "./format-date";
 import { formatDollars } from "./money";
 import { PurchaseDialog } from "./purchase-dialog";
 import type { ProductPurchase } from "./types";
@@ -13,15 +14,6 @@ type PurchaseListProps = {
 };
 
 type Purchase = { date: string; store?: string; products: (Product & { purchase: ProductPurchase })[] };
-
-const dateFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-/** `YYYY-MM-DD` as `Nov 7, 2026`, read as a local date. */
-// @spec PURCH-LIST-005
-function formatDate(date: string) {
-  const [year, month, day] = date.split("-").map(Number);
-  return dateFormat.format(new Date(year, month - 1, day));
-}
 
 /** Products grouped by purchase date and exact store, newest first, then by store, with no store last. */
 // @spec PURCH-LIST-002, PURCH-LIST-003, PURCH-LIST-004, PURCH-LIST-008
