@@ -34,12 +34,12 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-EDIT-018**: When the page's loaders revalidate while the product dialog is open, the dialog shall keep the contents of its fields.
 - [x] **PROD-EDIT-019**: The product dialog shall show its name, shade, brand, and category inputs in that order.
 - [x] **PROD-EDIT-020**: The product dialog shall not disable Save because the shade input is blank.
-- [ ] **PROD-EDIT-021**: The product dialog shall show a date opened, a date expiring, and a date removed date picker, in that order, after its category input.
-- [ ] **PROD-EDIT-022**: When the product dialog opens to add a product, the dialog shall show the date opened, date expiring, and date removed pickers empty.
-- [ ] **PROD-EDIT-023**: When the product dialog opens to edit a product, the dialog shall show the product's `opened`, `expires`, and `removed` dates in the date opened, date expiring, and date removed pickers respectively, leaving a picker empty where the product has no such date.
-- [ ] **PROD-EDIT-024**: The product dialog's date opened and date removed pickers shall not offer dates after today's local date.
-- [ ] **PROD-EDIT-025**: While the product dialog's date opened or date removed picker holds a date after today's local date, the dialog shall disable Save.
-- [ ] **PROD-EDIT-026**: The product dialog shall not disable Save because the date opened, date expiring, or date removed picker is empty.
+- [x] **PROD-EDIT-021**: The product dialog shall show a date opened, a date expiring, and a date removed date picker, in that order, after its category input.
+- [x] **PROD-EDIT-022**: When the product dialog opens to add a product, the dialog shall show the date opened, date expiring, and date removed pickers empty.
+- [x] **PROD-EDIT-023**: When the product dialog opens to edit a product, the dialog shall show the product's `opened`, `expires`, and `removed` dates in the date opened, date expiring, and date removed pickers respectively, leaving a picker empty where the product has no such date.
+- [x] **PROD-EDIT-024**: The product dialog's date opened and date removed pickers shall not offer dates after today's local date.
+- [x] **PROD-EDIT-025**: While the product dialog's date opened or date removed picker holds a date after today's local date, the dialog shall disable Save.
+- [x] **PROD-EDIT-026**: The product dialog shall not disable Save because the date opened, date expiring, or date removed picker is empty.
 
 ## Saving a Product
 
@@ -60,8 +60,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-SAVE-015**: When a POST to `/api/products` from the product dialog succeeds, the page shall report the new product's `id` to the component that opened the dialog after revalidating its loaders.
 - [x] **PROD-SAVE-016**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed shade is not blank, the page shall include the trimmed shade as `shade` in the request body.
 - [x] **PROD-SAVE-017**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed shade is blank, the page shall leave `shade` out of the request body.
-- [ ] **PROD-SAVE-018**: When the product dialog sends a POST or PUT to `/api/products`, for each of the date opened, date expiring, and date removed pickers that holds a date, the page shall include that date in the request body as `opened`, `expires`, or `removed` respectively.
-- [ ] **PROD-SAVE-019**: When the product dialog sends a POST or PUT to `/api/products`, for each of the date opened, date expiring, and date removed pickers that is empty, the page shall leave `opened`, `expires`, or `removed` respectively out of the request body.
+- [x] **PROD-SAVE-018**: When the product dialog sends a POST or PUT to `/api/products`, for each of the date opened, date expiring, and date removed pickers that holds a date, the page shall include that date in the request body as `opened`, `expires`, or `removed` respectively.
+- [x] **PROD-SAVE-019**: When the product dialog sends a POST or PUT to `/api/products`, for each of the date opened, date expiring, and date removed pickers that is empty, the page shall leave `opened`, `expires`, or `removed` respectively out of the request body.
 
 ## Product API
 
