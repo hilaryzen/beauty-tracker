@@ -21,6 +21,7 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 | `name` | string | Product name | Products |
 | `brand` | string | Brand name | Products |
 | `category` | string | A category name listed in `configs.json → categories` | Products |
+| `status` | `"Backlog"` \| `"Opened"` \| `"In Progress"` \| `"Panned"` \| `"Decluttered"` | Where the product is in its life (*Product Status*) | Products |
 | `shade` | string, optional | The product's shade or color variant, such as `Berry`. Absent when the product has none | Products |
 | `opened` | `"YYYY-MM-DD"`, optional | The day the product was first opened. Absent when not recorded | Products |
 | `expires` | `"YYYY-MM-DD"`, optional | The day the product expires. Absent when not recorded | Products |
@@ -37,6 +38,7 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 - `id` is an integer, unique across all records.
 - `name` and `brand` each contain at least one non-whitespace character and neither starts nor ends with whitespace.
 - `category` names a category present in `configs.json → categories`.
+- `status` is one of `Backlog`, `Opened`, `In Progress`, `Panned`, and `Decluttered`.
 - `shade`, when present, contains at least one non-whitespace character and neither starts nor ends with whitespace.
 - `opened`, `expires`, and `removed`, when present, are each a real calendar date in `YYYY-MM-DD` form.
 - `opened` and `removed`, when present, are no later than the server's current local date. `expires` may be any date.
@@ -48,6 +50,22 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 - `purchase`, when present, satisfies the purchases design's field rules.
 
 The `/api/products` route validates each product it saves against these rules. Logging and month rollover preserve them by construction, and the `/api/purchases` route validates each purchase it records.
+
+## Product Status
+
+Every product has exactly one status, set by the user in the product dialog:
+
+| Status | Meaning |
+|---|---|
+| `Backlog` | Owned but not yet opened |
+| `Opened` | Opened, but not being actively used up |
+| `In Progress` | Being actively used up |
+| `Panned` | Used up |
+| `Decluttered` | Gotten rid of before being used up |
+
+The values are stored exactly as shown, which is also how pages display them. Status order — `In Progress`, `Opened`, `Backlog`, `Panned`, `Decluttered` — puts the products in active use first and the ones no longer owned last; `statusRank()` (`src/features/products/product-status.ts`) gives each status its position in that order, and the usage table sorts by it (usage design, *Usage Table*).
+
+Status is set by hand and is independent of the dates: choosing a status does not fill in or clear a date, and a status is not checked against the dates (a `Backlog` product may have an opened date). As with the dates, an odd combination is the user's to fix (*Low friction over precision*).
 
 ## Product Name with Shade
 
@@ -63,6 +81,7 @@ Where a page shows a product's name, it shows the name followed by ` – ` (spac
 │ Shade             [___________] │
 │ Brand             [___________] │
 │ Category          [Foundation ▾]│
+│ Status            [Backlog    ▾]│
 │ Date opened       [2026-11-07]  │
 │ Date expiring     [__________]  │
 │ Date removed      [__________]  │
@@ -74,9 +93,11 @@ Where a page shows a product's name, it shows the name followed by ` – ` (spac
 └─────────────────────────────────┘
 ```
 
-**Fields.** Name, brand, and category are required. Shade is optional: when editing, it starts with the product's shade, or blank if it has none, and saving with it blank leaves the product with no shade.
+**Fields.** Name, brand, category, and status are required. Shade is optional: when editing, it starts with the product's shade, or blank if it has none, and saving with it blank leaves the product with no shade.
 
-Date opened, date expiring, and date removed are optional date pickers (native date inputs), shown after category. Each starts blank when adding; when editing, each starts with the product's date, or blank if it has none, and saving with one blank leaves the product without that date. Date opened and date removed do not offer dates after today's local date; date expiring offers any date. Dates are not checked against each other or against the purchase date: they are entered by hand, often long after the fact, and an odd combination is the user's to fix (*Low friction over precision*).
+Status is a dropdown shown after category, offering the five statuses in the order a product moves through them — `Backlog`, `Opened`, `In Progress`, `Panned`, `Decluttered` — and no blank option. It starts at `Backlog` when adding; when editing, it starts with the product's status, or with nothing chosen if the stored status is not one of the five (possible only by a hand edit). While nothing is chosen it shows the placeholder `Status`.
+
+Date opened, date expiring, and date removed are optional date pickers (native date inputs), shown after status. Each starts blank when adding; when editing, each starts with the product's date, or blank if it has none, and saving with one blank leaves the product without that date. Date opened and date removed do not offer dates after today's local date; date expiring offers any date. Dates are not checked against each other or against the purchase date: they are entered by hand, often long after the fact, and an odd combination is the user's to fix (*Low friction over precision*).
 
 Size, rating, and notes are optional and shown after the date pickers, in that order. Each starts blank when adding; when editing, each starts with the product's value, or blank if it has none, and saving with it blank leaves the product without it.
 
@@ -91,13 +112,13 @@ Category is a dropdown of the configured categories, listed under their groups i
 **Saving.** `useProductEditor()` (`src/features/products/use-product-editor.ts`) trims the text fields and saves in up to two requests, one at a time:
 
 1. If the category name is new, POST the current categories plus the new one to `/api/configs`, which applies the category rules. If this fails, nothing is saved and step 2 does not run.
-2. POST (add) or PUT (edit) the product to `/api/products`. The request carries `shade` only when the trimmed shade is not blank, each of `opened`, `expires`, and `removed` only when its date picker holds a date, `size` only when the size amount is not blank (as `{ amount, unit }` with the amount as a number), `rating` only when one is chosen, and `notes` only when the trimmed notes are not blank.
+2. POST (add) or PUT (edit) the product to `/api/products`. The request always carries `status`, and carries `shade` only when the trimmed shade is not blank, each of `opened`, `expires`, and `removed` only when its date picker holds a date, `size` only when the size amount is not blank (as `{ amount, unit }` with the amount as a number), `rating` only when one is chosen, and `notes` only when the trimmed notes are not blank.
 
 The category is saved first so that a failure between the two steps leaves at worst an unused category, never a product whose category is not configured. An unused category is valid and appears in the dropdown.
 
 A typed category name that matches a configured category, ignoring capitalization, is treated as that category: the product uses the configured spelling and step 1 is skipped. While the name matches, the group dropdown shows that category's group and is disabled, and the new group name input is hidden, so the form shows where the product is going and does not offer a choice it would ignore. This also makes retrying after a failed step 2 safe. A typed group name that matches an existing group, ignoring capitalization, is treated as that group.
 
-**After saving.** On success the dialog closes and the page's loaders revalidate. When it has added a product, the dialog then reports the new product's `id`, once the loaders have revalidated, to the component that opened it (`onSaved`), so the purchase form can choose the product it just created. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category or group is not chosen, or while date opened or date removed is after today, or while the size amount is invalid or is filled in with no unit chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
+**After saving.** On success the dialog closes and the page's loaders revalidate. When it has added a product, the dialog then reports the new product's `id`, once the loaders have revalidated, to the component that opened it (`onSaved`), so the purchase form can choose the product it just created. On any failure the dialog stays open with its contents, and an error notification shows the server's message, or says the change was not saved if there was no response or the response carries no message. If step 1 succeeded and step 2 failed, the loaders still revalidate so the new category appears in the dropdown. Save is disabled while a required field is blank or a category, group, or status is not chosen, or while date opened or date removed is after today, or while the size amount is invalid or is filled in with no unit chosen. It is also disabled while a save is in flight, so a double click cannot add a product twice. Save stays enabled when nothing has changed, and sends the request as usual.
 
 **Closing.** Cancel, Esc, and the close control close the dialog and discard its contents. A click outside the dialog does nothing, so a stray click cannot lose what was typed. While a save is in flight the dialog cannot be closed, so the result of the save, including a failure, is seen in context.
 
@@ -109,8 +130,8 @@ Routines refer to products by `id`, so renaming a product updates its routine ca
 
 Inside one multi-file update holding `configs.json` and `usage.json` (data-store design, *Multi-file updates*), the `/api/products` route validates the body, including that its category is configured, and writes `usage.json` once:
 
-- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, and each of `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes` that the body has, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
-- **Edit** — replaces `name`, `brand`, and `category`; sets each of `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes` to the body's value, or removes it when the body has none; and leaves every other field unchanged.
+- **Add** — assigns `id` as the highest existing id plus 1 (0 if there are no products), sets `name`, `brand`, `category`, `status`, and each of `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes` that the body has, sets `uses` to `{}`, `currentMonth` to the server's current month, and `usesThisMonth` to 0, gives it no `purchase`, appends the record, and responds with the new `id`.
+- **Edit** — replaces `name`, `brand`, `category`, and `status`; sets each of `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes` to the body's value, or removes it when the body has none; and leaves every other field unchanged.
 
 The route reads and writes records through the data store, not through usage's loader, and applies no rollover. A record that has not rolled over yet rolls over the next time usage data is loaded. Because each write runs in the queues, overlapping adds each see the previous one's record and get different ids, and a category edit cannot remove the product's category between the check and the write.
 
@@ -189,8 +210,8 @@ A case-only rename (`cleanser` to `Cleanser`) cannot hold both names at once, be
 
 | Endpoint | Method | Request | Response |
 |---|---|---|---|
-| `/api/products` | POST | `{ "name", "brand", "category", "shade"?, "opened"?, "expires"?, "removed"?, "size"?, "rating"?, "notes"? }` | `{ "id": <new id> }`; product added |
-| `/api/products` | PUT | `{ "id", "name", "brand", "category", "shade"?, "opened"?, "expires"?, "removed"?, "size"?, "rating"?, "notes"? }` | `null`; product changed |
+| `/api/products` | POST | `{ "name", "brand", "category", "status", "shade"?, "opened"?, "expires"?, "removed"?, "size"?, "rating"?, "notes"? }` | `{ "id": <new id> }`; product added |
+| `/api/products` | PUT | `{ "id", "name", "brand", "category", "status", "shade"?, "opened"?, "expires"?, "removed"?, "size"?, "rating"?, "notes"? }` | `null`; product changed |
 | `/api/products` | POST or PUT (invalid) | Body failing validation | 400 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | POST or PUT (storage failure) | Any | 500 with `{ "error": "<message>" }`; file unchanged |
 | `/api/products` | PATCH or DELETE | Any | 405 with `{ "error": "<message>" }`; file unchanged |
@@ -199,7 +220,7 @@ A case-only rename (`cleanser` to `Cleanser`) cannot hold both names at once, be
 | `/api/categories` | POST (storage failure) | Any | 500 with `{ "error": "<message>" }`; files keep the steps completed before the failure |
 | `/api/categories` | GET, PUT, PATCH, or DELETE | Any | 405 with `{ "error": "<message>" }`; files unchanged |
 
-An `/api/products` body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes` may be left out; `name`, `brand`, and each of the optional keys when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
+An `/api/products` body is valid when it is a JSON object with the keys listed for its method and no others, where only `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes` may be left out; `name`, `brand`, `status`, and each of the optional keys when present satisfy the record rules; and `category` names a configured category. On a PUT, `id` must also match a product's `id`. The error message describes the first failure found.
 
 ## Decisions & Alternatives
 
@@ -229,6 +250,13 @@ An `/api/products` body is valid when it is a JSON object with the keys listed f
 | Malformed dates already stored | A stored date the date picker cannot show, such as `Nov 5`, starts blank, so saving the product removes it | Report the bad value in the dialog; reject the edit | Only a hand edit can store one, as with a partly typed date (*Simplicity over robustness*) |
 | Future opened or removed dates already stored | The dialog shows them, and Save stays disabled until they are corrected | Accept them on edit | Only a hand edit can store one, and correcting it in the dialog takes one step |
 | Date removed and ownership | Stored and shown only; a removed product still appears and can be logged everywhere | Hide or dim removed products | What "currently owned" means belongs to the inventory design (HLD Goal 3) |
+| Product status | A required field with five fixed values, owned by products and edited in the product dialog | Derive it from the opened and removed dates; an optional field; user-configured statuses like categories | A product's place in its life is a choice the dates cannot make: `Opened` and `In Progress` differ only in intent, and `Panned` and `Decluttered` share a removed date. Being required gives every product a place in the usage table's sort. Five fixed values need no editor, and the sort order is defined against them |
+| Status values stored | The display labels (`In Progress`) | Lowercase keys (`in-progress`) mapped to labels | One spelling in the file and on the page needs no mapping (*Simplicity over robustness*); a label change would mean rewriting records, which is unlikely for five settled words |
+| Status and dates | Independent: neither sets nor checks the other | Choosing a status fills a blank opened or removed date with today; reject mismatches | Matches the dates, which are not checked against each other: they are often entered from memory, and a mismatch is the user's to fix (*Low friction over precision*) |
+| Status dropdown order | The order a product moves through: `Backlog`, `Opened`, `In Progress`, `Panned`, `Decluttered` | Status order, as the usage table sorts | Moving a product along is the common edit, and its next status is the next option down |
+| Status on other pages | Shown and sorted by only in the usage table; routine cards and the routine editor's and purchase dialog's product dropdowns list products whatever their status | Leave `Panned` and `Decluttered` products out of the dropdowns | What "currently owned" means belongs to the inventory design (HLD Goal 3), as with the removed date |
+| Starting status when adding | `Backlog` | No preselection | Most products are added when bought, before they are opened, so the common case takes no click |
+| Stored status that is not one of the five | The dialog starts with no status chosen, and Save stays disabled until one is | Show it; default it to `Backlog` | Only a hand edit can store one; choosing a status takes one step, and a silent default could hide a real status |
 | Size, rating, and notes | Optional fields on the record, owned by products and edited in the product dialog | A free-text size; notes kept in a separate file | They describe the product itself and are set one product at a time, like shade and dates |
 | Product cost | No cost field on the product; what a product cost is its `purchase.price` | A list or retail price on the product beside the purchase price | One price per product keeps cost per use unambiguous (HLD *Purchase model*) |
 | Size shape | An amount and one of four units: `oz`, `fl oz`, `g`, `mL` | A single free-text string such as `1.7 fl oz`; any unit | A number with a fixed unit can be compared and computed with later; four units cover beauty packaging. `oz` (weight) and `fl oz` (volume) are both offered because labels use both |
@@ -274,6 +302,7 @@ An `/api/products` body is valid when it is a JSON object with the keys listed f
 - src/features/products/use-product-editor.ts
 - src/features/products/product-name.ts
 - src/features/products/product-details.ts
+- src/features/products/product-status.ts
 - src/app/routes/api.products.ts
 - src/utils/calendar-date.ts
 - src/utils/today.ts
