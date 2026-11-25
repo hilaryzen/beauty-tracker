@@ -38,6 +38,10 @@ Each product is a `Product` (`src/features/products/types.ts`) stored in `usage.
 
 The `/api/products` route validates each product it saves against these rules. Logging and month rollover preserve them by construction, and the `/api/purchases` route validates each purchase it records.
 
+## Product Name with Shade
+
+Where a page shows a product's name, it shows the name followed by ` – ` (space, en dash, space) and the shade when the product has one (`Lip Glow – Berry`), all in the same text style as the name, so two shades of one product can be told apart. A product without a shade shows its name alone. `productName()` (`src/features/products/product-name.ts`) builds this text. The usage table, routine cards, purchase list, and purchase dialog's product dropdown show products this way (usage, routines, and purchases designs). Error messages from the server that name a product use its name alone.
+
 ## Product Dialog
 
 `ProductDialog` (`src/features/products/product-dialog.tsx`) is one modal form used for both adding and editing. The usage table opens it (usage design, *Usage Table*) and passes it the configured categories. Because it is modal, the +/- controls and routine cards cannot be clicked while it is open.
@@ -124,6 +128,8 @@ A body is valid when it is a JSON object with the keys listed for its method and
 | Shade | An optional field of its own | Part of the name; a free-text notes field | Keeps the product name the same across shades of one product, so two shades of it read as the same product in different colors |
 | Clearing a shade | A blank Shade field removes `shade` from the record | Keep the stored shade when the field is blank | Otherwise a shade, once set, could never be removed in the app (HLD Goal 4) |
 | Shade in requests | Omitted when there is none; a PUT without `shade` removes it | Send `""` or `null` for no shade | A PUT already replaces every field products owns, and an absent key matches an absent field on the record. One rule — any `shade` sent must be a clean name — needs no special values |
+| Showing a shade | One format, defined here and built by `productName()`, used wherever a page shows a product | Each segment formats the shade its own way | A product reads the same on every page, and a change to the format is made once |
+| Shade in error messages | Left out; a server error names a product by its name alone | Use the name with shade there too | Errors that name a product are rare and cannot come from the app's own forms, so the shade would add nothing a user would see |
 | Duplicate products | Allowed | Reject a repeated name and brand | A repurchase can be tracked separately |
 | Group for an existing category typed as new | Filled in and locked | Require a group and ignore it; hide the group dropdown | Shows where the product is going without offering a choice that would be ignored |
 | Clicking outside the dialog | Does nothing; Cancel, Esc, and the close control close it | Chakra's default of closing on an outside click | A stray click should not lose what was typed |
@@ -140,8 +146,7 @@ A body is valid when it is a JSON object with the keys listed for its method and
 ### Deferred
 1. **Deleting products** — HLD Goal 4 requires deleting products in the app. Not yet designed. It must settle what happens to routines that list the product (routines design, deferred question 2), and whether the highest-id-plus-1 rule can reuse a deleted product's id.
 2. **Category editor** — HLD Goal 4 requires editing categories in the app. Not yet designed. The product dialog can add categories and groups but not rename or remove them, so removing an unused category needs a hand edit until this exists.
-3. **Shade outside the usage table** — routine cards, the purchase list, and the purchase dialog's product chooser show a product without its shade, so two shades of one product look the same there. Showing it belongs to the routines and purchases segments.
-4. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
+3. **Categories as their own segment** — today categories serve sorting and the record rules; split out if inventory or purchases add category behavior of their own.
 
 ## References
 
