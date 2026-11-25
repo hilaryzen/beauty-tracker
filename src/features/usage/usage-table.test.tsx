@@ -214,6 +214,88 @@ describe("a product's dates in the usage table", () => {
   });
 });
 
+describe("a product's size, cost, and rating in the usage table", () => {
+  const COLUMNS = ["Size", "Cost", "Rating"];
+
+  function headers() {
+    return screen.getAllByRole("columnheader").map((header) => header.textContent);
+  }
+
+  // The text of the row's Size, Cost, and Rating cells, found by their headers' positions.
+  function detailCells(tr: HTMLElement) {
+    const cells = within(tr).getAllByRole("cell");
+    return COLUMNS.map((column) => cells[headers().indexOf(column)].textContent);
+  }
+
+  function withPrimer(changes: Record<string, unknown>) {
+    return { usage: [{ ...sampleUsage[0], ...changes }, ...sampleUsage.slice(1)], categories: sampleConfigs.categories } as PageData;
+  }
+
+  // @spec USAGE-UI-031
+  it("shows Size, Cost, and Rating columns after Brand and before Overall Uses", async () => {
+    renderTable();
+    await screen.findAllByRole("cell");
+    const all = headers();
+    const at = all.indexOf("Brand");
+    expect(all.slice(at + 1, at + 5)).toEqual([...COLUMNS, "Overall Uses"]);
+    expect(within(await row("Hydro Grip Primer")).getAllByRole("cell")).toHaveLength(all.length);
+  });
+
+  // @spec USAGE-UI-032, USAGE-UI-034, USAGE-UI-036
+  it("shows the size, the purchase price, and the rating", async () => {
+    renderTable(withPrimer({
+      size: { amount: 1.7, unit: "fl oz" },
+      purchase: { date: "2026-09-14", price: 3200 },
+      rating: 4,
+    }));
+    expect(detailCells(await row("Hydro Grip Primer"))).toEqual(["1.7 fl oz", "$32.00", "4"]);
+  });
+
+  // @spec USAGE-UI-032
+  it.each([
+    [{ amount: 50, unit: "mL" }, "50 mL"],
+    [{ amount: 0.25, unit: "oz" }, "0.25 oz"],
+    [{ amount: 7.5, unit: "g" }, "7.5 g"],
+  ])("writes the size %o as %s", async (size, text) => {
+    renderTable(withPrimer({ size }));
+    expect(detailCells(await row("Hydro Grip Primer"))[0]).toBe(text);
+  });
+
+  // @spec USAGE-UI-034
+  it.each([
+    [0, "$0.00"],
+    [1999, "$19.99"],
+    [120000, "$1,200.00"],
+  ])("shows a purchase price of %i cents as the purchase list does: %s", async (price, text) => {
+    renderTable(withPrimer({ purchase: { date: "2026-09-14", price } }));
+    expect(detailCells(await row("Hydro Grip Primer"))[1]).toBe(text);
+  });
+
+  // @spec USAGE-UI-033, USAGE-UI-035, USAGE-UI-037
+  it("leaves the Size, Cost, and Rating cells empty when the product has none", async () => {
+    renderTable(withPrimer({ rating: 2 }));
+    expect(detailCells(await row("Hydro Grip Primer"))).toEqual(["", "", "2"]);
+    expect(detailCells(await row("Cushion Glass Original"))).toEqual(["", "", ""]);
+  });
+
+  // @spec USAGE-UI-033
+  it.each([
+    ["a string", "1.7 fl oz"],
+    ["an unknown unit", { amount: 30, unit: "ml" }],
+    ["a zero amount", { amount: 0, unit: "g" }],
+    ["a text amount", { amount: "30", unit: "g" }],
+  ])("leaves the Size cell empty when the size is %s", async (_, size) => {
+    renderTable(withPrimer({ size }));
+    expect(detailCells(await row("Hydro Grip Primer"))[0]).toBe("");
+  });
+
+  // @spec USAGE-UI-037
+  it.each([0, 6, 3.5, "4"])("leaves the Rating cell empty when the rating is %s", async (rating) => {
+    renderTable(withPrimer({ rating }));
+    expect(detailCells(await row("Hydro Grip Primer"))[2]).toBe("");
+  });
+});
+
 describe("opening the product dialog", () => {
   // @spec USAGE-UI-007
   it("shows an Add product button above the rows", async () => {
