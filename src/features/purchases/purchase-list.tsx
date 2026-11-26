@@ -5,7 +5,7 @@ import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
 import { formatDate } from "./format-date";
 import { formatDollars } from "./money";
-import { PurchaseDialog } from "./purchase-dialog";
+import { type EditedPurchase, PurchaseDialog } from "./purchase-dialog";
 import type { ProductPurchase } from "./types";
 
 type PurchaseListProps = {
@@ -35,15 +35,28 @@ function groupPurchases(usage: Product[]): Purchase[] {
   });
 }
 
-// @spec PURCH-LIST-001, PURCH-LIST-006, PURCH-LIST-007, PURCH-LIST-010, PURCH-LIST-011, PURCH-DLG-001
+/** The purchase as the dialog edits it: a snapshot taken when Edit is activated. */
+function toEdited({ date, store, products }: Purchase): EditedPurchase {
+  return { date, store, items: products.map((product) => ({ productId: product.id, price: product.purchase.price })) };
+}
+
+// @spec PURCH-LIST-001, PURCH-LIST-006, PURCH-LIST-007, PURCH-LIST-010, PURCH-LIST-011, PURCH-LIST-012, PURCH-LIST-013, PURCH-DLG-001, PURCH-DLG-030
 export function PurchaseList({ usage, categories }: PurchaseListProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  // The purchase being edited, snapshotted when Edit is activated; none when adding. Kept while the
+  // dialog closes, so its title does not change as it animates out.
+  const [editing, setEditing] = useState<EditedPurchase | undefined>();
+
+  function openDialog(purchase?: EditedPurchase) {
+    setEditing(purchase);
+    setDialogOpen(true);
+  }
   const purchases = groupPurchases(usage);
 
   return (
     <>
       <Flex justify="flex-end" mb="4">
-        <Button onClick={() => setDialogOpen(true)}>Add purchase</Button>
+        <Button onClick={() => openDialog()}>Add purchase</Button>
       </Flex>
       {purchases.length === 0 ? (
         <Text color="fg.muted">No purchases yet.</Text>
@@ -51,6 +64,7 @@ export function PurchaseList({ usage, categories }: PurchaseListProps) {
         <Stack gap="4">
           {purchases.map((purchase) => {
             const total = purchase.products.reduce((sum, product) => sum + product.purchase.price, 0);
+            const name = `${formatDate(purchase.date)}${purchase.store === undefined ? "" : ` · ${purchase.store}`}`;
             return (
               <Box
                 as="article"
@@ -69,7 +83,17 @@ export function PurchaseList({ usage, categories }: PurchaseListProps) {
                       </>
                     )}
                   </Heading>
-                  <Text fontWeight="semibold">{`Total ${formatDollars(total)}`}</Text>
+                  <HStack gap="3">
+                    <Text fontWeight="semibold">{`Total ${formatDollars(total)}`}</Text>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      aria-label={`Edit purchase ${name}`}
+                      onClick={() => openDialog(toEdited(purchase))}
+                    >
+                      Edit
+                    </Button>
+                  </HStack>
                 </Flex>
                 <List.Root listStyleType="none" gap="1">
                   {purchase.products.map((product) => (
@@ -90,6 +114,7 @@ export function PurchaseList({ usage, categories }: PurchaseListProps) {
       )}
       <PurchaseDialog
         open={dialogOpen}
+        editing={editing}
         usage={usage}
         categories={categories}
         onClose={() => setDialogOpen(false)}
