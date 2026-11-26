@@ -6,6 +6,12 @@ export function formatDollars(cents: number) {
   return dollars.format(cents / 100);
 }
 
+/** Formats cents as a dollar amount to type into a price input, such as `32.00`. */
+// @spec PURCH-DLG-033
+export function formatAmount(cents: number) {
+  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
+}
+
 /**
  * Parses a typed dollar amount into whole cents: digits with an optional decimal point and at most
  * two decimal places, ignoring surrounding whitespace and one leading `$`. Returns undefined if the

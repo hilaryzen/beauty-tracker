@@ -10,15 +10,12 @@ export type PurchaseDraft = {
   items: { productId: number; price: number }[];
 };
 
-// @spec PURCH-SAVE-001, PURCH-SAVE-002, PURCH-SAVE-003, PURCH-SAVE-005
+// @spec PURCH-SAVE-001, PURCH-SAVE-002, PURCH-SAVE-003, PURCH-SAVE-005, PURCH-SAVE-010, PURCH-SAVE-011
 export function usePurchaseEditor() {
   const { revalidate } = useRevalidator();
 
-  /** Saves the purchase and reloads the page's data. Returns whether it saved. */
-  async function savePurchase({ date, store, items }: PurchaseDraft) {
-    const trimmedStore = store.trim();
-    const body = trimmedStore === "" ? { date, items } : { date, store: trimmedStore, items };
-    const result = await sendJson("/api/purchases", "POST", body);
+  async function send(method: "POST" | "PUT" | "DELETE", body: unknown) {
+    const result = await sendJson("/api/purchases", method, body);
     if (!result.ok) {
       toaster.create({ type: "error", title: result.message });
       return false;
@@ -27,5 +24,20 @@ export function usePurchaseEditor() {
     return true;
   }
 
-  return { savePurchase };
+  /**
+   * Saves the purchase and reloads the page's data: adds it, or, given the ids of the products an
+   * existing purchase had, replaces that purchase. Returns whether it saved.
+   */
+  function savePurchase({ date, store, items }: PurchaseDraft, replaces?: number[]) {
+    const trimmedStore = store.trim();
+    const fields = trimmedStore === "" ? { date, items } : { date, store: trimmedStore, items };
+    return replaces === undefined ? send("POST", fields) : send("PUT", { replaces, ...fields });
+  }
+
+  /** Deletes the purchase made up of these products and reloads the page's data. Returns whether it deleted. */
+  function deletePurchase(productIds: number[]) {
+    return send("DELETE", { productIds });
+  }
+
+  return { savePurchase, deletePurchase };
 }

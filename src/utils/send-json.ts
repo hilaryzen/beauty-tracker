@@ -7,7 +7,7 @@ const notSaved = "Your change was not saved.";
  * on failure, the message to show: the server's `error`, or a generic "not saved" message.
  */
 // @spec PROD-SAVE-011, PROD-SAVE-012, PROD-SAVE-014, PURCH-SAVE-007, PURCH-SAVE-008, PURCH-SAVE-009
-export async function sendJson(url: string, method: "POST" | "PUT", body: unknown): Promise<SendResult> {
+export async function sendJson(url: string, method: "POST" | "PUT" | "DELETE", body: unknown): Promise<SendResult> {
   let response: Response;
   try {
     response = await fetch(url, {

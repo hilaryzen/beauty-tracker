@@ -671,3 +671,333 @@ describe("finished products in the purchase dialog", () => {
     expect(optionTexts(productSelects()[1])).not.toContain("Saie Dew Serum");
   });
 });
+
+describe("editing a purchase", () => {
+  // Gel (5) and brush (7) form the Nov 1 Sephora purchase.
+  const brush = product(7, "Real Techniques", "Brow Brush", "Primer", { date: "2026-11-01", store: "Sephora", price: 1200 });
+  const withBrush = [...usage, brush];
+  const editName = "Edit purchase Nov 1, 2026 · Sephora";
+
+  function renderEditable(records: Product[] = withBrush) {
+    return renderPurchases(vi.fn(() => ({ usage: records, categories })));
+  }
+
+  async function openEditDialog(name = editName) {
+    fireEvent.click(await screen.findByRole("button", { name }));
+    const dialog = await screen.findByRole("dialog", { name: "Edit purchase" });
+    await within(dialog).findByLabelText("Date");
+    return dialog;
+  }
+
+  async function openConfirmation(dialog: HTMLElement) {
+    fireEvent.click(button("Delete", dialog));
+    return screen.findByRole("alertdialog", { name: "Delete this purchase?" });
+  }
+
+  // While the delete confirmation is open, it hides the edit dialog behind it from assistive technology.
+  function editDialog() {
+    return screen.getByRole("dialog", { name: "Edit purchase", hidden: true });
+  }
+
+  function hiddenButton(name: string, container: HTMLElement) {
+    return within(container).getByRole("button", { name, hidden: true });
+  }
+
+  function methodOf(call: unknown[]) {
+    return (call[1] as RequestInit).method?.toUpperCase();
+  }
+
+  describe("opening and fields", () => {
+    // @spec PURCH-DLG-030, PURCH-DLG-032
+    it("opens the purchase dialog titled Edit purchase from a purchase's Edit button", async () => {
+      renderEditable();
+      expect(await openEditDialog()).toBeInTheDocument();
+    });
+
+    // @spec PURCH-DLG-031
+    it("titles the dialog Add purchase when adding", async () => {
+      renderEditable();
+      fireEvent.click(await screen.findByRole("button", { name: "Add purchase" }));
+      expect(await screen.findByRole("dialog", { name: "Add purchase" })).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "Edit purchase" })).toBeNull();
+    });
+
+    // @spec PURCH-DLG-033
+    it("starts with the purchase's date, store, and one item per product in id order with its price", async () => {
+      renderEditable();
+      await openEditDialog();
+      expect(screen.getByLabelText("Date")).toHaveValue("2026-11-01");
+      expect(screen.getByLabelText("Store")).toHaveValue("Sephora");
+      expect(productSelects().map(selectedText)).toEqual([label(gel), label(brush)]);
+      expect(priceInputs().map((input) => input.value)).toEqual(["24.50", "12.00"]);
+    });
+
+    // @spec PURCH-DLG-033
+    it("starts with an empty store when the purchase has none", async () => {
+      const { store: _store, ...noStore } = gel.purchase!;
+      renderEditable([...usage.filter((record) => record !== gel), { ...gel, purchase: noStore }]);
+      await openEditDialog("Edit purchase Nov 1, 2026");
+      expect(screen.getByLabelText("Store")).toHaveValue("");
+      expect(productSelects().map(selectedText)).toEqual([label(gel)]);
+    });
+
+    // @spec PURCH-DLG-034
+    it("offers the purchase's own products, even finished ones, when no other item has chosen them", async () => {
+      renderEditable([...usage, { ...brush, status: "Panned" }]);
+      await openEditDialog();
+      expect(optionTexts(productSelects()[0])).not.toContain(label(brush));
+      fireEvent.click(screen.getAllByRole("button", { name: "Remove item" })[1]);
+      expect(optionTexts(productSelects()[0])).toContain(label(brush));
+      fireEvent.click(button("Add item"));
+      const offered = optionTexts(productSelects()[1]);
+      expect(offered).toContain(label(brush));
+      expect(offered).toContain(label(primer));
+      expect(offered).not.toContain(label(gel));
+      expect(offered).not.toContain(label(spray));
+    });
+
+    // @spec PURCH-DLG-035
+    it("shows a Delete button when editing", async () => {
+      renderEditable();
+      const dialog = await openEditDialog();
+      expect(button("Delete", dialog)).toBeInTheDocument();
+    });
+
+    // @spec PURCH-DLG-036
+    it("shows no Delete button when adding", async () => {
+      renderEditable();
+      const dialog = await openPurchaseDialog();
+      expect(within(dialog).queryByRole("button", { name: "Delete" })).toBeNull();
+    });
+
+    // @spec PURCH-DLG-042
+    it("keeps naming the products the purchase had when it opened after the page's data refreshes", async () => {
+      const loader = vi
+        .fn()
+        .mockReturnValueOnce({ usage: withBrush, categories })
+        .mockReturnValue({
+          usage: [{ ...primer, purchase: { date: "2026-11-01", store: "Sephora", price: 100 } }, ...withBrush.slice(1)],
+          categories,
+        });
+      renderPurchases(loader);
+      await openEditDialog();
+      fireEvent.click(screen.getByText("Refresh"));
+      await waitFor(() => expect(loader.mock.calls.length).toBeGreaterThan(1));
+      expect(productSelects()).toHaveLength(2);
+      fireEvent.click(button("Save", editDialog()));
+      await waitFor(() => expect(requestsTo("/api/purchases")).toHaveLength(1));
+      expect(bodyOf(requestsTo("/api/purchases")[0]).replaces).toEqual([5, 7]);
+    });
+  });
+
+  describe("saving an edit", () => {
+    // @spec PURCH-SAVE-010
+    it("PUTs the replaced products, the date, and each item's product id and price in whole cents, in order", async () => {
+      renderEditable();
+      await openEditDialog();
+      fill(screen.getByLabelText("Date"), "2026-10-31");
+      fill(priceInputs()[0], "20");
+      fireEvent.click(screen.getAllByRole("button", { name: "Remove item" })[1]);
+      fireEvent.click(button("Add item"));
+      chooseProduct(1, label(primer));
+      fill(priceInputs()[1], "$3.5");
+      fireEvent.click(button("Save", editDialog()));
+      await waitFor(() => expect(requestsTo("/api/purchases")).toHaveLength(1));
+      const call = requestsTo("/api/purchases")[0];
+      expect(methodOf(call)).toBe("PUT");
+      expect(bodyOf(call)).toEqual({
+        replaces: [5, 7],
+        date: "2026-10-31",
+        store: "Sephora",
+        items: [
+          { productId: 5, price: 2000 },
+          { productId: 0, price: 350 },
+        ],
+      });
+    });
+
+    // @spec PURCH-SAVE-002, PURCH-SAVE-003
+    it("sends the trimmed store, or none when it is blank", async () => {
+      renderEditable();
+      await openEditDialog();
+      fill(screen.getByLabelText("Store"), "  Ulta ");
+      fireEvent.click(button("Save", editDialog()));
+      await waitFor(() => expect(requestsTo("/api/purchases")).toHaveLength(1));
+      expect(bodyOf(requestsTo("/api/purchases")[0]).store).toBe("Ulta");
+
+      await openEditDialog();
+      fill(screen.getByLabelText("Store"), "   ");
+      fireEvent.click(button("Save", editDialog()));
+      await waitFor(() => expect(requestsTo("/api/purchases")).toHaveLength(2));
+      expect(bodyOf(requestsTo("/api/purchases")[1])).not.toHaveProperty("store");
+    });
+
+    // @spec PURCH-SAVE-004, PURCH-SAVE-005
+    it("closes the dialog and reloads the page data after a successful edit", async () => {
+      const loader = renderEditable();
+      await openEditDialog();
+      fireEvent.click(button("Save", editDialog()));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
+    });
+
+    // @spec PURCH-SAVE-006, PURCH-SAVE-007
+    it("keeps the dialog open with its contents and shows the server's message when an edit fails", async () => {
+      respond({ "/api/purchases": errorResponse("This purchase has changed", 400) });
+      renderEditable();
+      await openEditDialog();
+      fill(screen.getByLabelText("Store"), "Ulta");
+      fireEvent.click(button("Save", editDialog()));
+      expect(await screen.findByText("This purchase has changed")).toBeInTheDocument();
+      expect(screen.getByLabelText("Store")).toHaveValue("Ulta");
+      expect(priceInputs().map((input) => input.value)).toEqual(["24.50", "12.00"]);
+    });
+
+    // @spec PURCH-DLG-039
+    it("disables Delete while a save is in flight", async () => {
+      respond({ "/api/purchases": never });
+      renderEditable();
+      const dialog = await openEditDialog();
+      fireEvent.click(button("Save", dialog));
+      await waitFor(() => expect(button("Delete", dialog)).toBeDisabled());
+    });
+  });
+
+  describe("deleting", () => {
+    // @spec PURCH-DLG-037
+    it("asks for confirmation over the edit dialog before deleting", async () => {
+      renderEditable();
+      const dialog = await openEditDialog();
+      const confirmation = await openConfirmation(dialog);
+      expect(within(confirmation).getByText(/no purchase/i)).toBeInTheDocument();
+      expect(button("Delete", confirmation)).toBeInTheDocument();
+      expect(button("Cancel", confirmation)).toBeInTheDocument();
+      expect(editDialog()).toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    // @spec PURCH-DLG-038
+    it("closes only the confirmation on its Cancel, Esc, or close control", async () => {
+      renderEditable();
+      const dialog = await openEditDialog();
+      fill(screen.getByLabelText("Store"), "Ulta");
+
+      fireEvent.click(button("Cancel", await openConfirmation(dialog)));
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+
+      const second = await openConfirmation(dialog);
+      await waitForEscListener(second);
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+
+      fireEvent.click(button("Close", await openConfirmation(dialog)));
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+
+      expect(editDialog()).toBeInTheDocument();
+      expect(screen.getByLabelText("Store")).toHaveValue("Ulta");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    // @spec PURCH-DLG-043
+    it("keeps the confirmation open when the user clicks outside it", async () => {
+      renderEditable();
+      const dialog = await openEditDialog();
+      await openConfirmation(dialog);
+      await waitPastOutsideClickSetup();
+      const outside = { clientX: 500, clientY: 500 };
+      fireEvent.pointerDown(document.body, outside);
+      fireEvent.pointerUp(document.body, outside);
+      fireEvent.click(document.body, outside);
+      await waitPastOutsideClickSetup();
+      expect(screen.getByRole("alertdialog", { name: "Delete this purchase?" })).toBeInTheDocument();
+    });
+
+    // @spec PURCH-SAVE-011
+    it("sends a DELETE listing the products the purchase had when the dialog opened", async () => {
+      renderEditable();
+      const dialog = await openEditDialog();
+      fireEvent.click(screen.getAllByRole("button", { name: "Remove item" })[1]);
+      fireEvent.click(button("Delete", await openConfirmation(dialog)));
+      await waitFor(() => expect(requestsTo("/api/purchases")).toHaveLength(1));
+      const call = requestsTo("/api/purchases")[0];
+      expect(methodOf(call)).toBe("DELETE");
+      expect(bodyOf(call)).toEqual({ productIds: [5, 7] });
+    });
+
+    // @spec PURCH-SAVE-004, PURCH-SAVE-005
+    it("closes both dialogs and reloads the page data after a successful delete", async () => {
+      const loader = renderEditable();
+      const dialog = await openEditDialog();
+      fireEvent.click(button("Delete", await openConfirmation(dialog)));
+      await waitFor(() => {
+        expect(screen.queryByRole("alertdialog")).toBeNull();
+        expect(screen.queryByRole("dialog", { hidden: true })).toBeNull();
+      });
+      await waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
+    });
+
+    // @spec PURCH-SAVE-006, PURCH-SAVE-007, PURCH-SAVE-012
+    it("closes only the confirmation and shows the server's message when a delete fails", async () => {
+      respond({ "/api/purchases": errorResponse("This purchase has changed", 400) });
+      renderEditable();
+      const dialog = await openEditDialog();
+      fill(screen.getByLabelText("Store"), "Ulta");
+      fireEvent.click(button("Delete", await openConfirmation(dialog)));
+      expect(await screen.findByText("This purchase has changed")).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+      expect(editDialog()).toBeInTheDocument();
+      expect(screen.getByLabelText("Store")).toHaveValue("Ulta");
+    });
+
+    // @spec PURCH-SAVE-008
+    it("says the change was not saved when a delete fails with no message", async () => {
+      respond({ "/api/purchases": () => Promise.resolve(new Response("oops", { status: 500 })) });
+      renderEditable();
+      const dialog = await openEditDialog();
+      fireEvent.click(button("Delete", await openConfirmation(dialog)));
+      expect(await screen.findByText(/not saved/i)).toBeInTheDocument();
+    });
+
+    // @spec PURCH-SAVE-009
+    it("says the change was not saved when a delete gets no response", async () => {
+      respond({ "/api/purchases": () => Promise.reject(new TypeError("Failed to fetch")) });
+      renderEditable();
+      const dialog = await openEditDialog();
+      fireEvent.click(button("Delete", await openConfirmation(dialog)));
+      expect(await screen.findByText(/not saved/i)).toBeInTheDocument();
+      expect(editDialog()).toBeInTheDocument();
+    });
+
+    // @spec PURCH-DLG-039, PURCH-DLG-040
+    it("disables Delete and Save while a delete is in flight", async () => {
+      respond({ "/api/purchases": never });
+      renderEditable();
+      const dialog = await openEditDialog();
+      const confirmation = await openConfirmation(dialog);
+      fireEvent.click(button("Delete", confirmation));
+      await waitFor(() => expect(button("Delete", confirmation)).toBeDisabled());
+      expect(hiddenButton("Delete", dialog)).toBeDisabled();
+      expect(hiddenButton("Save", dialog)).toBeDisabled();
+    });
+
+    // @spec PURCH-DLG-041, PURCH-DLG-044
+    it("ignores Cancel, Esc, and the close controls of both dialogs while a delete is in flight", async () => {
+      respond({ "/api/purchases": never });
+      renderEditable();
+      const dialog = await openEditDialog();
+      const confirmation = await openConfirmation(dialog);
+      await waitForEscListener(confirmation);
+      fireEvent.click(button("Delete", confirmation));
+      await waitFor(() => expect(button("Delete", confirmation)).toBeDisabled());
+
+      fireEvent.click(button("Cancel", confirmation));
+      fireEvent.click(button("Close", confirmation));
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      fireEvent.click(hiddenButton("Cancel", dialog));
+      fireEvent.click(hiddenButton("Close", dialog));
+      await waitPastOutsideClickSetup();
+      expect(screen.getByRole("alertdialog", { name: "Delete this purchase?" })).toBeInTheDocument();
+      expect(editDialog()).toBeInTheDocument();
+    });
+  });
+});

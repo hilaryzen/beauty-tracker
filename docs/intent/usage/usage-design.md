@@ -60,11 +60,11 @@ Callers pass a list of ids, so the same hook serves single-product logging (usag
 - **Status** — the product's `status` as stored (`In Progress`). Empty when the product has no `status`, or one that is not one of the five.
 - **Product** — the product's name with its shade (products design, *Product Name with Shade*).
 - **Size** — the product's `size` (products design, *Product Record*) as its amount written without trailing zeros, a space, and its unit (`1.7 fl oz`, `50 mL`). Empty when the product has no size, or a size that breaks the products record rules (possible only by a hand edit), matching how the product dialog treats one.
-- **Cost** — the product's purchase price (`purchase.price`, purchases design, *Purchase Field*) as US dollars with two decimal places (`$32.00`), the format the purchases page uses (`formatDollars`). `$0.00` for a gift or free sample. Empty when the product has no purchase. The table only shows the price; it is changed by adding a purchase.
+- **Cost** — the product's purchase price (`purchase.price`, purchases design, *Purchase Field*) as US dollars with two decimal places (`$32.00`), the format the purchases page uses (`formatDollars`). `$0.00` for a gift or free sample. Empty when the product has no purchase. The table only shows the price; it is changed on the purchases page.
 - **Rating** — the product's `rating` as a bare number (`4`). Empty when the product has no rating, or a rating that is not an integer from 1 to 5.
 - **Overall Uses** — sum of all values in `uses`, plus `usesThisMonth`.
 - **This Month's Uses** — `usesThisMonth`.
-- **Purchased, Opened, Expires, Removed** — the product's purchase date (`purchase.date`, purchases design, *Purchase Field*) and its `opened`, `expires`, and `removed` dates (products design, *Product Record*), each shown as stored, in `YYYY-MM-DD` form. A cell is empty when the product has no such date. The table only shows these dates; they are changed in the product dialog and, for the purchase date, by adding a purchase.
+- **Purchased, Opened, Expires, Removed** — the product's purchase date (`purchase.date`, purchases design, *Purchase Field*) and its `opened`, `expires`, and `removed` dates (products design, *Product Record*), each shown as stored, in `YYYY-MM-DD` form. A cell is empty when the product has no such date. The table only shows these dates; they are changed in the product dialog and, for the purchase date, on the purchases page.
 - **Add product and edit buttons** — open the products segment's `ProductDialog`, to add a product or to edit that row's product.
 
 ## API
