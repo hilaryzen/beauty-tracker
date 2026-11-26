@@ -16,8 +16,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-008**: The system shall allow a product record to carry an optional `notes` field, a string.
 - [x] **PROD-009**: The system shall restrict a product record's `status` to one of `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`.
 - [x] **PROD-010**: The system shall rank product statuses in the order `In Progress`, `Opened`, `Backlog`, `Panned`, `Decluttered`, first to last.
-- [ ] **PROD-011**: The system shall treat a product record whose `status` is `Panned` or `Decluttered` as finished.
-- [ ] **PROD-012**: The system shall treat a product record that has no `status`, or a `status` other than `Panned` or `Decluttered`, as not finished.
+- [x] **PROD-011**: The system shall treat a product record whose `status` is `Panned` or `Decluttered` as finished.
+- [x] **PROD-012**: The system shall treat a product record that has no `status`, or a `status` other than `Panned` or `Decluttered`, as not finished.
 
 ## Product Dialog
 

@@ -15,7 +15,7 @@ What a product is: the product record, categories, adding and editing products, 
 - docs/intent/products/products-design.md
 
 ### EARS
-- docs/intent/products/products-specs.md (204 specs)
+- docs/intent/products/products-specs.md (206 specs)
 
 ### Tests
 - src/app/routes/api.products.test.ts
@@ -56,13 +56,13 @@ What a product is: the product record, categories, adding and editing products, 
 6. `CategoryEditor` — adds, renames, reorders, moves, and deletes categories and groups on the settings page, saving each edit at once (`category-editor.tsx`)
 7. `productName` — a product's name with its shade, used by the usage table, routine cards, routine editor, and purchases page (`product-name.ts`)
 8. Size and rating rules — `isProductSize`, `isRating`, the size units, size formatting, and size amount parsing, shared by `/api/products`, the product dialog, and the usage table (`product-details.ts`)
-9. Status values — the five statuses in lifecycle order, `isStatus`, and `statusRank` for status order, shared by `/api/products`, the product dialog, and the usage table (`product-status.ts`)
+9. Status values — the five statuses in lifecycle order, `isStatus`, `statusRank` for status order, and `isFinished` for Panned and Decluttered products, shared by `/api/products`, the product dialog, the usage table, the routine editor, and the purchase dialog (`product-status.ts`)
 
 ## Spec Coverage
 
 | Category | Spec IDs | Implemented | Deferred | Gaps |
 |----------|----------|-------------|----------|------|
-| Record | PROD-001 to PROD-010 | 10 | 0 | 0 |
+| Record | PROD-001 to PROD-012 | 12 | 0 | 0 |
 | Dialog | PROD-EDIT-001 to PROD-EDIT-049 | 49 | 0 | 0 |
 | Saving | PROD-SAVE-001 to PROD-SAVE-026 | 26 | 0 | 0 |
 | API | PROD-API-001 to PROD-API-046 | 46 | 0 | 0 |
@@ -70,7 +70,7 @@ What a product is: the product record, categories, adding and editing products, 
 | Category rename | PROD-CATAPI-001 to PROD-CATAPI-023 | 23 | 0 | 0 |
 | Category editor | PROD-CATEDIT-001 to PROD-CATEDIT-046 | 46 | 0 | 0 |
 
-**Summary:** 204 specs, all `[x]`.
+**Summary:** 206 specs, all `[x]`.
 
 ## Key Findings
 
