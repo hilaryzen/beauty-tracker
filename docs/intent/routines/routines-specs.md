@@ -28,7 +28,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **ROUT-EDIT-004**: If a routine lists a product id that matches no product record, then the routine editor shall show "Unknown product (id N)", with N the id, in that product's place.
 - [x] **ROUT-EDIT-005**: The routine editor shall show Rename, Move up, Move down, and Delete controls for each routine.
 - [x] **ROUT-EDIT-006**: The routine editor shall show Move up, Move down, and Remove controls for each product listed in a routine, including an unknown product.
-- [ ] **ROUT-EDIT-057**: While a routine lists a finished product (PROD-011), the routine editor shall list that product in the routine's section with Move up, Move down, and Remove controls.
+- [x] **ROUT-EDIT-057**: While a routine lists a finished product (PROD-011), the routine editor shall list that product in the routine's section with Move up, Move down, and Remove controls.
 - [x] **ROUT-EDIT-007**: The routine editor shall end each routine's section with an "Add product" dropdown.
 - [x] **ROUT-EDIT-008**: The routine editor shall end with a new routine name input, a "First product" dropdown, and an Add routine button, after every routine's section.
 - [x] **ROUT-EDIT-009**: While no routines are configured, the routine editor shall show only the new routine name input, the "First product" dropdown, and the Add routine button.
@@ -44,10 +44,10 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **ROUT-EDIT-053**: Where a product record's category is not a configured category, each product dropdown in the routine editor that lists the product shall list it under an option group named for its category, placed after the option groups of configured categories.
 - [x] **ROUT-EDIT-054**: Each product dropdown in the routine editor shall order the option groups of categories that are not configured by the order in which those categories first appear in `usage.json`.
 - [x] **ROUT-EDIT-016**: A routine's "Add product" dropdown shall leave out the products already listed in that routine.
-- [ ] **ROUT-EDIT-017**: While a routine's "Add product" dropdown has no product to list, the routine editor shall disable that dropdown.
-- [ ] **ROUT-EDIT-018**: The routine editor's "First product" dropdown shall list every product record that is not finished (PROD-012).
-- [ ] **ROUT-EDIT-055**: Each product dropdown in the routine editor shall leave out finished products (PROD-011), subject to ROUT-EDIT-056.
-- [ ] **ROUT-EDIT-056**: While a product is chosen in the routine editor's "First product" dropdown, the dropdown shall list that product, whether or not it is finished.
+- [x] **ROUT-EDIT-017**: While a routine's "Add product" dropdown has no product to list, the routine editor shall disable that dropdown.
+- [x] **ROUT-EDIT-018**: The routine editor's "First product" dropdown shall list every product record that is not finished (PROD-012).
+- [x] **ROUT-EDIT-055**: Each product dropdown in the routine editor shall leave out finished products (PROD-011), subject to ROUT-EDIT-056.
+- [x] **ROUT-EDIT-056**: While a product is chosen in the routine editor's "First product" dropdown, the dropdown shall list that product, whether or not it is finished.
 
 ### Edits
 
@@ -108,4 +108,4 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **ROUT-VAL-003**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine lists no products.
 - [x] **ROUT-VAL-004**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any routine lists the same product id more than once.
 - [x] **ROUT-VAL-005**: When a `routines` value is validated for a POST to `/api/configs`, the system shall treat it as failing validation if any listed product id matches no product record in `usage.json`.
-- [ ] **ROUT-VAL-007**: When a `routines` value is validated for a POST to `/api/configs`, the system shall not treat it as failing validation because a listed product is finished (PROD-011).
+- [x] **ROUT-VAL-007**: When a `routines` value is validated for a POST to `/api/configs`, the system shall not treat it as failing validation because a listed product is finished (PROD-011).

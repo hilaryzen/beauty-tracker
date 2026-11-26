@@ -3,6 +3,7 @@ import { type KeyboardEvent, useState } from "react";
 import { useRevalidator } from "react-router";
 import { toaster } from "@/components/ui/toaster";
 import { productName } from "@/features/products/product-name";
+import { isFinished } from "@/features/products/product-status";
 import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
 import { formatDate } from "@/features/purchases/format-date";
@@ -30,13 +31,21 @@ function swap<T>(items: T[], index: number, other: number) {
 }
 
 /**
- * The products not in `exclude`, grouped by category: configured categories in configured order,
+ * The products that are not finished and not in `exclude`, plus the chosen product `keep` if any,
+ * grouped by category: configured categories in configured order,
  * then categories that are not configured in order of first appearance. Options whose text would
  * collide show their purchase date when they have one.
  */
-// @spec ROUT-EDIT-010, ROUT-EDIT-011, ROUT-EDIT-012, ROUT-EDIT-013, ROUT-EDIT-014, ROUT-EDIT-015, ROUT-EDIT-053, ROUT-EDIT-054
-export function productOptions(usage: Product[], categories: Categories | undefined, exclude: Set<number>): OptionGroup[] {
-  const available = usage.filter((product) => !exclude.has(product.id));
+// @spec ROUT-EDIT-010, ROUT-EDIT-011, ROUT-EDIT-012, ROUT-EDIT-013, ROUT-EDIT-014, ROUT-EDIT-015, ROUT-EDIT-053, ROUT-EDIT-054, ROUT-EDIT-055, ROUT-EDIT-056
+export function productOptions(
+  usage: Product[],
+  categories: Categories | undefined,
+  exclude: Set<number>,
+  keep?: number,
+): OptionGroup[] {
+  const available = usage.filter(
+    (product) => product.id === keep || (!exclude.has(product.id) && !isFinished(product)),
+  );
   const configured = Object.values(categories ?? {}).flat();
   const unconfigured = [...new Set(usage.map((product) => product.category))].filter((category) => !configured.includes(category));
 
@@ -87,7 +96,7 @@ function ProductSelect({ label, prompt, groups, value, disabled, onChange }: {
 }
 
 /** Edits configs.json → routines; each edit saves at once. */
-// @spec ROUT-EDIT-001, ROUT-EDIT-002, ROUT-EDIT-003, ROUT-EDIT-004, ROUT-EDIT-005, ROUT-EDIT-006, ROUT-EDIT-007, ROUT-EDIT-008, ROUT-EDIT-009, ROUT-EDIT-016, ROUT-EDIT-017, ROUT-EDIT-018
+// @spec ROUT-EDIT-001, ROUT-EDIT-002, ROUT-EDIT-003, ROUT-EDIT-004, ROUT-EDIT-005, ROUT-EDIT-006, ROUT-EDIT-007, ROUT-EDIT-008, ROUT-EDIT-009, ROUT-EDIT-016, ROUT-EDIT-017, ROUT-EDIT-018, ROUT-EDIT-057
 export function RoutineEditor({ routines, categories, usage }: RoutineEditorProps) {
   const { revalidate } = useRevalidator();
   const entries = Object.entries(routines ?? {});
@@ -276,7 +285,7 @@ export function RoutineEditor({ routines, categories, usage }: RoutineEditorProp
         <ProductSelect
           label="First product"
           prompt="First product…"
-          groups={productOptions(usage, categories, new Set())}
+          groups={productOptions(usage, categories, new Set(), firstProduct === "" ? undefined : Number(firstProduct))}
           value={firstProduct}
           disabled={false}
           onChange={setFirstProduct}

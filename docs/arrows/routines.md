@@ -15,7 +15,7 @@ Named groups of products the user logs together in one click.
 - docs/intent/routines/routines-design.md
 
 ### EARS
-- docs/intent/routines/routines-specs.md (70 specs)
+- docs/intent/routines/routines-specs.md (74 specs)
 
 ### Tests
 - src/features/routine/routine-card.test.tsx
@@ -37,7 +37,7 @@ Named groups of products the user logs together in one click.
 2. `RoutineCard` — one card per routine with product names looked up by id ("Unknown product (id N)" when none matches) and +/- controls; no cards when routines are empty or missing (`routine-card.tsx`)
 3. `useUsage` (usage segment) — logs ±1 for all products in the routine as one `{ ids, delta }` request
 4. `checkRoutines` — routine rules applied by `/api/configs` (`routine-rules.ts`)
-5. `RoutineEditor` — settings page editor: add, rename, reorder, and delete routines; add, reorder, and remove their products through dropdowns grouped by category, with purchase dates on repurchased products; each edit POSTs the full `routines` value to `/api/configs` (`routine-editor.tsx`)
+5. `RoutineEditor` — settings page editor: add, rename, reorder, and delete routines; add, reorder, and remove their products through dropdowns grouped by category that leave out finished products, with purchase dates on repurchased products; each edit POSTs the full `routines` value to `/api/configs` (`routine-editor.tsx`)
 
 ## Spec Coverage
 
@@ -46,10 +46,10 @@ Named groups of products the user logs together in one click.
 | Definition | ROUT-001 | 1 | 0 | 0 |
 | UI | ROUT-UI-001 to ROUT-UI-007 | 7 | 0 | 0 |
 | Logging | ROUT-LOG-001 to ROUT-LOG-002 | 2 | 0 | 0 |
-| Validation | ROUT-VAL-001 to ROUT-VAL-006 | 6 | 0 | 0 |
-| Editor | ROUT-EDIT-001 to ROUT-EDIT-054 | 54 | 0 | 0 |
+| Validation | ROUT-VAL-001 to ROUT-VAL-007 | 7 | 0 | 0 |
+| Editor | ROUT-EDIT-001 to ROUT-EDIT-057 | 57 | 0 | 0 |
 
-**Summary:** 70 specs, all `[x]`.
+**Summary:** 74 specs, all `[x]`.
 
 ## Key Findings
 
