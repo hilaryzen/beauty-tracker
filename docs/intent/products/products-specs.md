@@ -6,7 +6,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 ## Product Record
 
-- [x] **PROD-001**: The system shall store each tracked product as a record with an integer id, name, brand, category, a map of closed-month use counts keyed by `YYYY-MM`, a current month in `YYYY-MM` form, and a use count for that current month.
+- [x] **PROD-001**: The system shall store each tracked product as a record with an integer id, name, brand, category, status, a map of closed-month use counts keyed by `YYYY-MM`, a current month in `YYYY-MM` form, and a use count for that current month.
 - [x] **PROD-002**: The system shall locate a product record by its `id` field, independent of the record's position in `usage.json`.
 - [x] **PROD-003**: The system shall allow a product record to carry an optional `purchase` field.
 - [x] **PROD-004**: The system shall allow a product record to carry an optional `shade` field.
@@ -14,6 +14,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-006**: The system shall allow a product record to carry an optional `size` field, an object holding a numeric `amount` and a `unit` of `oz`, `fl oz`, `g`, or `mL`.
 - [x] **PROD-007**: The system shall allow a product record to carry an optional `rating` field, an integer from 1 to 5.
 - [x] **PROD-008**: The system shall allow a product record to carry an optional `notes` field, a string.
+- [x] **PROD-009**: The system shall restrict a product record's `status` to one of `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`.
+- [x] **PROD-010**: The system shall rank product statuses in the order `In Progress`, `Opened`, `Backlog`, `Panned`, `Decluttered`, first to last.
 
 ## Product Dialog
 
@@ -58,6 +60,14 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-EDIT-039**: The product dialog shall not disable Save because the size amount input is empty, whether or not a size unit is chosen.
 - [x] **PROD-EDIT-040**: The product dialog shall not disable Save because the rating dropdown is blank or the notes input is empty.
 - [x] **PROD-EDIT-041**: While no size unit is chosen, the product dialog's size unit dropdown shall show the placeholder `Unit`.
+- [x] **PROD-EDIT-042**: The product dialog shall show a status dropdown after its category input and before its date opened picker.
+- [x] **PROD-EDIT-043**: The product dialog's status dropdown shall offer `Backlog`, `Opened`, `In Progress`, `Panned`, and `Decluttered`, in that order, and no other option.
+- [x] **PROD-EDIT-044**: When the product dialog opens to add a product, the dialog shall show `Backlog` chosen in the status dropdown.
+- [x] **PROD-EDIT-045**: When the product dialog opens to edit a product whose `status` is `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the dialog shall show that status chosen in the status dropdown.
+- [x] **PROD-EDIT-046**: When the product dialog opens to edit a product that has no `status`, or a `status` other than `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the dialog shall show no status chosen.
+- [x] **PROD-EDIT-047**: While no status is chosen in the product dialog, the dialog shall disable Save.
+- [x] **PROD-EDIT-048**: When the user chooses a status in the product dialog, the dialog shall leave the date opened, date expiring, and date removed pickers unchanged.
+- [x] **PROD-EDIT-049**: While no status is chosen in the product dialog, the status dropdown shall show the placeholder `Status`.
 
 ## Saving a Product
 
@@ -86,6 +96,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-SAVE-023**: When the product dialog sends a POST or PUT to `/api/products` and the rating dropdown is blank, the page shall leave `rating` out of the request body.
 - [x] **PROD-SAVE-024**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed notes are not blank, the page shall include the trimmed notes, with their inner line breaks, as `notes` in the request body.
 - [x] **PROD-SAVE-025**: When the product dialog sends a POST or PUT to `/api/products` and the trimmed notes are blank, the page shall leave `notes` out of the request body.
+- [x] **PROD-SAVE-026**: When the product dialog sends a POST or PUT to `/api/products`, the page shall include the chosen status as `status` in the request body.
 
 ## Product API
 
@@ -95,8 +106,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-004**: When `/api/products` receives a PUT whose body passes validation, the system shall replace the name, brand, and category of the product record whose `id` matches the body's `id`.
 - [x] **PROD-API-005**: When `/api/products` receives a PUT whose body passes validation, the system shall leave that product record's id, closed-month use counts, current month, and current-month use count unchanged.
 - [x] **PROD-API-006**: When `/api/products` applies a POST or PUT that passes validation, the system shall write `usage.json` once.
-- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes`, then the system shall treat the body as failing validation.
-- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, or `category`, or contains any top-level key other than those, `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-007**: If a POST body to `/api/products` lacks `name`, `brand`, `category`, or `status`, or contains any top-level key other than those, `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-008**: If a PUT body to `/api/products` lacks `id`, `name`, `brand`, `category`, or `status`, or contains any top-level key other than those, `shade`, `opened`, `expires`, `removed`, `size`, `rating`, and `notes`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-009**: If `name` or `brand` in a body to `/api/products` is not a string containing a non-whitespace character with no leading or trailing whitespace, then the system shall treat the body as failing validation.
 - [x] **PROD-API-010**: If `category` in a body to `/api/products` is not a category listed in `configs.json → categories`, then the system shall treat the body as failing validation.
 - [x] **PROD-API-011**: If `id` in a PUT body to `/api/products` is not an integer matching a product record's `id`, then the system shall treat the body as failing validation.
@@ -132,6 +143,9 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PROD-API-041**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record no `size`, `rating`, or `notes` field that the body does not contain.
 - [x] **PROD-API-042**: When `/api/products` receives a PUT whose body passes validation, the system shall set each of `size`, `rating`, and `notes` that the body contains on the matching product record to the body's value.
 - [x] **PROD-API-043**: When `/api/products` receives a PUT whose body passes validation, the system shall remove from the matching product record each of `size`, `rating`, and `notes` that the body does not contain.
+- [x] **PROD-API-044**: If `status` in a body to `/api/products` is not exactly, with matching capitalization, one of the strings `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, then the system shall treat the body as failing validation.
+- [x] **PROD-API-045**: When `/api/products` receives a POST whose body passes validation, the system shall give the new product record the body's `status`.
+- [x] **PROD-API-046**: When `/api/products` receives a PUT whose body passes validation, the system shall set the matching product record's `status` to the body's `status`.
 
 ## Categories
 

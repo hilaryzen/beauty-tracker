@@ -1,12 +1,15 @@
 import type { ProductPurchase } from "@/features/purchases/types";
 import type { ProductSize } from "./product-details";
+import type { ProductStatus } from "./product-status";
 
-// @spec PROD-001, PROD-003, PROD-004, PROD-005, PROD-006, PROD-007, PROD-008
+// @spec PROD-001, PROD-009, PROD-003, PROD-004, PROD-005, PROD-006, PROD-007, PROD-008
 export type Product = {
   id: number,
   name: string,
   brand: string,
   category: string,
+  /** Where the product is in its life. */
+  status: ProductStatus,
   /** The shade or color variant; absent when the product has none. */
   shade?: string,
   /** The day the product was first opened, as `YYYY-MM-DD`; absent when not recorded. */

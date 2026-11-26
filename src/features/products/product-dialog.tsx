@@ -2,6 +2,7 @@ import { Button, CloseButton, Dialog, Field, HStack, Input, NativeSelect, Portal
 import { type FormEvent, useState } from "react";
 import { today } from "@/utils/today";
 import { formatAmount, isProductSize, isRating, parseSizeAmount, SIZE_UNITS } from "./product-details";
+import { isStatus, STATUSES } from "./product-status";
 import type { Product } from "./types";
 import { type Categories, findCategory, useProductEditor } from "./use-product-editor";
 
@@ -30,12 +31,14 @@ function isConfigured(categories: Categories | undefined, category: string) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-EDIT-021, PROD-EDIT-022, PROD-EDIT-023, PROD-EDIT-024, PROD-EDIT-025, PROD-EDIT-026, PROD-EDIT-027, PROD-EDIT-028, PROD-EDIT-029, PROD-EDIT-030, PROD-EDIT-031, PROD-EDIT-032, PROD-EDIT-033, PROD-EDIT-034, PROD-EDIT-035, PROD-EDIT-036, PROD-EDIT-037, PROD-EDIT-038, PROD-EDIT-039, PROD-EDIT-040, PROD-EDIT-041, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
+// @spec PROD-EDIT-001, PROD-EDIT-002, PROD-EDIT-019, PROD-EDIT-020, PROD-EDIT-004, PROD-EDIT-005, PROD-EDIT-006, PROD-EDIT-007, PROD-EDIT-008, PROD-EDIT-009, PROD-EDIT-010, PROD-EDIT-012, PROD-EDIT-013, PROD-EDIT-014, PROD-EDIT-018, PROD-EDIT-021, PROD-EDIT-022, PROD-EDIT-023, PROD-EDIT-024, PROD-EDIT-025, PROD-EDIT-026, PROD-EDIT-027, PROD-EDIT-028, PROD-EDIT-029, PROD-EDIT-030, PROD-EDIT-031, PROD-EDIT-032, PROD-EDIT-033, PROD-EDIT-034, PROD-EDIT-035, PROD-EDIT-036, PROD-EDIT-037, PROD-EDIT-038, PROD-EDIT-039, PROD-EDIT-040, PROD-EDIT-041, PROD-EDIT-042, PROD-EDIT-043, PROD-EDIT-044, PROD-EDIT-045, PROD-EDIT-046, PROD-EDIT-047, PROD-EDIT-048, PROD-EDIT-049, PROD-SAVE-008, PROD-SAVE-010, PROD-SAVE-015
 function ProductForm({ product, categories, saving, onSavingChange, onClose, onSaved }: ProductFormProps) {
   const { saveProduct } = useProductEditor(categories);
   const [name, setName] = useState(product?.name ?? "");
   const [shade, setShade] = useState(product?.shade ?? "");
   const [brand, setBrand] = useState(product?.brand ?? "");
+  // A new product starts in the backlog; a stored status that is not one of the five can only come from a hand edit, so none is chosen.
+  const [status, setStatus] = useState<string>(product ? (isStatus(product.status) ? product.status : "") : "Backlog");
   const [opened, setOpened] = useState(product?.opened ?? "");
   const [expires, setExpires] = useState(product?.expires ?? "");
   const [removed, setRemoved] = useState(product?.removed ?? "");
@@ -67,6 +70,7 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
     removed <= maxDate &&
     name.trim() !== "" &&
     brand.trim() !== "" &&
+    status !== "" &&
     category !== "" &&
     (!isNewCategory ||
       (newCategory.trim() !== "" && (matched !== undefined || (group !== "" && (!isNewGroup || newGroup.trim() !== "")))));
@@ -87,6 +91,7 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
       rating,
       notes,
       brand,
+      status,
       category: isNewCategory ? newCategory : category,
       group: isNewGroup ? newGroup : group,
     });
@@ -161,6 +166,18 @@ function ProductForm({ product, categories, saving, onSavingChange, onClose, onS
               <Input value={newGroup} onChange={(event) => setNewGroup(event.target.value)} />
             </Field.Root>
           )}
+          <Field.Root>
+            <Field.Label>Status</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field value={status} onChange={(event) => setStatus(event.target.value)}>
+                <option value="" disabled>Status</option>
+                {STATUSES.map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
           <Field.Root>
             <Field.Label>Date opened</Field.Label>
             <Input type="date" max={maxDate} value={opened} onChange={(event) => setOpened(event.target.value)} />

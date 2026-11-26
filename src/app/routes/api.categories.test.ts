@@ -177,7 +177,7 @@ describe("/api/categories", () => {
       const move = new Request("http://localhost/api/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: 1, name: sampleUsage[1].name, brand: sampleUsage[1].brand, category: "Primer" }),
+        body: JSON.stringify({ id: 1, name: sampleUsage[1].name, brand: sampleUsage[1].brand, category: "Primer", status: sampleUsage[1].status }),
       });
       await Promise.all([rename, settle(() => productsAction({ request: move } as Parameters<typeof productsAction>[0]))]);
 

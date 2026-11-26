@@ -18,11 +18,11 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 ## Usage Table
 
 - [x] **USAGE-UI-001**: The home page shall display a usage table whose product rows show category, product name, brand, overall uses, and this month's uses.
-- [x] **USAGE-UI-002**: The usage table shall order rows by the position of each product's category in the concatenation of all configured category groups, taken in the groups' configured order.
-- [x] **USAGE-UI-003**: When two products in the usage table share a category position, the usage table shall keep them in their stored order.
+- [x] **USAGE-UI-002**: Among products that share a status position, the usage table shall order rows by the position of each product's category in the concatenation of all configured category groups, taken in the groups' configured order.
+- [x] **USAGE-UI-003**: When two products in the usage table share a status position and a category position, the usage table shall keep them in their stored order.
 - [x] **USAGE-UI-004**: The usage table shall show, as a product's overall uses, the sum of the product's closed-month use counts plus its current-month use count.
 - [x] **USAGE-UI-005**: The usage table shall show a + and a − control on every product row.
-- [x] **USAGE-UI-006**: If `configs.json` has no `categories` key, then the usage table shall show product rows in their stored order.
+- [x] **USAGE-UI-006**: If `configs.json` has no `categories` key, then the usage table shall show product rows that share a status position in their stored order.
 - [x] **USAGE-UI-007**: The usage table shall show an Add product button above the product rows.
 - [x] **USAGE-UI-008**: The usage table shall show an edit button on every product row.
 - [x] **USAGE-UI-009**: When the user activates the Add product button, the usage table shall open the product dialog to add a product.
@@ -63,6 +63,14 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **USAGE-UI-035**: While a product record has no `purchase`, the usage table shall leave that row's Cost cell empty.
 - [x] **USAGE-UI-036**: While a product record has a `rating` that is an integer from 1 to 5, the usage table shall show that rating as a number in that row's Rating column.
 - [x] **USAGE-UI-037**: While a product record has no `rating`, or a `rating` that is not an integer from 1 to 5, the usage table shall leave that row's Rating cell empty.
+
+## Usage Table Status
+
+- [x] **USAGE-UI-038**: The usage table shall order rows by status position, in the status order `In Progress`, `Opened`, `Backlog`, `Panned`, `Decluttered` (PROD-010).
+- [x] **USAGE-UI-039**: The usage table shall give every product record that has no `status`, or a `status` other than `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, one shared status position after `Decluttered`.
+- [x] **USAGE-UI-040**: The usage table shall show a Status column as its first column, before the Category column.
+- [x] **USAGE-UI-041**: While a product record has a `status` of `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the usage table shall show that status, as stored, in that row's Status column.
+- [x] **USAGE-UI-042**: While a product record has no `status`, or a `status` other than `Backlog`, `Opened`, `In Progress`, `Panned`, or `Decluttered`, the usage table shall leave that row's Status cell empty.
 
 ## Logging
 

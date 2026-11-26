@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toaster } from "@/components/ui/toaster";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
 import { renderPage } from "@/test/render";
+import type { ProductStatus } from "@/features/products/product-status";
 import { UsageTable } from "./usage-table";
 
 type PageData = { usage: typeof sampleUsage; categories?: Record<string, string[]> };
@@ -46,12 +47,23 @@ async function row(name: string) {
   return (await screen.findByText(name)).closest("tr") as HTMLElement;
 }
 
+// The row's cell under the column with this header.
+function cellUnder(tr: HTMLElement, header: string) {
+  const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+  return within(tr).getAllByRole("cell")[headers.indexOf(header)];
+}
+
 async function productOrder() {
   await screen.findAllByRole("cell");
   return screen
     .getAllByRole("row")
     .slice(1)
-    .map((tr) => within(tr).getAllByRole("cell")[1].textContent);
+    .map((tr) => cellUnder(tr, "Product").textContent);
+}
+
+// Every product with the same status, so ordering tests isolate what comes after status.
+function sameStatus(usage: typeof sampleUsage, status: ProductStatus = "Opened") {
+  return usage.map((product) => ({ ...product, status }));
 }
 
 function requestBody(call: unknown[]) {
@@ -87,7 +99,7 @@ describe("usage table display", () => {
   // @spec USAGE-UI-002
   it("orders rows by category position across all groups in configured group order", async () => {
     renderTable({
-      usage: sampleUsage,
+      usage: sameStatus(sampleUsage),
       categories: { makeup: ["Foundation", "Primer"], skincare: ["Cleanser"] },
     });
     expect(await productOrder()).toEqual([
@@ -104,7 +116,7 @@ describe("usage table display", () => {
       { ...sampleUsage[2] },
       { ...sampleUsage[0], id: 5, name: "Primer A" },
     ];
-    renderTable({ usage, categories: sampleConfigs.categories });
+    renderTable({ usage: sameStatus(usage), categories: sampleConfigs.categories });
     await screen.findByText("Primer B");
     expect(await productOrder()).toEqual(["Blueberry Bounce Gentle Cleanser", "Primer B", "Primer A"]);
   });
@@ -129,14 +141,108 @@ describe("usage table display", () => {
 
   // @spec USAGE-UI-006
   it("shows rows in stored order when there are no categories", async () => {
-    renderTable({ usage: sampleUsage });
+    renderTable({ usage: sameStatus(sampleUsage) });
     expect(await productOrder()).toEqual(sampleUsage.map((item) => item.name));
+  });
+});
+
+describe("a product's status in the usage table", () => {
+  function product(name: string, category: string, status: string | undefined) {
+    const record: Record<string, unknown> = { ...sampleUsage[0], name, category, status };
+    if (status === undefined) delete record.status;
+    return record as unknown as (typeof sampleUsage)[number];
+  }
+
+  // @spec USAGE-UI-038
+  it("orders rows by status: In Progress, Opened, Backlog, Panned, Decluttered", async () => {
+    const usage = [
+      product("Decluttered one", "Primer", "Decluttered"),
+      product("Backlog one", "Primer", "Backlog"),
+      product("Panned one", "Primer", "Panned"),
+      product("In Progress one", "Primer", "In Progress"),
+      product("Opened one", "Primer", "Opened"),
+    ];
+    renderTable({ usage, categories: sampleConfigs.categories });
+    expect(await productOrder()).toEqual(["In Progress one", "Opened one", "Backlog one", "Panned one", "Decluttered one"]);
+  });
+
+  // @spec USAGE-UI-038, USAGE-UI-002
+  it("orders by status before category, then by category within a status", async () => {
+    // Configured category order: Cleanser, Primer, Foundation.
+    const usage = [
+      product("Backlog cleanser", "Cleanser", "Backlog"),
+      product("In Progress foundation", "Foundation", "In Progress"),
+      product("Backlog primer", "Primer", "Backlog"),
+      product("In Progress cleanser", "Cleanser", "In Progress"),
+    ];
+    renderTable({ usage, categories: sampleConfigs.categories });
+    expect(await productOrder()).toEqual(["In Progress cleanser", "In Progress foundation", "Backlog cleanser", "Backlog primer"]);
+  });
+
+  // @spec USAGE-UI-038, USAGE-UI-006
+  it("orders by status, then stored order, when there are no categories", async () => {
+    const usage = [
+      product("Backlog one", "Cleanser", "Backlog"),
+      product("In Progress one", "Primer", "In Progress"),
+      product("Backlog two", "Primer", "Backlog"),
+    ];
+    renderTable({ usage });
+    expect(await productOrder()).toEqual(["In Progress one", "Backlog one", "Backlog two"]);
+  });
+
+  // @spec USAGE-UI-038
+  it("orders by status within a group tab", async () => {
+    const usage = [
+      product("Backlog primer", "Primer", "Backlog"),
+      product("Opened foundation", "Foundation", "Opened"),
+      product("In Progress cleanser", "Cleanser", "In Progress"),
+    ];
+    renderTable({ usage, categories: sampleConfigs.categories }, "/?group=makeup");
+    expect(await productOrder()).toEqual(["Opened foundation", "Backlog primer"]);
+  });
+
+  // @spec USAGE-UI-039, USAGE-UI-003
+  it("sorts products with no status or an unrecognized one together after Decluttered, in stored order", async () => {
+    const usage = [
+      product("Unknown status", "Primer", "Used up"),
+      product("Decluttered one", "Foundation", "Decluttered"),
+      product("No status", "Primer", undefined),
+      product("Lowercase status", "Primer", "in progress"),
+    ];
+    renderTable({ usage, categories: sampleConfigs.categories });
+    expect(await productOrder()).toEqual(["Decluttered one", "Unknown status", "No status", "Lowercase status"]);
+  });
+
+  // @spec USAGE-UI-040
+  it("shows a Status column first, before Category", async () => {
+    renderTable();
+    await screen.findAllByRole("cell");
+    const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+    expect(headers.slice(0, 2)).toEqual(["Status", "Category"]);
+    expect(within(await row("Hydro Grip Primer")).getAllByRole("cell")).toHaveLength(headers.length);
+  });
+
+  // @spec USAGE-UI-041
+  it("shows each status as stored", async () => {
+    const statuses = ["Backlog", "Opened", "In Progress", "Panned", "Decluttered"];
+    renderTable({ usage: statuses.map((status) => product(`${status} one`, "Primer", status)), categories: sampleConfigs.categories });
+    for (const status of statuses) {
+      expect(cellUnder(await row(`${status} one`), "Status").textContent).toBe(status);
+    }
+  });
+
+  // @spec USAGE-UI-042
+  it("leaves the Status cell empty for a product with no status or an unrecognized one", async () => {
+    const usage = [product("No status", "Primer", undefined), product("Unknown status", "Primer", "Used up")];
+    renderTable({ usage, categories: sampleConfigs.categories });
+    expect(cellUnder(await row("No status"), "Status").textContent).toBe("");
+    expect(cellUnder(await row("Unknown status"), "Status").textContent).toBe("");
   });
 });
 
 describe("a product's shade in the usage table", () => {
   function productCell(tr: HTMLElement) {
-    return within(tr).getAllByRole("cell")[1];
+    return cellUnder(tr, "Product");
   }
 
   // @spec USAGE-UI-011

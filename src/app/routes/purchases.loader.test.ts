@@ -8,6 +8,7 @@ const lastMonth = {
   name: "Hydro Grip Primer",
   brand: "Milk Makeup",
   category: "Primer",
+  status: "Opened",
   uses: {},
   currentMonth: "2026-10",
   usesThisMonth: 2,
