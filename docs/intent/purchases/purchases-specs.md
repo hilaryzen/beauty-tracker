@@ -31,7 +31,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PURCH-DLG-005**: When the user activates "Add item" in the purchase dialog, the dialog shall add an item with no product chosen and an empty price after the existing items.
 - [x] **PURCH-DLG-006**: When the user activates an item's remove control in the purchase dialog, the dialog shall remove that item.
 - [x] **PURCH-DLG-007**: While the purchase dialog has one item, the dialog shall disable that item's remove control.
-- [x] **PURCH-DLG-008**: Each item's product dropdown in the purchase dialog shall list the products that have no purchase and are not chosen on another item, including the product chosen on that item.
+- [ ] **PURCH-DLG-008**: Each item's product dropdown in the purchase dialog shall list the products that have no purchase, are not finished (PROD-011), and are not chosen on another item.
+- [ ] **PURCH-DLG-029**: Each item's product dropdown in the purchase dialog shall list the product chosen on that item, whether or not it has a purchase or is finished.
 - [x] **PURCH-DLG-009**: Each item's product dropdown in the purchase dialog shall list products in sections labeled with their category name, ordered by group and then by category in configured order, with no section for a category that has no product to list.
 - [x] **PURCH-DLG-010**: Each item's product dropdown in the purchase dialog shall list products whose category is not configured after all configured categories, under "Other".
 - [x] **PURCH-DLG-011**: Each item's product dropdown in the purchase dialog shall label each product with its brand followed by its name.
@@ -88,3 +89,4 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 - [x] **PURCH-API-019**: When `/api/purchases` receives overlapping POST requests that pass validation on their own and name the same product, the system shall apply only the first and reject the others as failing validation.
 - [x] **PURCH-API-020**: If `/api/purchases` receives a PUT, PATCH, or DELETE request, then the system shall respond with 405 and a JSON body of the form `{ "error": "<message>" }`.
 - [x] **PURCH-API-021**: If `/api/purchases` receives a PUT, PATCH, or DELETE request, then the system shall leave `usage.json` unchanged.
+- [ ] **PURCH-API-022**: When `/api/purchases` validates a body, the system shall not treat an item as failing validation because its product is finished (PROD-011).
