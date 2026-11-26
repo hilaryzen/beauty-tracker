@@ -694,8 +694,13 @@ describe("editing a purchase", () => {
     return screen.findByRole("alertdialog", { name: "Delete this purchase?" });
   }
 
+  // While the delete confirmation is open, it hides the edit dialog behind it from assistive technology.
   function editDialog() {
-    return screen.getByRole("dialog", { name: "Edit purchase" });
+    return screen.getByRole("dialog", { name: "Edit purchase", hidden: true });
+  }
+
+  function hiddenButton(name: string, container: HTMLElement) {
+    return within(container).getByRole("button", { name, hidden: true });
   }
 
   function methodOf(call: unknown[]) {
@@ -924,8 +929,10 @@ describe("editing a purchase", () => {
       const loader = renderEditable();
       const dialog = await openEditDialog();
       fireEvent.click(button("Delete", await openConfirmation(dialog)));
-      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-      expect(screen.queryByRole("alertdialog")).toBeNull();
+      await waitFor(() => {
+        expect(screen.queryByRole("alertdialog")).toBeNull();
+        expect(screen.queryByRole("dialog", { hidden: true })).toBeNull();
+      });
       await waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
     });
 
@@ -969,8 +976,8 @@ describe("editing a purchase", () => {
       const confirmation = await openConfirmation(dialog);
       fireEvent.click(button("Delete", confirmation));
       await waitFor(() => expect(button("Delete", confirmation)).toBeDisabled());
-      expect(button("Delete", dialog)).toBeDisabled();
-      expect(button("Save", dialog)).toBeDisabled();
+      expect(hiddenButton("Delete", dialog)).toBeDisabled();
+      expect(hiddenButton("Save", dialog)).toBeDisabled();
     });
 
     // @spec PURCH-DLG-041, PURCH-DLG-044
@@ -986,8 +993,8 @@ describe("editing a purchase", () => {
       fireEvent.click(button("Cancel", confirmation));
       fireEvent.click(button("Close", confirmation));
       fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
-      fireEvent.click(button("Cancel", dialog));
-      fireEvent.click(button("Close", dialog));
+      fireEvent.click(hiddenButton("Cancel", dialog));
+      fireEvent.click(hiddenButton("Close", dialog));
       await waitPastOutsideClickSetup();
       expect(screen.getByRole("alertdialog", { name: "Delete this purchase?" })).toBeInTheDocument();
       expect(editDialog()).toBeInTheDocument();
