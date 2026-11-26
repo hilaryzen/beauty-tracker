@@ -18,23 +18,29 @@ import { isFinished } from "@/features/products/product-status";
 import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
 import { today } from "@/utils/today";
-import { formatDollars, parseDollars } from "./money";
+import { formatAmount, formatDollars, parseDollars } from "./money";
 import { usePurchaseEditor } from "./use-purchase-editor";
 
 const NEW_PRODUCT = "__new_product__";
 
 type Item = { key: number; productId?: number; price: string };
 
+/** An existing purchase to edit: its date, store, and each product's id and price in cents, in id order. */
+export type EditedPurchase = { date: string; store?: string; items: { productId: number; price: number }[] };
+
 type PurchaseDialogProps = {
   open: boolean;
+  /** The purchase to edit; the dialog adds a purchase when this is absent. */
+  editing?: EditedPurchase;
   usage: Product[];
   categories?: Categories;
   onClose: () => void;
 };
 
 type PurchaseFormProps = Omit<PurchaseDialogProps, "open"> & {
-  saving: boolean;
-  onSavingChange: (saving: boolean) => void;
+  /** Whether a save or delete is in flight. */
+  busy: boolean;
+  onBusyChange: (busy: boolean) => void;
 };
 
 // @spec PURCH-DLG-011, PURCH-DLG-028
@@ -62,14 +68,21 @@ function knownStores(usage: Product[]) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PURCH-DLG-002, PURCH-DLG-003, PURCH-DLG-008, PURCH-DLG-029, PURCH-DLG-005, PURCH-DLG-006, PURCH-DLG-007, PURCH-DLG-012, PURCH-DLG-013, PURCH-DLG-014, PURCH-DLG-015, PURCH-DLG-016, PURCH-DLG-017, PURCH-DLG-018, PURCH-DLG-019, PURCH-DLG-020, PURCH-DLG-021, PURCH-DLG-022, PURCH-DLG-027, PURCH-SAVE-004, PURCH-SAVE-006
-function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: PurchaseFormProps) {
-  const { savePurchase } = usePurchaseEditor();
+// @spec PURCH-DLG-002, PURCH-DLG-033, PURCH-DLG-034, PURCH-DLG-035, PURCH-DLG-036, PURCH-DLG-039, PURCH-DLG-040, PURCH-DLG-042, PURCH-SAVE-012, PURCH-DLG-003, PURCH-DLG-008, PURCH-DLG-029, PURCH-DLG-005, PURCH-DLG-006, PURCH-DLG-007, PURCH-DLG-012, PURCH-DLG-013, PURCH-DLG-014, PURCH-DLG-015, PURCH-DLG-016, PURCH-DLG-017, PURCH-DLG-018, PURCH-DLG-019, PURCH-DLG-020, PURCH-DLG-021, PURCH-DLG-022, PURCH-DLG-027, PURCH-SAVE-004, PURCH-SAVE-006
+function PurchaseForm({ editing, usage, categories, busy, onBusyChange, onClose }: PurchaseFormProps) {
+  const { savePurchase, deletePurchase } = usePurchaseEditor();
   const storeListId = useId();
-  const nextKey = useRef(1);
-  const [date, setDate] = useState(today);
-  const [store, setStore] = useState("");
-  const [items, setItems] = useState<Item[]>([{ key: 0, price: "" }]);
+  // The products the edited purchase had when the dialog opened: what saving replaces and deleting removes.
+  const [original] = useState(() => editing?.items.map((item) => item.productId));
+  const nextKey = useRef(editing?.items.length ?? 1);
+  const [date, setDate] = useState(() => editing?.date ?? today());
+  const [store, setStore] = useState(editing?.store ?? "");
+  const [items, setItems] = useState<Item[]>(() =>
+    editing
+      ? editing.items.map((item, key) => ({ key, productId: item.productId, price: formatAmount(item.price) }))
+      : [{ key: 0, price: "" }],
+  );
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   // The item a product is being created for, while the product dialog is open.
   const [creatingFor, setCreatingFor] = useState<number | undefined>();
 
@@ -78,7 +91,7 @@ function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: Pu
   const total = prices.reduce<number>((sum, price) => sum + (price ?? 0), 0);
 
   const canSave =
-    !saving &&
+    !busy &&
     date !== "" &&
     date <= maxDate &&
     items.every((item) => item.productId !== undefined) &&
@@ -105,14 +118,20 @@ function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: Pu
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!canSave) return;
-    onSavingChange(true);
-    const saved = await savePurchase({
-      date,
-      store,
-      items: items.map((item, index) => ({ productId: item.productId!, price: prices[index]! })),
-    });
-    onSavingChange(false);
+    onBusyChange(true);
+    const draft = { date, store, items: items.map((item, index) => ({ productId: item.productId!, price: prices[index]! })) };
+    const saved = await savePurchase(draft, original);
+    onBusyChange(false);
     if (saved) onClose();
+  }
+
+  async function handleDelete() {
+    if (busy || !original) return;
+    onBusyChange(true);
+    const deleted = await deletePurchase(original);
+    onBusyChange(false);
+    setConfirmingDelete(false);
+    if (deleted) onClose();
   }
 
   return (
@@ -145,7 +164,8 @@ function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: Pu
               categories,
               (product) =>
                 product.id === item.productId ||
-                (!product.purchase && !isFinished(product) && !chosenElsewhere.includes(product.id)),
+                (!chosenElsewhere.includes(product.id) &&
+                  ((!product.purchase && !isFinished(product)) || (original?.includes(product.id) ?? false))),
             );
             const invalidPrice = item.price.trim() !== "" && prices[index] === undefined;
             return (
@@ -197,7 +217,12 @@ function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: Pu
         </Stack>
       </Dialog.Body>
       <Dialog.Footer>
-        <Button variant="outline" disabled={saving} onClick={onClose}>Cancel</Button>
+        {original && (
+          <Button variant="outline" colorPalette="red" me="auto" disabled={busy} onClick={() => setConfirmingDelete(true)}>
+            Delete
+          </Button>
+        )}
+        <Button variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
         <Button type="submit" disabled={!canSave}>Save</Button>
       </Dialog.Footer>
     </form>
@@ -210,13 +235,57 @@ function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: Pu
           if (creatingFor !== undefined) updateItem(creatingFor, { productId: id });
         }}
       />
+    <DeleteConfirmation
+      open={confirmingDelete}
+      busy={busy}
+      onCancel={() => setConfirmingDelete(false)}
+      onConfirm={handleDelete}
+    />
     </>
   );
 }
 
-// @spec PURCH-DLG-023, PURCH-DLG-024, PURCH-DLG-025, PURCH-DLG-026
-export function PurchaseDialog({ open, usage, categories, onClose }: PurchaseDialogProps) {
-  const [saving, setSaving] = useState(false);
+type DeleteConfirmationProps = { open: boolean; busy: boolean; onCancel: () => void; onConfirm: () => void };
+
+// @spec PURCH-DLG-037, PURCH-DLG-038, PURCH-DLG-043, PURCH-DLG-044, PURCH-SAVE-011
+function DeleteConfirmation({ open, busy, onCancel, onConfirm }: DeleteConfirmationProps) {
+  return (
+    <Dialog.Root
+      open={open}
+      role="alertdialog"
+      closeOnInteractOutside={false}
+      closeOnEscape={!busy}
+      onOpenChange={(details) => {
+        if (!details.open && !busy) onCancel();
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Delete this purchase?</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <Text>Its products will have no purchase, so each can be bought again.</Text>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" disabled={busy} onClick={onCancel}>Cancel</Button>
+              <Button colorPalette="red" disabled={busy} onClick={onConfirm}>Delete</Button>
+            </Dialog.Footer>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" disabled={busy} />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  );
+}
+
+// @spec PURCH-DLG-023, PURCH-DLG-024, PURCH-DLG-025, PURCH-DLG-026, PURCH-DLG-031, PURCH-DLG-032, PURCH-DLG-041
+export function PurchaseDialog({ open, editing, usage, categories, onClose }: PurchaseDialogProps) {
+  const [busy, setBusy] = useState(false);
 
   return (
     <Dialog.Root
@@ -225,9 +294,9 @@ export function PurchaseDialog({ open, usage, categories, onClose }: PurchaseDia
       lazyMount
       unmountOnExit
       closeOnInteractOutside={false}
-      closeOnEscape={!saving}
+      closeOnEscape={!busy}
       onOpenChange={(details) => {
-        if (!details.open && !saving) onClose();
+        if (!details.open && !busy) onClose();
       }}
     >
       <Portal>
@@ -235,17 +304,18 @@ export function PurchaseDialog({ open, usage, categories, onClose }: PurchaseDia
         <Dialog.Positioner>
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Add purchase</Dialog.Title>
+              <Dialog.Title>{editing ? "Edit purchase" : "Add purchase"}</Dialog.Title>
             </Dialog.Header>
             <PurchaseForm
+              editing={editing}
               usage={usage}
               categories={categories}
-              saving={saving}
-              onSavingChange={setSaving}
+              busy={busy}
+              onBusyChange={setBusy}
               onClose={onClose}
             />
             <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" disabled={saving} />
+              <CloseButton size="sm" disabled={busy} />
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>
