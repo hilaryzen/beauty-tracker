@@ -14,6 +14,7 @@ import {
 import { type FormEvent, useId, useRef, useState } from "react";
 import { ProductDialog } from "@/features/products/product-dialog";
 import { productName } from "@/features/products/product-name";
+import { isFinished } from "@/features/products/product-status";
 import type { Product } from "@/features/products/types";
 import type { Categories } from "@/features/products/use-product-editor";
 import { today } from "@/utils/today";
@@ -61,7 +62,7 @@ function knownStores(usage: Product[]) {
 
 // Mounted only while the dialog is open, so its fields start fresh each time and
 // keep their contents when the page's data refreshes.
-// @spec PURCH-DLG-002, PURCH-DLG-003, PURCH-DLG-005, PURCH-DLG-006, PURCH-DLG-007, PURCH-DLG-012, PURCH-DLG-013, PURCH-DLG-014, PURCH-DLG-015, PURCH-DLG-016, PURCH-DLG-017, PURCH-DLG-018, PURCH-DLG-019, PURCH-DLG-020, PURCH-DLG-021, PURCH-DLG-022, PURCH-DLG-027, PURCH-SAVE-004, PURCH-SAVE-006
+// @spec PURCH-DLG-002, PURCH-DLG-003, PURCH-DLG-008, PURCH-DLG-029, PURCH-DLG-005, PURCH-DLG-006, PURCH-DLG-007, PURCH-DLG-012, PURCH-DLG-013, PURCH-DLG-014, PURCH-DLG-015, PURCH-DLG-016, PURCH-DLG-017, PURCH-DLG-018, PURCH-DLG-019, PURCH-DLG-020, PURCH-DLG-021, PURCH-DLG-022, PURCH-DLG-027, PURCH-SAVE-004, PURCH-SAVE-006
 function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: PurchaseFormProps) {
   const { savePurchase } = usePurchaseEditor();
   const storeListId = useId();
@@ -143,7 +144,8 @@ function PurchaseForm({ usage, categories, saving, onSavingChange, onClose }: Pu
               usage,
               categories,
               (product) =>
-                product.id === item.productId || (!product.purchase && !chosenElsewhere.includes(product.id)),
+                product.id === item.productId ||
+                (!product.purchase && !isFinished(product) && !chosenElsewhere.includes(product.id)),
             );
             const invalidPrice = item.price.trim() !== "" && prices[index] === undefined;
             return (

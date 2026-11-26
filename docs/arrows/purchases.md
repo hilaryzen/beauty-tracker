@@ -15,7 +15,7 @@ What each product cost: a product's purchase (date, store, price), the purchase 
 - docs/intent/purchases/purchases-design.md
 
 ### EARS
-- docs/intent/purchases/purchases-specs.md (70 specs)
+- docs/intent/purchases/purchases-specs.md (72 specs)
 
 ### Tests
 - src/app/routes/api.purchases.test.ts
@@ -40,7 +40,7 @@ What each product cost: a product's purchase (date, store, price), the purchase 
 **Key Components:**
 1. `ProductPurchase` type — `{ date, store?, price }`, price in cents (`types.ts`)
 2. `PurchaseList` — groups products by purchase date and exact store, newest first, with totals and an Add purchase button (`purchase-list.tsx`)
-3. `PurchaseDialog` and `usePurchaseEditor` — modal form with date, store suggestions, and items offering only products with no purchase, plus "New product" opening the product dialog; one POST to `/api/purchases` (`purchase-dialog.tsx`, `use-purchase-editor.ts`)
+3. `PurchaseDialog` and `usePurchaseEditor` — modal form with date, store suggestions, and items offering only products with no purchase that are not finished (keeping each item's chosen product), plus "New product" opening the product dialog; one POST to `/api/purchases` (`purchase-dialog.tsx`, `use-purchase-editor.ts`)
 4. `/api/purchases` route — POST validates the body and sets `purchase` on each item's product inside the `usage.json` queue, rejecting products already bought (`api.purchases.ts`)
 
 ## Spec Coverage
@@ -49,11 +49,11 @@ What each product cost: a product's purchase (date, store, price), the purchase 
 |----------|----------|-------------|----------|------|
 | Field | PURCH-001 | 1 | 0 | 0 |
 | List | PURCH-LIST-001 to PURCH-LIST-011 | 11 | 0 | 0 |
-| Dialog | PURCH-DLG-001 to PURCH-DLG-028 | 28 | 0 | 0 |
+| Dialog | PURCH-DLG-001 to PURCH-DLG-029 | 29 | 0 | 0 |
 | Saving | PURCH-SAVE-001 to PURCH-SAVE-009 | 9 | 0 | 0 |
-| API | PURCH-API-001 to PURCH-API-021 | 21 | 0 | 0 |
+| API | PURCH-API-001 to PURCH-API-022 | 22 | 0 | 0 |
 
-**Summary:** 70 specs, all `[x]`.
+**Summary:** 72 specs, all `[x]`.
 
 ## Key Findings
 
