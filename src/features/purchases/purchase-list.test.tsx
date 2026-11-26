@@ -147,6 +147,22 @@ describe("purchase list", () => {
     expect(screen.getByText("No purchases yet.")).toBeInTheDocument();
   });
 
+  // @spec PURCH-LIST-012
+  it("shows an Edit button on each purchase", async () => {
+    renderList();
+    const list = await purchases();
+    for (const purchase of list) expect(within(purchase).getByRole("button", { name: /^Edit purchase/ })).toHaveTextContent("Edit");
+  });
+
+  // @spec PURCH-LIST-013
+  it("names each Edit button for the purchase's date and store", async () => {
+    renderList();
+    const list = await purchases();
+    expect(within(list[0]).getByRole("button", { name: "Edit purchase Nov 7, 2026 · Sephora" })).toBeInTheDocument();
+    expect(within(list[3]).getByRole("button", { name: "Edit purchase Nov 7, 2026" })).toBeInTheDocument();
+    expect(within(list[4]).getByRole("button", { name: "Edit purchase Oct 30, 2026" })).toBeInTheDocument();
+  });
+
   // @spec PURCH-LIST-010
   it("does not say there are no purchases when some exist", async () => {
     renderList();
