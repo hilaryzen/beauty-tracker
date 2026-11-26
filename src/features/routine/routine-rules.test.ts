@@ -72,6 +72,17 @@ describe("routine rules for /api/configs", () => {
     expect(await readData("configs.json")).toEqual(sampleConfigs);
   });
 
+  // @spec ROUT-VAL-007
+  it("accepts a routine that lists a finished product", async () => {
+    await writeData("usage.json", [
+      { ...sampleUsage[0], status: "Panned" },
+      { ...sampleUsage[1], status: "Decluttered" },
+      ...sampleUsage.slice(2),
+    ]);
+    expect(status(await postRoutines({ Evening: [0, 1] }))).toBe(200);
+    expect((await readData("configs.json")).routines).toEqual({ Evening: [0, 1] });
+  });
+
   // @spec ROUT-VAL-006
   it("rejects a routine name that starts or ends with whitespace", async () => {
     expect(status(await postRoutines({ " Evening": [0] }))).toBe(400);

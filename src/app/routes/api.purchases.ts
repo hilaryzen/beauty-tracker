@@ -20,7 +20,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 /** Returns a message describing the first problem with the body, or undefined if its shape is valid. */
-// @spec PURCH-API-004, PURCH-API-005, PURCH-API-006, PURCH-API-007, PURCH-API-008, PURCH-API-009, PURCH-API-010, PURCH-API-011, PURCH-API-014
+// @spec PURCH-API-004, PURCH-API-005, PURCH-API-006, PURCH-API-007, PURCH-API-008, PURCH-API-009, PURCH-API-010, PURCH-API-011, PURCH-API-014, PURCH-API-022
 function checkShape(body: unknown): string | undefined {
   if (!isObject(body)) return "The request body must be an object";
   const unknownKey = Object.keys(body).find((key) => !["date", "store", "items"].includes(key));

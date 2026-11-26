@@ -608,3 +608,66 @@ describe("when a purchase save fails", () => {
     expect(screen.getByRole("dialog", { name: "Add purchase" })).toBeInTheDocument();
   });
 });
+
+describe("finished products in the purchase dialog", () => {
+  const status = (record: Product, value: string) => ({ ...record, status: value as Product["status"] });
+
+  // @spec PURCH-DLG-008, PURCH-DLG-009
+  it("leaves out finished products, but not products with another or no status", async () => {
+    const withStatuses = [
+      status(primer, "Panned"),
+      status(cushion, "Backlog"),
+      status(cleanser, "Opened"),
+      status(pinch, "Decluttered"),
+      status(toner, "panned"),
+      { ...gel, purchase: undefined, status: undefined as unknown as Product["status"] },
+      spray,
+    ];
+    renderPurchases(vi.fn(() => ({ usage: withStatuses, categories })));
+    await openPurchaseDialog();
+    expect(optionTexts(productSelects()[0])).toEqual([label(gel), label(cushion), label(toner), "New product"]);
+  });
+
+  // @spec PURCH-DLG-029
+  it("keeps listing an item's chosen product after it becomes finished or gets a purchase", async () => {
+    const loader = vi
+      .fn()
+      .mockReturnValueOnce({ usage, categories })
+      .mockReturnValue({
+        usage: [{ ...status(primer, "Panned"), purchase: { date: "2026-11-06", price: 3200 } }, ...usage.slice(1)],
+        categories,
+      });
+    renderPurchases(loader);
+    await openPurchaseDialog();
+    chooseProduct(0, label(primer));
+    fireEvent.click(button("Add item"));
+    fireEvent.click(screen.getByText("Refresh"));
+    await waitFor(() => expect(loader.mock.calls.length).toBeGreaterThan(1));
+    await waitFor(() => expect(optionTexts(productSelects()[1])).toEqual([label(cushion), label(pinch), label(toner), "New product"]));
+    expect(optionTexts(productSelects()[0])).toContain(label(primer));
+    expect(selectedText(productSelects()[0])).toBe(label(primer));
+  });
+
+  // @spec PURCH-DLG-014, PURCH-DLG-029
+  it("chooses a new product saved as finished on its item", async () => {
+    const dewSerum = { ...product(9, "Saie", "Dew Serum", "Cleanser"), status: "Panned" as const };
+    respond({ "/api/products": () => Promise.resolve(Response.json({ id: 9 })) });
+    const loader = vi
+      .fn()
+      .mockReturnValueOnce({ usage, categories })
+      .mockReturnValue({ usage: [...usage, dewSerum], categories });
+    renderPurchases(loader);
+    await openPurchaseDialog();
+    chooseProduct(0, "New product");
+    const productDialog = await screen.findByRole("dialog", { name: "Add product" });
+    fill(await within(productDialog).findByLabelText("Name"), "Dew Serum");
+    fill(within(productDialog).getByLabelText("Brand"), "Saie");
+    fireEvent.change(within(productDialog).getByLabelText("Category"), { target: { value: "Cleanser" } });
+    fireEvent.change(within(productDialog).getByLabelText("Status"), { target: { value: "Panned" } });
+    fireEvent.click(button("Save", productDialog));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Add product" })).toBeNull());
+    await waitFor(() => expect(selectedText(productSelects()[0])).toBe("Saie Dew Serum"));
+    fireEvent.click(button("Add item"));
+    expect(optionTexts(productSelects()[1])).not.toContain("Saie Dew Serum");
+  });
+});

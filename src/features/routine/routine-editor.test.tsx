@@ -41,7 +41,10 @@ const routines: Routines = {
 type PageData = { routines?: Routines; categories?: Categories; usage: Product[] };
 
 function renderEditor(data: PageData = { routines, categories, usage }) {
-  const loader = vi.fn(() => data);
+  return renderEditorWith(vi.fn(() => data));
+}
+
+function renderEditorWith<Loader extends () => PageData>(loader: Loader) {
   function Page() {
     const loaded = useLoaderData() as PageData;
     return <RoutineEditor routines={loaded.routines} categories={loaded.categories} usage={loaded.usage} />;
@@ -751,5 +754,92 @@ describe("routine editor saving", () => {
     await ready();
     fireEvent.click(button("Delete routine Evening"));
     expect(await screen.findByText(/not saved/i)).toBeInTheDocument();
+  });
+});
+
+describe("finished products in the routine editor", () => {
+  // Product 7 is the only product in the configured Mask category, and it is finished.
+  // Product 8 shows the same text as product 4, which has a purchase.
+  // Products 9 and 10 have a status that does not count as finished, or none at all.
+  const finishedUsage: Product[] = [
+    ...usage,
+    product(7, "Sheet Mask", "Mask", { status: "Panned" }),
+    product(8, "Lip Glow", "Gloss", { shade: "Berry", status: "Decluttered" }),
+    product(9, "Odd Serum", "Cleanser", { status: "panned" as Product["status"] }),
+    product(10, "Bare Serum", "Cleanser", { status: undefined as unknown as Product["status"] }),
+  ];
+  const maskCategories: Categories = { ...categories, face: ["Mask"] };
+  const all = { routines, categories: maskCategories, usage: finishedUsage };
+
+  // @spec ROUT-EDIT-018, ROUT-EDIT-055, ROUT-EDIT-012
+  it("lists every product that is not finished in the First product dropdown, and no finished one", async () => {
+    renderEditor({ routines: {}, categories: maskCategories, usage: finishedUsage });
+    await ready();
+    const groups = optionGroups("First product");
+    expect(groups.map((group) => group.label)).not.toContain("Mask");
+    const options = groups.flatMap((group) => group.options);
+    expect(options).not.toContain("Sheet Mask");
+    expect(options.filter((text) => text?.startsWith("Lip Glow"))).toHaveLength(1);
+    expect(options).toContain("Odd Serum");
+    expect(options).toContain("Bare Serum");
+    expect(options).toHaveLength(finishedUsage.length - 2);
+  });
+
+  // @spec ROUT-EDIT-055, ROUT-EDIT-016
+  it("leaves finished products out of each Add product dropdown", async () => {
+    renderEditor(all);
+    await ready();
+    const options = optionGroups("Add product to Evening").flatMap((group) => group.options);
+    expect(options).not.toContain("Sheet Mask");
+    expect(options).toContain("Odd Serum");
+    expect(options.filter((text) => text?.startsWith("Lip Glow"))).toHaveLength(1);
+  });
+
+  // @spec ROUT-EDIT-015, ROUT-EDIT-055
+  it("does not count a finished product when checking for colliding text", async () => {
+    renderEditor(all);
+    await ready();
+    const gloss = optionGroups("First product").find((group) => group.label === "Gloss");
+    expect(gloss?.options).toEqual(["Lip Glow – Berry"]);
+  });
+
+  // @spec ROUT-EDIT-017
+  it("disables Add product while every product that is not finished is already in the routine", async () => {
+    const listable = finishedUsage.filter((item) => item.id !== 7 && item.id !== 8).map((item) => item.id);
+    renderEditor({ routines: { Most: listable, Some: [0] }, categories: maskCategories, usage: finishedUsage });
+    await ready();
+    expect(screen.getByLabelText("Add product to Most")).toBeDisabled();
+    expect(screen.getByLabelText("Add product to Some")).toBeEnabled();
+  });
+
+  // @spec ROUT-EDIT-056
+  it("keeps listing the chosen First product after it becomes finished, until another is chosen", async () => {
+    const panned = usage.map((item) => (item.id === 0 ? { ...item, status: "Panned" as const } : item));
+    const loader = vi
+      .fn()
+      .mockReturnValueOnce({ routines, categories, usage })
+      .mockReturnValue({ routines, categories, usage: panned });
+    renderEditorWith(loader);
+    await ready();
+    choose("First product", 0);
+    fireEvent.click(button("Delete routine Evening"));
+    await waitFor(() => expect(loader.mock.calls.length).toBeGreaterThan(1));
+    await waitFor(() => expect(optionGroups("Add product to Morning Skincare").flatMap((group) => group.options)).not.toContain("Hydro Grip Primer"));
+    const first = screen.getByLabelText("First product") as HTMLSelectElement;
+    expect(first.value).toBe("0");
+    expect(optionGroups("First product").flatMap((group) => group.options)).toContain("Hydro Grip Primer");
+
+    choose("First product", 5);
+    expect(optionGroups("First product").flatMap((group) => group.options)).not.toContain("Hydro Grip Primer");
+  });
+
+  // @spec ROUT-EDIT-057
+  it("lists a finished product already in a routine, with its move and Remove controls", async () => {
+    renderEditor({ routines: { Old: [0, 7, 1] }, categories: maskCategories, usage: finishedUsage });
+    await ready();
+    expect(listed("Old")).toEqual(["Hydro Grip Primer", "Sheet Mask", "Cushion Glass – 21N"]);
+    for (const name of ["Move Sheet Mask up in Old", "Move Sheet Mask down in Old", "Remove Sheet Mask from Old"]) {
+      expect(button(name)).toBeEnabled();
+    }
   });
 });
