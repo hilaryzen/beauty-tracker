@@ -85,6 +85,19 @@ describe("/api/purchases", () => {
       expect(saved[1].purchase).toEqual({ date: "2026-10-20", price: 4200 });
     });
 
+    // @spec PURCH-API-022
+    it("accepts items whose products are finished", async () => {
+      await writeData("usage.json", [
+        { ...usage[0], status: "Decluttered" },
+        { ...usage[1], status: "Panned" },
+        usage[2],
+      ]);
+      expect(await post(purchase)).toBeNull();
+      const saved = await readData("usage.json");
+      expect(saved[1].purchase).toEqual({ date: "2026-10-20", store: "Sephora", price: 4200 });
+      expect(saved[0].purchase).toEqual({ date: "2026-10-20", store: "Sephora", price: 0 });
+    });
+
     // @spec PURCH-API-001
     it("accepts today's date", async () => {
       expect(await post({ ...purchase, date: "2026-10-26" })).toBeNull();
