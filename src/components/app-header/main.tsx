@@ -2,7 +2,7 @@ import { Flex, HStack, Link, Text } from "@chakra-ui/react";
 import { NavLink } from "react-router";
 
 const pages = [
-  { label: "Usage", to: "/" },
+  { label: "Inventory", to: "/" },
   { label: "Purchases", to: "/purchases" },
   { label: "Settings", to: "/settings" },
 ];

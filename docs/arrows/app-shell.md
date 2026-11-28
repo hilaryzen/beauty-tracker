@@ -42,16 +42,16 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 
 ## Architecture
 
-**Purpose:** Frame every page (HTML document, fonts, theme provider, navigation header, error boundary), declare routes, compose the home page from the usage and routines segments, compose the purchases page from the purchases segment, and compose the settings page from the products segment's category editor and the routines segment's routine editor.
+**Purpose:** Frame every page (HTML document, fonts, theme provider, navigation header, error boundary), declare routes, compose the home page from the inventory and routines segments, compose the purchases page from the purchases segment, and compose the settings page from the products segment's category editor and the routines segment's routine editor.
 
 **Key Components:**
 1. `root.tsx` — HTML layout with the "Beauty Tracker" title, the app meta description, and Inter font links; `Shell` (Chakra `Provider` + `AppHeader` + `<Toaster />`) around every page including the error page; Chakra-styled `ErrorBoundary`
 2. `routes.ts` — index route, `/purchases`, `/settings`, plus `/api/usage`, `/api/products`, `/api/purchases`, `/api/configs`, and `/api/categories`
-3. `home.tsx` — server loader reads `configs.json` and usage through `loadUsage()`, 500 "Your data could not be loaded." when either is unreadable; renders `RoutineCard` above `UsageTable`
+3. `home.tsx` — server loader reads `configs.json` and usage through `loadUsage()`, 500 "Your data could not be loaded." when either is unreadable; renders `RoutineCard` above `InventoryTable`
 3a. `purchases.tsx` — server loader reads `usage.json` and `configs.json` through the data store without rollover, 500 "Your data could not be loaded." when either is unreadable; renders the heading "Purchases" above `PurchaseList`
 3c. `settings.tsx` — server loader reads `usage.json` and `configs.json` through the data store without rollover, 500 "Your data could not be loaded." when either is unreadable; renders the heading "Settings" above `CategoryEditor` and `RoutineEditor`, side by side from the `lg` breakpoint and stacked with routines first below it
-3b. `AppHeader` — "Beauty Tracker" plus Usage, Purchases, and Settings `NavLink`s; the current path's link gets `aria-current="page"` and a bolder style (`app-header/main.tsx`)
-4. `AddMinusButtons` — shared + / − button pair used by the usage table and routine cards (`add-minus-buttons/main.tsx`)
+3b. `AppHeader` — "Beauty Tracker" plus Inventory, Purchases, and Settings `NavLink`s; the current path's link gets `aria-current="page"` and a bolder style (`app-header/main.tsx`)
+4. `AddMinusButtons` — shared + / − button pair used by the inventory table and routine cards (`add-minus-buttons/main.tsx`)
 5. `components/ui/*` — Chakra snippets: `provider.tsx` (app system with Inter), `color-mode.tsx` (`ColorModeProvider` only), `toaster.tsx`
 
 ## Spec Coverage
@@ -70,8 +70,3 @@ Page frame and composition: root layout, theme, error page, routing, navigation 
 ## Key Findings
 
 None open.
-
-## Work Required
-
-### Nice to Have
-1. Add an Inventory header link when inventory gets a page (LLD deferred question 1).

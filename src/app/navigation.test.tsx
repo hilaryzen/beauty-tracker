@@ -113,28 +113,28 @@ describe("navigation header", () => {
   });
 
   // @spec SHELL-NAV-003
-  it("links to Usage, then Purchases, then Settings", async () => {
+  it("links to Inventory, then Purchases, then Settings", async () => {
     renderApp("/purchases");
     const links = within(await header()).getAllByRole("link");
-    expect(links.map((link) => link.textContent)).toEqual(["Usage", "Purchases", "Settings"]);
+    expect(links.map((link) => link.textContent)).toEqual(["Inventory", "Purchases", "Settings"]);
     expect(links.map((link) => link.getAttribute("href"))).toEqual(["/", "/purchases", "/settings"]);
   });
 
   // @spec SHELL-NAV-004
-  it("marks only Usage as the current page at /", async () => {
+  it("marks only Inventory as the current page at /", async () => {
     renderApp("/");
     await header();
-    expect(headerLink("Usage")).toHaveAttribute("aria-current", "page");
+    expect(headerLink("Inventory")).toHaveAttribute("aria-current", "page");
     expect(headerLink("Purchases")).not.toHaveAttribute("aria-current");
   });
 
   // @spec SHELL-NAV-004
-  it("still marks Usage as the current page when the home page fails to load", async () => {
+  it("still marks Inventory as the current page when the home page fails to load", async () => {
     renderApp("/", () => {
       throw new Response(null, { status: 500, statusText: "Your data could not be loaded." });
     });
     expect(await screen.findByRole("heading", { name: "Error" })).toBeInTheDocument();
-    expect(headerLink("Usage")).toHaveAttribute("aria-current", "page");
+    expect(headerLink("Inventory")).toHaveAttribute("aria-current", "page");
     expect(headerLink("Purchases")).not.toHaveAttribute("aria-current");
   });
 
@@ -143,7 +143,7 @@ describe("navigation header", () => {
     renderApp("/purchases");
     await header();
     expect(headerLink("Purchases")).toHaveAttribute("aria-current", "page");
-    expect(headerLink("Usage")).not.toHaveAttribute("aria-current");
+    expect(headerLink("Inventory")).not.toHaveAttribute("aria-current");
   });
 
   // @spec SHELL-NAV-009
@@ -151,7 +151,7 @@ describe("navigation header", () => {
     renderApp("/settings");
     await header();
     expect(headerLink("Settings")).toHaveAttribute("aria-current", "page");
-    expect(headerLink("Usage")).not.toHaveAttribute("aria-current");
+    expect(headerLink("Inventory")).not.toHaveAttribute("aria-current");
     expect(headerLink("Purchases")).not.toHaveAttribute("aria-current");
   });
 
@@ -159,7 +159,7 @@ describe("navigation header", () => {
   it("marks no link as the current page on a path that matches no route", async () => {
     renderApp("/no-such-page");
     expect(await screen.findByRole("heading", { name: "404" })).toBeInTheDocument();
-    expect(headerLink("Usage")).not.toHaveAttribute("aria-current");
+    expect(headerLink("Inventory")).not.toHaveAttribute("aria-current");
     expect(headerLink("Purchases")).not.toHaveAttribute("aria-current");
   });
 
@@ -168,7 +168,7 @@ describe("navigation header", () => {
     renderApp("/purchases");
     await header();
     const current = getComputedStyle(headerLink("Purchases"));
-    const other = getComputedStyle(headerLink("Usage"));
+    const other = getComputedStyle(headerLink("Inventory"));
     const differs = ["color", "font-weight", "text-decoration-line", "border-bottom-color", "background-color"].some(
       (property) => current.getPropertyValue(property) !== other.getPropertyValue(property),
     );
@@ -185,7 +185,7 @@ describe("navigation header", () => {
     expect(screen.getByRole("banner")).toBe(banner);
     expect(headerLink("Purchases")).toHaveAttribute("aria-current", "page");
 
-    fireEvent.click(headerLink("Usage"));
+    fireEvent.click(headerLink("Inventory"));
     expect(await screen.findByRole("table")).toBeInTheDocument();
     expect(screen.getByRole("banner")).toBe(banner);
   });

@@ -16,8 +16,8 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 - [x] **SHELL-NAV-001**: Every page, including the error page, shall display a header above the page content.
 - [x] **SHELL-NAV-002**: The header shall show the app name "Beauty Tracker" as text that is not a link.
-- [x] **SHELL-NAV-003**: The header shall show a "Usage" link to `/`, then a "Purchases" link to `/purchases`, then a "Settings" link to `/settings`.
-- [x] **SHELL-NAV-004**: While the current path is `/` — showing the home page, or the error page when the home page fails to load — the header shall mark the "Usage" link, and no other link, with `aria-current="page"`.
+- [x] **SHELL-NAV-003**: The header shall show an "Inventory" link to `/`, then a "Purchases" link to `/purchases`, then a "Settings" link to `/settings`.
+- [x] **SHELL-NAV-004**: While the current path is `/` — showing the home page, or the error page when the home page fails to load — the header shall mark the "Inventory" link, and no other link, with `aria-current="page"`.
 - [x] **SHELL-NAV-005**: While the current path is `/purchases`, the header shall mark the "Purchases" link, and no other link, with `aria-current="page"`.
 - [x] **SHELL-NAV-006**: While the current path matches no route, the header shall mark no link with `aria-current="page"`.
 - [x] **SHELL-NAV-007**: The header shall display the link marked with `aria-current="page"` in a visual style that differs from the other header links.
@@ -26,7 +26,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 ## Home Page
 
-- [x] **SHELL-HOME-001**: The home page shall display the routine cards above the usage table.
+- [x] **SHELL-HOME-001**: The home page shall display the routine cards above the inventory table.
 - [x] **SHELL-HOME-002**: If `configs.json` or `usage.json` cannot be read when the home page loads, then the system shall respond with status 500 and the status text "Your data could not be loaded."
 
 ## Purchases Page

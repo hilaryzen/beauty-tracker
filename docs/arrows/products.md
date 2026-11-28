@@ -54,9 +54,9 @@ What a product is: the product record, categories, adding and editing products, 
 4. `/api/products` route — POST adds (responding with the new id) and PUT edits, validated inside a multi-file update holding `configs.json` and `usage.json`, with no rollover (`api.products.ts`)
 5. `/api/categories` route — renames a category in `configs.json` and every product using it, in ordered writes inside one multi-file update (`api.categories.ts`)
 6. `CategoryEditor` — adds, renames, reorders, moves, and deletes categories and groups on the settings page, saving each edit at once (`category-editor.tsx`)
-7. `productName` — a product's name with its shade, used by the usage table, routine cards, routine editor, and purchases page (`product-name.ts`)
-8. Size and rating rules — `isProductSize`, `isRating`, the size units, size formatting, and size amount parsing, shared by `/api/products`, the product dialog, and the usage table (`product-details.ts`)
-9. Status values — the five statuses in lifecycle order, `isStatus`, `statusRank` for status order, and `isFinished` for Panned and Decluttered products, shared by `/api/products`, the product dialog, the usage table, the routine editor, and the purchase dialog (`product-status.ts`)
+7. `productName` — a product's name with its shade, used by the inventory table, routine cards, routine editor, and purchases page (`product-name.ts`)
+8. Size and rating rules — `isProductSize`, `isRating`, the size units, size formatting, and size amount parsing, shared by `/api/products`, the product dialog, and the inventory table (`product-details.ts`)
+9. Status values — the five statuses in lifecycle order, `isStatus`, `statusRank` for status order, and `isFinished` for Panned and Decluttered products, shared by `/api/products`, the product dialog, the inventory table, the routine editor, and the purchase dialog (`product-status.ts`)
 
 ## Spec Coverage
 

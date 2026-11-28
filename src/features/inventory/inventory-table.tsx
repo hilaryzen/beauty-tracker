@@ -8,9 +8,9 @@ import { formatDollars } from "@/features/purchases/money";
 import type { Product } from "@/features/products/types";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import { useUsage } from "./use-usage";
+import { useUsage } from "@/features/usage/use-usage";
 
-type UsageTableProps = {
+type InventoryTableProps = {
   usage: Product[];
   categories?: Record<string, Array<string>>
 }
@@ -31,8 +31,8 @@ function overallUses(item: Product) {
   return Object.values(item.uses).reduce((sum, value) => sum + value, 0) + item.usesThisMonth;
 }
 
-// @spec USAGE-UI-001, USAGE-UI-002, USAGE-UI-003, USAGE-UI-004, USAGE-UI-005, USAGE-UI-006, USAGE-UI-007, USAGE-UI-008, USAGE-UI-009, USAGE-UI-010, USAGE-UI-011, USAGE-UI-012, USAGE-UI-013, USAGE-UI-014, USAGE-UI-015, USAGE-UI-016, USAGE-UI-017, USAGE-UI-018, USAGE-UI-019, USAGE-UI-020, USAGE-UI-021, USAGE-UI-022, USAGE-UI-023, USAGE-UI-024, USAGE-UI-025, USAGE-UI-026, USAGE-UI-027, USAGE-UI-028, USAGE-UI-029, USAGE-UI-030, USAGE-UI-031, USAGE-UI-032, USAGE-UI-033, USAGE-UI-034, USAGE-UI-035, USAGE-UI-036, USAGE-UI-037, USAGE-UI-038, USAGE-UI-039, USAGE-UI-040, USAGE-UI-041, USAGE-UI-042, USAGE-LOG-001, USAGE-LOG-002
-export const UsageTable = ({ usage, categories }: UsageTableProps) => {
+// @spec INV-UI-001, INV-UI-002, INV-UI-003, INV-UI-004, INV-UI-005, INV-UI-006, INV-UI-007, INV-UI-008, INV-UI-009, INV-UI-010, INV-UI-011, INV-UI-012, INV-UI-013, INV-UI-014, INV-UI-015, INV-UI-016, INV-UI-017, INV-UI-018, INV-UI-019, INV-UI-020, INV-UI-021, INV-UI-022, INV-UI-023, INV-UI-024, INV-UI-025, INV-UI-026, INV-UI-027, INV-UI-028, INV-UI-029, INV-UI-030, INV-UI-031, INV-UI-032, INV-UI-033, INV-UI-034, INV-UI-035, INV-UI-036, INV-UI-037, INV-UI-038, INV-UI-039, INV-UI-040, INV-UI-041, INV-UI-042, INV-LOG-001, INV-LOG-002
+export const InventoryTable = ({ usage, categories }: InventoryTableProps) => {
   const { addUsesToItems, removeUsesFromItems } = useUsage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | undefined>();

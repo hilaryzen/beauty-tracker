@@ -2,11 +2,10 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useLoaderData, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { toaster } from "@/components/ui/toaster";
 import { sampleConfigs, sampleUsage } from "@/test/data-dir";
 import { renderPage } from "@/test/render";
 import type { ProductStatus } from "@/features/products/product-status";
-import { UsageTable } from "./usage-table";
+import { InventoryTable } from "./inventory-table";
 
 type PageData = { usage: typeof sampleUsage; categories?: Record<string, string[]> };
 
@@ -16,7 +15,7 @@ function Page() {
   const navigate = useNavigate();
   return (
     <>
-      <UsageTable usage={usage} categories={categories as Record<string, string[]>} />
+      <InventoryTable usage={usage} categories={categories as Record<string, string[]>} />
       {/* Test-only probes: the current URL's search string, and a browser Back. */}
       <output data-testid="search">{location.search}</output>
       <button onClick={() => navigate(-1)}>Test back</button>
@@ -80,12 +79,10 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  // The toaster is shared across renders; clear it so one test's notification can't satisfy another's.
-  toaster.remove();
 });
 
-describe("usage table display", () => {
-  // @spec USAGE-UI-001
+describe("inventory table display", () => {
+  // @spec INV-UI-001
   it("shows category, name, brand, overall uses, and this month's uses for each product row", async () => {
     renderTable();
     for (const header of ["Category", "Product", "Brand", "Overall Uses", "This Month's Uses"]) {
@@ -96,7 +93,7 @@ describe("usage table display", () => {
     expect(within(primer).getByText("Milk Makeup")).toBeInTheDocument();
   });
 
-  // @spec USAGE-UI-002
+  // @spec INV-UI-002
   it("orders rows by category position across all groups in configured group order", async () => {
     renderTable({
       usage: sameStatus(sampleUsage),
@@ -109,7 +106,7 @@ describe("usage table display", () => {
     ]);
   });
 
-  // @spec USAGE-UI-003
+  // @spec INV-UI-003
   it("keeps stored order for products in the same category", async () => {
     const usage = [
       { ...sampleUsage[0], id: 0, name: "Primer B" },
@@ -121,7 +118,7 @@ describe("usage table display", () => {
     expect(await productOrder()).toEqual(["Blueberry Bounce Gentle Cleanser", "Primer B", "Primer A"]);
   });
 
-  // @spec USAGE-UI-004
+  // @spec INV-UI-004
   it("shows overall uses as past months plus the current month", async () => {
     renderTable();
     const primer = await row("Hydro Grip Primer");
@@ -129,7 +126,7 @@ describe("usage table display", () => {
     expect(within(primer).getByText("27")).toBeInTheDocument();
   });
 
-  // @spec USAGE-UI-005
+  // @spec INV-UI-005
   it("shows a + and a − control on every row", async () => {
     renderTable();
     for (const product of sampleUsage) {
@@ -139,21 +136,21 @@ describe("usage table display", () => {
     }
   });
 
-  // @spec USAGE-UI-006
+  // @spec INV-UI-006
   it("shows rows in stored order when there are no categories", async () => {
     renderTable({ usage: sameStatus(sampleUsage) });
     expect(await productOrder()).toEqual(sampleUsage.map((item) => item.name));
   });
 });
 
-describe("a product's status in the usage table", () => {
+describe("a product's status in the inventory table", () => {
   function product(name: string, category: string, status: string | undefined) {
     const record: Record<string, unknown> = { ...sampleUsage[0], name, category, status };
     if (status === undefined) delete record.status;
     return record as unknown as (typeof sampleUsage)[number];
   }
 
-  // @spec USAGE-UI-038
+  // @spec INV-UI-038
   it("orders rows by status: In Progress, Opened, Backlog, Panned, Decluttered", async () => {
     const usage = [
       product("Decluttered one", "Primer", "Decluttered"),
@@ -166,7 +163,7 @@ describe("a product's status in the usage table", () => {
     expect(await productOrder()).toEqual(["In Progress one", "Opened one", "Backlog one", "Panned one", "Decluttered one"]);
   });
 
-  // @spec USAGE-UI-038, USAGE-UI-002
+  // @spec INV-UI-038, INV-UI-002
   it("orders by status before category, then by category within a status", async () => {
     // Configured category order: Cleanser, Primer, Foundation.
     const usage = [
@@ -179,7 +176,7 @@ describe("a product's status in the usage table", () => {
     expect(await productOrder()).toEqual(["In Progress cleanser", "In Progress foundation", "Backlog cleanser", "Backlog primer"]);
   });
 
-  // @spec USAGE-UI-038, USAGE-UI-006
+  // @spec INV-UI-038, INV-UI-006
   it("orders by status, then stored order, when there are no categories", async () => {
     const usage = [
       product("Backlog one", "Cleanser", "Backlog"),
@@ -190,7 +187,7 @@ describe("a product's status in the usage table", () => {
     expect(await productOrder()).toEqual(["In Progress one", "Backlog one", "Backlog two"]);
   });
 
-  // @spec USAGE-UI-038
+  // @spec INV-UI-038
   it("orders by status within a group tab", async () => {
     const usage = [
       product("Backlog primer", "Primer", "Backlog"),
@@ -201,7 +198,7 @@ describe("a product's status in the usage table", () => {
     expect(await productOrder()).toEqual(["Opened foundation", "Backlog primer"]);
   });
 
-  // @spec USAGE-UI-039, USAGE-UI-003
+  // @spec INV-UI-039, INV-UI-003
   it("sorts products with no status or an unrecognized one together after Decluttered, in stored order", async () => {
     const usage = [
       product("Unknown status", "Primer", "Used up"),
@@ -213,7 +210,7 @@ describe("a product's status in the usage table", () => {
     expect(await productOrder()).toEqual(["Decluttered one", "Unknown status", "No status", "Lowercase status"]);
   });
 
-  // @spec USAGE-UI-040
+  // @spec INV-UI-040
   it("shows a Status column first, before Category", async () => {
     renderTable();
     await screen.findAllByRole("cell");
@@ -222,7 +219,7 @@ describe("a product's status in the usage table", () => {
     expect(within(await row("Hydro Grip Primer")).getAllByRole("cell")).toHaveLength(headers.length);
   });
 
-  // @spec USAGE-UI-041
+  // @spec INV-UI-041
   it("shows each status as stored", async () => {
     const statuses = ["Backlog", "Opened", "In Progress", "Panned", "Decluttered"];
     renderTable({ usage: statuses.map((status) => product(`${status} one`, "Primer", status)), categories: sampleConfigs.categories });
@@ -231,7 +228,7 @@ describe("a product's status in the usage table", () => {
     }
   });
 
-  // @spec USAGE-UI-042
+  // @spec INV-UI-042
   it("leaves the Status cell empty for a product with no status or an unrecognized one", async () => {
     const usage = [product("No status", "Primer", undefined), product("Unknown status", "Primer", "Used up")];
     renderTable({ usage, categories: sampleConfigs.categories });
@@ -240,12 +237,12 @@ describe("a product's status in the usage table", () => {
   });
 });
 
-describe("a product's shade in the usage table", () => {
+describe("a product's shade in the inventory table", () => {
   function productCell(tr: HTMLElement) {
     return cellUnder(tr, "Product");
   }
 
-  // @spec USAGE-UI-011
+  // @spec INV-UI-011
   it("shows the name, an en dash, and the shade as plain text in the Product column", async () => {
     renderTable({ usage: [{ ...sampleUsage[0], shade: "Berry" }, ...sampleUsage.slice(1)], categories: sampleConfigs.categories });
     const cell = productCell(await row("Hydro Grip Primer – Berry"));
@@ -254,7 +251,7 @@ describe("a product's shade in the usage table", () => {
     expect(cell.children).toHaveLength(0);
   });
 
-  // @spec USAGE-UI-012
+  // @spec INV-UI-012
   it("shows only the name in the Product column for a product without a shade", async () => {
     renderTable();
     const cell = productCell(await row("Hydro Grip Primer"));
@@ -262,7 +259,7 @@ describe("a product's shade in the usage table", () => {
   });
 });
 
-describe("a product's dates in the usage table", () => {
+describe("a product's dates in the inventory table", () => {
   const DATE_COLUMNS = ["Purchased", "Opened", "Expires", "Removed"];
 
   function headers() {
@@ -283,7 +280,7 @@ describe("a product's dates in the usage table", () => {
     removed: "2026-10-05",
   };
 
-  // @spec USAGE-UI-026
+  // @spec INV-UI-026
   it("shows Purchased, Opened, Expires, and Removed columns after This Month's Uses and before the controls", async () => {
     renderTable();
     await screen.findAllByRole("cell");
@@ -296,13 +293,13 @@ describe("a product's dates in the usage table", () => {
     expect(within(cells.at(-1) as HTMLElement).getByRole("button", { name: "Edit" })).toBeInTheDocument();
   });
 
-  // @spec USAGE-UI-027, USAGE-UI-028
+  // @spec INV-UI-027, INV-UI-028
   it("shows each date as stored, in YYYY-MM-DD form", async () => {
     renderTable({ usage: [dated, ...sampleUsage.slice(1)], categories: sampleConfigs.categories });
     expect(dateCells(await row("Hydro Grip Primer"))).toEqual(["2026-09-14", "2026-09-20", "2027-09-20", "2026-10-05"]);
   });
 
-  // @spec USAGE-UI-029, USAGE-UI-030
+  // @spec INV-UI-029, INV-UI-030
   it("leaves a date cell empty when the product has no such date", async () => {
     renderTable({
       usage: [{ ...sampleUsage[0], expires: "2027-01-01" }, ...sampleUsage.slice(1)],
@@ -312,7 +309,7 @@ describe("a product's dates in the usage table", () => {
     expect(dateCells(await row("Cushion Glass Original"))).toEqual(["", "", "", ""]);
   });
 
-  // @spec USAGE-UI-029
+  // @spec INV-UI-029
   it("leaves the Purchased cell empty for a product with no purchase, while showing its other dates", async () => {
     const { purchase: _purchase, ...unbought } = dated;
     renderTable({ usage: [unbought, ...sampleUsage.slice(1)], categories: sampleConfigs.categories });
@@ -320,7 +317,7 @@ describe("a product's dates in the usage table", () => {
   });
 });
 
-describe("a product's size, cost, and rating in the usage table", () => {
+describe("a product's size, cost, and rating in the inventory table", () => {
   const COLUMNS = ["Size", "Cost", "Rating"];
 
   function headers() {
@@ -337,7 +334,7 @@ describe("a product's size, cost, and rating in the usage table", () => {
     return { usage: [{ ...sampleUsage[0], ...changes }, ...sampleUsage.slice(1)], categories: sampleConfigs.categories } as PageData;
   }
 
-  // @spec USAGE-UI-031
+  // @spec INV-UI-031
   it("shows Size, Cost, and Rating columns after Brand and before Overall Uses", async () => {
     renderTable();
     await screen.findAllByRole("cell");
@@ -347,7 +344,7 @@ describe("a product's size, cost, and rating in the usage table", () => {
     expect(within(await row("Hydro Grip Primer")).getAllByRole("cell")).toHaveLength(all.length);
   });
 
-  // @spec USAGE-UI-032, USAGE-UI-034, USAGE-UI-036
+  // @spec INV-UI-032, INV-UI-034, INV-UI-036
   it("shows the size, the purchase price, and the rating", async () => {
     renderTable(withPrimer({
       size: { amount: 1.7, unit: "fl oz" },
@@ -357,7 +354,7 @@ describe("a product's size, cost, and rating in the usage table", () => {
     expect(detailCells(await row("Hydro Grip Primer"))).toEqual(["1.7 fl oz", "$32.00", "4"]);
   });
 
-  // @spec USAGE-UI-032
+  // @spec INV-UI-032
   it.each([
     [{ amount: 50, unit: "mL" }, "50 mL"],
     [{ amount: 0.25, unit: "oz" }, "0.25 oz"],
@@ -367,7 +364,7 @@ describe("a product's size, cost, and rating in the usage table", () => {
     expect(detailCells(await row("Hydro Grip Primer"))[0]).toBe(text);
   });
 
-  // @spec USAGE-UI-034
+  // @spec INV-UI-034
   it.each([
     [0, "$0.00"],
     [1999, "$19.99"],
@@ -377,14 +374,14 @@ describe("a product's size, cost, and rating in the usage table", () => {
     expect(detailCells(await row("Hydro Grip Primer"))[1]).toBe(text);
   });
 
-  // @spec USAGE-UI-033, USAGE-UI-035, USAGE-UI-037
+  // @spec INV-UI-033, INV-UI-035, INV-UI-037
   it("leaves the Size, Cost, and Rating cells empty when the product has none", async () => {
     renderTable(withPrimer({ rating: 2 }));
     expect(detailCells(await row("Hydro Grip Primer"))).toEqual(["", "", "2"]);
     expect(detailCells(await row("Cushion Glass Original"))).toEqual(["", "", ""]);
   });
 
-  // @spec USAGE-UI-033
+  // @spec INV-UI-033
   it.each([
     ["a string", "1.7 fl oz"],
     ["an unknown unit", { amount: 30, unit: "ml" }],
@@ -395,7 +392,7 @@ describe("a product's size, cost, and rating in the usage table", () => {
     expect(detailCells(await row("Hydro Grip Primer"))[0]).toBe("");
   });
 
-  // @spec USAGE-UI-037
+  // @spec INV-UI-037
   it.each([0, 6, 3.5, "4"])("leaves the Rating cell empty when the rating is %s", async (rating) => {
     renderTable(withPrimer({ rating }));
     expect(detailCells(await row("Hydro Grip Primer"))[2]).toBe("");
@@ -403,7 +400,7 @@ describe("a product's size, cost, and rating in the usage table", () => {
 });
 
 describe("opening the product dialog", () => {
-  // @spec USAGE-UI-007
+  // @spec INV-UI-007
   it("shows an Add product button above the rows", async () => {
     renderTable();
     const add = await screen.findByRole("button", { name: "Add product" });
@@ -412,13 +409,13 @@ describe("opening the product dialog", () => {
     expect(add.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  // @spec USAGE-UI-007
+  // @spec INV-UI-007
   it("shows the Add product button when there are no products", async () => {
     renderTable({ usage: [], categories: sampleConfigs.categories });
     expect(await screen.findByRole("button", { name: "Add product" })).toBeInTheDocument();
   });
 
-  // @spec USAGE-UI-008
+  // @spec INV-UI-008
   it("shows an edit button on every row", async () => {
     renderTable();
     for (const product of sampleUsage) {
@@ -427,7 +424,7 @@ describe("opening the product dialog", () => {
     }
   });
 
-  // @spec USAGE-UI-009
+  // @spec INV-UI-009
   it("opens an empty product dialog from the Add product button", async () => {
     renderTable();
     fireEvent.click(await screen.findByRole("button", { name: "Add product" }));
@@ -436,7 +433,7 @@ describe("opening the product dialog", () => {
     expect(within(dialog).getByLabelText("Name")).toHaveValue("");
   });
 
-  // @spec USAGE-UI-010
+  // @spec INV-UI-010
   it("opens the product dialog for the row's product from its edit button", async () => {
     renderTable();
     fireEvent.click(within(await row("Cushion Glass Original")).getByRole("button", { name: "Edit" }));
@@ -445,7 +442,7 @@ describe("opening the product dialog", () => {
     expect(within(dialog).getByLabelText("Name")).toHaveValue("Cushion Glass Original");
   });
 
-  // @spec USAGE-UI-009
+  // @spec INV-UI-009
   it("opens empty again after editing a product and cancelling", async () => {
     renderTable();
     fireEvent.click(within(await row("Cushion Glass Original")).getByRole("button", { name: "Edit" }));
@@ -456,8 +453,8 @@ describe("opening the product dialog", () => {
   });
 });
 
-describe("logging from the usage table", () => {
-  // @spec USAGE-LOG-001
+describe("logging from the inventory table", () => {
+  // @spec INV-LOG-001
   it("sends a +1 for the row's product when + is clicked", async () => {
     renderTable();
     fireEvent.click(within(await row("Cushion Glass Original")).getByRole("button", { name: "+" }));
@@ -465,135 +462,62 @@ describe("logging from the usage table", () => {
     expect(requestBody(fetchMock.mock.calls[0])).toEqual({ ids: [1], delta: 1 });
   });
 
-  // @spec USAGE-LOG-002
+  // @spec INV-LOG-002
   it("sends a -1 for the row's product when − is clicked", async () => {
     renderTable();
     fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "-" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(requestBody(fetchMock.mock.calls[0])).toEqual({ ids: [0], delta: -1 });
   });
-
-  // @spec USAGE-LOG-004
-  it("sends a single POST to /api/usage with { ids, delta }", async () => {
-    renderTable();
-    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(String(url)).toMatch(/\/api\/usage$/);
-    expect(init.method?.toUpperCase()).toBe("POST");
-    expect(Object.keys(requestBody(fetchMock.mock.calls[0])).sort()).toEqual(["delta", "ids"]);
-  });
-
-  // @spec USAGE-LOG-005
-  it("reloads the page data after a successful save", async () => {
-    const loader = renderTable();
-    await row("Hydro Grip Primer");
-    expect(loader).toHaveBeenCalledTimes(1);
-    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
-    await waitFor(() => expect(loader).toHaveBeenCalledTimes(2));
-  });
-
-  // @spec USAGE-LOG-007
-  it("shows an error notification when the save fails", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ error: "disk full" }), { status: 500 }),
-    );
-    renderTable();
-    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
-    expect(await screen.findByText(/not saved/i)).toBeInTheDocument();
-  });
-
-  // @spec USAGE-LOG-008
-  it("keeps showing the last saved data when the save fails", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ error: "bad id" }), { status: 400 }),
-    );
-    const loader = renderTable();
-    const primer = await row("Hydro Grip Primer");
-    fireEvent.click(within(primer).getByRole("button", { name: "+" }));
-    await screen.findByText(/not saved/i);
-    expect(loader).toHaveBeenCalledTimes(1);
-    expect(within(await row("Hydro Grip Primer")).getByText("27")).toBeInTheDocument();
-  });
-
-  // @spec USAGE-LOG-009
-  it("sends a new request without cancelling one still in flight", async () => {
-    fetchMock.mockImplementation(() => new Promise(() => {}));
-    renderTable();
-    const plus = within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" });
-    fireEvent.click(plus);
-    fireEvent.click(plus);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const firstSignal = (fetchMock.mock.calls[0][1] as RequestInit | undefined)?.signal;
-    expect(firstSignal?.aborted ?? false).toBe(false);
-  });
-
-  // @spec USAGE-LOG-010
-  it("shows an error notification when the request gets no response", async () => {
-    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
-    renderTable();
-    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
-    expect(await screen.findByText(/not saved/i)).toBeInTheDocument();
-  });
-
-  // @spec USAGE-LOG-011
-  it("keeps showing the last saved data when the request gets no response", async () => {
-    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
-    const loader = renderTable();
-    fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
-    await screen.findByText(/not saved/i);
-    expect(loader).toHaveBeenCalledTimes(1);
-    expect(within(await row("Hydro Grip Primer")).getByText("27")).toBeInTheDocument();
-  });
 });
 
-describe("usage table group tabs", () => {
-  // @spec USAGE-UI-013
+describe("inventory table group tabs", () => {
+  // @spec INV-UI-013
   it("shows an All tab, then one tab per group in configured order", async () => {
     renderTable({ usage: sampleUsage, categories: { makeup: ["Primer", "Foundation"], skincare: ["Cleanser"], lips: [] } });
     expect(await tabNames()).toEqual(["All", "makeup", "skincare", "lips"]);
   });
 
-  // @spec USAGE-UI-014
+  // @spec INV-UI-014
   it("shows one row per product on the All tab", async () => {
     renderTable();
     expect(await selectedTab()).toEqual(["All"]);
     expect(await productOrder()).toHaveLength(sampleUsage.length);
   });
 
-  // @spec USAGE-UI-015
+  // @spec INV-UI-015
   it("shows only the products whose category is in the selected group", async () => {
     renderTable(undefined, "/?group=makeup");
     expect(await productOrder()).toEqual(["Hydro Grip Primer", "Cushion Glass Original"]);
   });
 
-  // @spec USAGE-UI-016
+  // @spec INV-UI-016
   it("shows a message in place of rows for a group with no products", async () => {
     renderTable(undefined, "/?group=lips");
     expect(await screen.findByText("No products in this group.")).toBeInTheDocument();
     expect(screen.queryByText("Hydro Grip Primer")).toBeNull();
   });
 
-  // @spec USAGE-UI-016
+  // @spec INV-UI-016
   it("does not show the empty-group message on a group with products", async () => {
     renderTable(undefined, "/?group=skincare");
     await screen.findByText("Blueberry Bounce Gentle Cleanser");
     expect(screen.queryByText("No products in this group.")).toBeNull();
   });
 
-  // @spec USAGE-UI-017
+  // @spec INV-UI-017
   it("shows only the All tab when there are no categories", async () => {
     renderTable({ usage: sampleUsage });
     expect(await tabNames()).toEqual(["All"]);
   });
 
-  // @spec USAGE-UI-018
+  // @spec INV-UI-018
   it("selects the group named in the URL's group parameter", async () => {
     renderTable(undefined, "/?group=skincare");
     expect(await selectedTab()).toEqual(["skincare"]);
   });
 
-  // @spec USAGE-UI-018
+  // @spec INV-UI-018
   it("keeps the selected group after a logged use reloads the page data", async () => {
     const loader = renderTable(undefined, "/?group=makeup");
     fireEvent.click(within(await row("Hydro Grip Primer")).getByRole("button", { name: "+" }));
@@ -602,20 +526,20 @@ describe("usage table group tabs", () => {
     expect(await productOrder()).toEqual(["Hydro Grip Primer", "Cushion Glass Original"]);
   });
 
-  // @spec USAGE-UI-019
+  // @spec INV-UI-019
   it("selects the All tab when the URL has no group parameter", async () => {
     renderTable(undefined, "/");
     expect(await selectedTab()).toEqual(["All"]);
   });
 
-  // @spec USAGE-UI-020
+  // @spec INV-UI-020
   it("selects the All tab and shows every product when the group parameter names no group", async () => {
     renderTable(undefined, "/?group=Makeup");
     expect(await selectedTab()).toEqual(["All"]);
     expect(await productOrder()).toHaveLength(sampleUsage.length);
   });
 
-  // @spec USAGE-UI-021
+  // @spec INV-UI-021
   it("sets the group parameter when a group tab is selected", async () => {
     renderTable();
     fireEvent.click(await screen.findByRole("tab", { name: "skincare" }));
@@ -624,7 +548,7 @@ describe("usage table group tabs", () => {
     expect(await productOrder()).toEqual(["Blueberry Bounce Gentle Cleanser"]);
   });
 
-  // @spec USAGE-UI-022
+  // @spec INV-UI-022
   it("removes the group parameter when the All tab is selected", async () => {
     renderTable(undefined, "/?group=skincare");
     fireEvent.click(await screen.findByRole("tab", { name: "All" }));
@@ -632,7 +556,7 @@ describe("usage table group tabs", () => {
     expect(await selectedTab()).toEqual(["All"]);
   });
 
-  // @spec USAGE-UI-023
+  // @spec INV-UI-023
   it("adds a history entry for each tab change, so Back returns to the previous tab", async () => {
     renderTable();
     fireEvent.click(await screen.findByRole("tab", { name: "skincare" }));
@@ -644,7 +568,7 @@ describe("usage table group tabs", () => {
     expect(await selectedTab()).toEqual(["skincare"]);
   });
 
-  // @spec USAGE-UI-013
+  // @spec INV-UI-013
   it("names each group's tab panel after its tab, even when the group name has a space", async () => {
     renderTable(
       { usage: sampleUsage, categories: { "body care": ["Cleanser"], makeup: ["Primer", "Foundation"] } },
@@ -653,7 +577,7 @@ describe("usage table group tabs", () => {
     expect(await screen.findByRole("tabpanel", { name: "body care" })).toBeInTheDocument();
   });
 
-  // @spec USAGE-UI-025
+  // @spec INV-UI-025
   it("moves focus without selecting a tab when the arrow keys are used", async () => {
     renderTable();
     const all = await screen.findByRole("tab", { name: "All" });
@@ -670,7 +594,7 @@ describe("usage table group tabs", () => {
     expect(currentSearch()).toBe("");
   });
 
-  // @spec USAGE-UI-024
+  // @spec INV-UI-024
   it("leaves the URL unchanged when the selected tab is clicked", async () => {
     renderTable(undefined, "/?group=hair");
     fireEvent.click(await screen.findByRole("tab", { name: "All" }));

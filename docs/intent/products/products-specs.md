@@ -23,7 +23,7 @@ Status markers: `[x]` implemented with tests, `[ ]` not yet implemented, or impl
 
 - [x] **PROD-EDIT-001**: When the product dialog opens to add a product, the dialog shall show an empty name, an empty shade, an empty brand, and no category chosen.
 - [x] **PROD-EDIT-002**: When the product dialog opens to edit a product, the dialog shall show that product's name, shade (empty if the product has none), brand, and category.
-- [x] **PROD-EDIT-003**: While the product dialog is open, the page shall prevent interaction with the usage table and routine cards.
+- [x] **PROD-EDIT-003**: While the product dialog is open, the page shall prevent interaction with the inventory table and routine cards.
 - [x] **PROD-EDIT-004**: The product dialog's category dropdown shall list the configured categories under their groups, in configured order, followed by a "New category" option.
 - [x] **PROD-EDIT-005**: When the user chooses "New category" in the product dialog, the dialog shall show a new category name input and a group dropdown listing the existing groups in configured order, followed by a "New group" option.
 - [x] **PROD-EDIT-006**: When the user chooses "New group" in the product dialog, the dialog shall show a new group name input.
