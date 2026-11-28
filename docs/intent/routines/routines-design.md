@@ -7,7 +7,7 @@ prefix: ROUT
 
 ## Context and Design Philosophy
 
-Most product use happens as part of a routine — a morning skincare sequence, a full makeup look. Logging each product individually after every routine is tedious, so a routine bundles products and logs a use for all of them in one click (HLD *Low friction over precision*). A routine always logs every product in it; if one was skipped that day, the user corrects it afterward from the usage table.
+Most product use happens as part of a routine — a morning skincare sequence, a full makeup look. Logging each product individually after every routine is tedious, so a routine bundles products and logs a use for all of them in one click (HLD *Low friction over precision*). A routine always logs every product in it; if one was skipped that day, the user corrects it afterward from the inventory table.
 
 Routines own only the grouping and its rules. Recording and saving a use belongs to the usage segment; routines call into it.
 
