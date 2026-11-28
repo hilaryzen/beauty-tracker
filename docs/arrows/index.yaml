@@ -94,7 +94,7 @@ arrows:
     blocks: []
     blockedBy: [inventory, routines, purchases]
     detail: app-shell.md
-    next: "Add an Inventory header link when inventory gets a page"
+    next: "None open"
     drift: null
 
 unmapped:
