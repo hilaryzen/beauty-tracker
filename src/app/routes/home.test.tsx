@@ -15,7 +15,7 @@ function Page() {
 
 describe("home page", () => {
   // @spec SHELL-HOME-001
-  it("shows the routine cards above the usage table", async () => {
+  it("shows the routine cards above the inventory table", async () => {
     renderPage(Page, () => ({
       usage: sampleUsage,
       categories: sampleConfigs.categories,

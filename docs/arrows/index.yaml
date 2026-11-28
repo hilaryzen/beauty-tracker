@@ -1,10 +1,11 @@
 schema_version: 2
-last_updated: 2026-11-25
+last_updated: 2026-11-27
 
 taxonomy:
   tracking:
     - products
     - usage
+    - inventory
     - routines
     - purchases
   platform:
@@ -18,7 +19,7 @@ arrows:
     sampled: 2026-11-25
     audited: null
     audited_sha: null
-    blocks: [usage, routines, purchases]
+    blocks: [usage, inventory, routines, purchases]
     blockedBy: [data-store]
     detail: products.md
     next: "Design deleting products (HLD Goal 4)"
@@ -27,12 +28,24 @@ arrows:
   usage:
     status: MAPPED
     parent: null
-    sampled: 2026-11-25
+    sampled: 2026-11-27
     audited: 2026-10-25
     audited_sha: 8527123
-    blocks: [routines, app-shell]
-    blockedBy: [data-store, products, purchases]
+    blocks: [inventory, routines]
+    blockedBy: [data-store, products]
     detail: usage.md
+    next: "None open"
+    drift: null
+
+  inventory:
+    status: MAPPED
+    parent: null
+    sampled: 2026-11-27
+    audited: null
+    audited_sha: null
+    blocks: [app-shell]
+    blockedBy: [products, purchases, usage]
+    detail: inventory.md
     next: "None open"
     drift: null
 
@@ -54,7 +67,7 @@ arrows:
     sampled: 2026-11-07
     audited: null
     audited_sha: null
-    blocks: [usage, routines, app-shell]
+    blocks: [inventory, routines, app-shell]
     blockedBy: [data-store, products]
     detail: purchases.md
     next: "Design editing and deleting purchases, and cost per use (HLD Goals 2 and 4)"
@@ -79,7 +92,7 @@ arrows:
     audited: 2026-10-25
     audited_sha: 8527123
     blocks: []
-    blockedBy: [usage, routines, purchases]
+    blockedBy: [inventory, routines, purchases]
     detail: app-shell.md
     next: "Add an Inventory header link when inventory gets a page"
     drift: null

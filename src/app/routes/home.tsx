@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { UsageTable } from "@/features/usage/usage-table";
+import { InventoryTable } from "@/features/inventory/inventory-table";
 import { loadUsage } from "@/features/usage/usage.server";
 import { getFile } from "@/utils/files.server";
 import { RoutineCard } from "@/features/routine/routine-card";
@@ -23,7 +23,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <RoutineCard usage={loaderData.usage} routines={loaderData.routines}/>
-      <UsageTable usage={loaderData.usage} categories={loaderData.categories}/>
+      <InventoryTable usage={loaderData.usage} categories={loaderData.categories}/>
     </>
   );
 }
