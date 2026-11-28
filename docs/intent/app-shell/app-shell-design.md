@@ -9,7 +9,7 @@ prefix: SHELL
 
 The app shell is everything around the features: the HTML document, theme, fonts, error page, route table, navigation header, notifications, and the pages that place the feature components together. It also holds small UI controls shared by more than one feature.
 
-The app has one page per tracked area — the home page for usage and a purchases page — plus a settings page for editing how the data is organized, all reached from a header on every page. The shell composes features but owns none of their behavior. Each page's loader reads the data its features need and hands it to their components, which decide what to display and how changes are made.
+The app has one page per tracked area — the home page for inventory and logging uses, and a purchases page — plus a settings page for editing how the data is organized, all reached from a header on every page. The shell composes features but owns none of their behavior. Each page's loader reads the data its features need and hands it to their components, which decide what to display and how changes are made.
 
 ## Stack
 
@@ -22,7 +22,7 @@ The app has one page per tracked area — the home page for usage and a purchase
 
 | Path | Module | Purpose |
 |---|---|---|
-| `/` | `routes/home.tsx` | Home page (usage) |
+| `/` | `routes/home.tsx` | Home page (inventory and logging) |
 | `/purchases` | `routes/purchases.tsx` | Purchases page |
 | `/settings` | `routes/settings.tsx` | Settings page |
 | `/api/usage` | `routes/api.usage.ts` | Usage data API (usage segment) |
@@ -48,11 +48,11 @@ The app has one page per tracked area — the home page for usage and a purchase
 
 | Link | Goes to |
 |---|---|
-| Usage | `/` |
+| Inventory | `/` |
 | Purchases | `/purchases` |
 | Settings | `/settings` |
 
-The link for the page being shown is highlighted and marked as the current page (`aria-current="page"`). Which link is current follows the path, not what the page renders: on `/`, Usage is current even when the home page fails to load and the error page shows instead. The Usage link matches `/` exactly, so it is not highlighted on `/purchases` or `/settings`. On a path that matches no route, no link is highlighted. Links navigate on the client without a full page reload.
+The link for the page being shown is highlighted and marked as the current page (`aria-current="page"`). Which link is current follows the path, not what the page renders: on `/`, Inventory is current even when the home page fails to load and the error page shows instead. The Inventory link matches `/` exactly, so it is not highlighted on `/purchases` or `/settings`. On a path that matches no route, no link is highlighted. Links navigate on the client without a full page reload.
 
 ## Error Page
 
@@ -70,7 +70,7 @@ The link for the page being shown is highlighted and marked as the current page 
 `src/app/routes/home.tsx`:
 
 - **Loader** (server) — loads product records through the usage segment's server-side loader, which applies month rollover (usage design, *Month Rollover*), and reads `configs.json` through the data store. If either file is unreadable, it throws a response with status 500 and status text "Your data could not be loaded.", which the error page shows under the heading "Error". If the rollover write fails, the loader's error propagates to the error page. Returns `{ usage, categories, routines }`.
-- **Component** — renders `RoutineCard` (routines segment) above `UsageTable` (usage segment), passing each the loader data it needs.
+- **Component** — renders `RoutineCard` (routines segment) above `InventoryTable` (inventory segment), passing each the loader data it needs.
 
 ## Purchases Page
 
@@ -88,7 +88,7 @@ The link for the page being shown is highlighted and marked as the current page 
 
 ## Shared Controls
 
-`AddMinusButtons` (`src/components/add-minus-buttons/main.tsx`) renders a "+" button and a "−" button, calling `onAddClick` / `onMinusClick`. Used by the usage table rows and routine cards.
+`AddMinusButtons` (`src/components/add-minus-buttons/main.tsx`) renders a "+" button and a "−" button, calling `onAddClick` / `onMinusClick`. Used by the inventory table rows and routine cards.
 
 `src/components/ui/` holds Chakra snippets the app uses: `provider.tsx`, `ColorModeProvider` in `color-mode.tsx`, and `toaster.tsx`.
 
@@ -103,20 +103,16 @@ The link for the page being shown is highlighted and marked as the current page 
 | Unreadable page data | 500 with "Your data could not be loaded." | 404 Not Found | The page exists; a 404 message would misdescribe the failure |
 | Document title | "Beauty Tracker", set in the root layout for every page | Per-route titles | One app, one title; root placement keeps it on the error page |
 | Meta description | One description, set in the root layout for every page | Per-route descriptions | The description names the whole app, so it fits every page; root placement keeps it on the error page |
-| App name in the header | Plain text | A link to `/` | The Usage link already goes to `/`; one way there is enough |
-| Page structure | One page per tracked area (usage, purchases) plus a settings page, linked from a header | Everything on one page; usage at `/usage` with `/` redirecting | Each area's content grows independently. Usage stays at `/` because it is the page used every day |
+| App name in the header | Plain text | A link to `/` | The Inventory link already goes to `/`; one way there is enough |
+| Home page link label | "Inventory" | "Usage"; "Home" | The inventory table is the home page's main content, and the label says what is there rather than where it sits |
+| Page structure | One page per tracked area (the home page for inventory and logging, purchases) plus a settings page, linked from a header | Everything on one page; inventory at `/inventory` with `/` redirecting | Each area's content grows independently. The home page stays at `/` because uses are logged there every day |
 | Category and routine editing placement | Both on a settings page at `/settings` | A `/categories` page; routine editing on the home page beside the routine cards | One page for how the data is organized, reached from one header link |
 | Settings page layout | Category editor left and routine editor right in wide windows; stacked with the routine editor first in narrow ones | One column; tabs | Both editors stay in view without switching. Routines are changed more often than categories, so they come first when only one fits |
 | Settings page source order | Category editor first, with the narrow layout moving the routine editor up | Routine editor first, with the wide layout moving the category editor left | Keyboard focus follows the wide layout's left-to-right reading order |
-| Routines placement | On the usage page, above the usage table | Their own page | Routines are a way of logging usage |
+| Routines placement | On the home page, above the inventory table | Their own page | Routines are a way of logging usage, which happens on the home page |
 | Navigation | A header on every page, including the error page | Sidebar; header on normal pages only | Few pages fit in a header; on the error page it gives a way back |
 | Shared +/− control | One `AddMinusButtons` component | Per-feature buttons | [inferred] Identical control in both features |
 | Unused generated snippets | Delete them | Keep for possible future use | The Chakra CLI regenerates any snippet on demand |
-
-## Open Questions & Future Decisions
-
-### Deferred
-1. **Inventory page** — add a header link when inventory gets a page.
 
 ## References
 
@@ -125,6 +121,7 @@ The link for the page being shown is highlighted and marked as the current page 
 - src/components/add-minus-buttons/main.tsx
 - src/components/ui/
 - react-router.config.ts, vite.config.ts, tsconfig.json
+- docs/intent/inventory/inventory-design.md
 - docs/intent/usage/usage-design.md
 - docs/intent/purchases/purchases-design.md
 - docs/intent/routines/routines-design.md
